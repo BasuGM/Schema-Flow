@@ -96,3 +96,12 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   - Routed edges are curves while the others are step lines, which looks inconsistent: addressed,
     all edges now use the same curve style.
   - The dev "N" badge covers the bottom list item's focus ring: dev only, already documented.
+- **Fixes:** commit `f382257`. QA-004: labels are shown only for the hovered or clicked edge.
+  Found and fixed while writing the QA-004 regression test: edge click-selection never worked,
+  because edges were fixed props without `onEdgesChange`. Observation: uniform curve style.
+  Regression tests are in `selection-sync.test.tsx`, `layout-dagre.test.ts` (now covering every
+  edge), `describe.test.ts` and `use-canvas-commands.test.ts`. `npm run check` passes: 19 files /
+  116 tests.
+- **Environment change:** the dev server was stopped and the production static export is being
+  served on http://localhost:3000 (`npm run start`), as Cowork requested for AC-P1-T09-7.
+- **Re-verification:** pending, see [handoffs/P1-fix-QA-004.md](handoffs/P1-fix-QA-004.md).
