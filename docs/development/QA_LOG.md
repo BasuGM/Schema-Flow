@@ -61,3 +61,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   - The Next.js dev indicator overlaps the zoom controls: dev-only, not changed.
   - Panel widths differ after crossing the 900 px breakpoint: cosmetic, not changed, recorded as
     a known limitation.
+- **Fixes:** commit `c879f58`, with regression tests in `src/graph/layout-dagre.test.ts`,
+  `src/graph/edge-path.test.ts`, `src/components/canvas/relationship-edge.test.ts` and
+  `src/components/workspace/selection-sync.test.tsx`. `npm run check` passes: 18 files / 111 tests.
+- **Re-verification:** pending, see [handoffs/P1-fix-QA-001-003.md](handoffs/P1-fix-QA-001-003.md).
