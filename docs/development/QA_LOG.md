@@ -136,3 +136,12 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   `selection-sync.test.tsx`. `npm run check` passes: 19 files / 124 tests.
 - **Environment:** dev server back on http://localhost:3000.
 - **Re-verification:** pending, see [handoffs/P1-QA-005.md](handoffs/P1-QA-005.md).
+
+---
+
+## 2026-11-13 — P2-T01…T03 (SQL import core, pure logic)
+
+- **Handoff:** [handoffs/P2-T01-T03.md](handoffs/P2-T01-T03.md)
+- **Commit:** `2efa17c`. `npm run check` passes: 27 files / 185 tests (parser: 8 files / 61 tests).
+- **Cowork result:** Pending — not independently verified.
+- **Defects:** none recorded.
