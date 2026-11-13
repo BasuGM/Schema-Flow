@@ -19,8 +19,9 @@ never leaves the browser. No backend, no Docker, no AI integrations, 2D only.
 
 ## Architecture boundaries
 
-- `src/domain`, `src/graph`, `src/samples` (and in later phases `src/parsers`, `src/analysis`,
+- `src/domain`, `src/graph`, `src/samples`, `src/parsers` (and later `src/analysis`,
   `src/generators`) are **pure TypeScript**: no React, Next or browser imports. Fully unit-tested.
+  SQL fixtures live in `tests/fixtures/sql/`.
 - The normalized `Schema` (`src/domain/schema/types.ts`) is the single source of truth. React Flow
   nodes/edges are derived by `schemaToFlow()`; never store schema data in React Flow state.
 - Parsers never touch React Flow; canvas components never touch parsers.
@@ -30,7 +31,8 @@ never leaves the browser. No backend, no Docker, no AI integrations, 2D only.
   receive only IDs + minimal display data. Selection/highlight state is read per node from
   `ui-store`, so selecting a table does not rebuild the nodes array.
 - Every new dependency is justified in `docs/development/ARCHITECTURE.md` before it is added.
-  Phase 2 libs (`node-sql-parser`, `@mrleebo/prisma-ast`) are not installed until Phase 2.
+  SQL is parsed by our own tolerant parser (ADR-012, no dependency); `@mrleebo/prisma-ast` is
+  installed only when P2-T04 starts.
 
 ## Conventions
 

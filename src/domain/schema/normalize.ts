@@ -124,7 +124,7 @@ function addTable(
   if (ctx.tables[id] || ctx.tableLookup.has(id)) {
     ctx.issues.push({
       severity: "error",
-      message: `Duplicate table "${id}" was skipped.`,
+      message: `Duplicate table "${id}" (names are matched case-insensitively) was skipped.`,
       line: draft.line,
     });
     return undefined;

@@ -190,3 +190,35 @@ These criteria add to or replace the originals; the original wording is kept abo
 3. Serve `out/` with any static file server. The project's `npm run start` does exactly this, with
    `python3 -m http.server 3000 --directory out`. Open http://localhost:3000.
 4. Afterwards stop it and run `npm run dev` again.
+
+## P2-T01…T03 — SQL import core (pure logic, no UI)
+
+Run `npx vitest run src/parsers` (61 tests). Fixtures are in `tests/fixtures/sql/`.
+
+| Fixture                   | Dialect    | ok        | Tables | Columns | Relationships     | Issues                                                                                                                                                                            |
+| ------------------------- | ---------- | --------- | ------ | ------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ecommerce.postgres.sql`  | postgresql | true      | 12     | 71      | 13 (1 one-to-one) | 0. Identical to the built-in sample (same fingerprint, columns, keys, FK pairs)                                                                                                   |
+| `shop.mysql.sql`          | mysql      | true      | 5      | 18      | 4 (1 one-to-one)  | 0                                                                                                                                                                                 |
+| `blog.sqlite.sql`         | sqlite     | true      | 4      | 12      | 3                 | 1 summary warning (PRAGMA ×1)                                                                                                                                                     |
+| `pgdump.postgres.sql`     | postgresql | true      | 3      | 14      | 3                 | 2 warnings: expression index (line 130); summary "Skipped 31 statements…"                                                                                                         |
+| `edge-cases.postgres.sql` | postgresql | **false** | 3      | 10      | 2                 | 5 warnings (CREATE VIEW line 23; unparseable CREATE TABLE line 29; expression index line 31; summary of 3; FK to missing `ghosts` line 14) + 1 error (duplicate `USERS`, line 27) |
+
+- AC-P2-T01-1: Semicolons inside strings, comments (including nested PG comments), quoted
+  identifiers and `$tag$` bodies never split a statement; each statement knows its start line. _Auto_
+- AC-P2-T01-2: Unterminated strings, comments or dollar quotes produce a warning, never an
+  exception. _Auto_
+- AC-P2-T01-3: `detectFormat` distinguishes SQL / Prisma / unknown and guesses the SQL dialect. _Auto_
+- AC-P2-T02-1: The PostgreSQL e-commerce fixture imports to the same schema as the built-in sample. _Auto_
+- AC-P2-T02-2: Enum columns (also schema-qualified), `GENERATED ALWAYS AS IDENTITY` and
+  `REFERENCES t` without columns are supported. _Auto_
+- AC-P2-T02-3: pg_dump output works: `ALTER TABLE ONLY … ADD CONSTRAINT` PK/UNIQUE/FK,
+  `ALTER COLUMN … SET DEFAULT nextval(...)` → autoincrement, `ADD GENERATED … AS IDENTITY`. _Auto_
+- AC-P2-T02-4: Irrelevant statements produce exactly **one** summary warning with per-kind counts;
+  relevant-but-unhandled statements produce line-numbered warnings. _Auto_
+- AC-P2-T02-5: One bad statement does not prevent the others from being imported; a duplicate
+  table yields `ok: false` with the schema still present. _Auto_
+- AC-P2-T03-1: MySQL and SQLite fixtures import with the counts above. _Auto_
+- AC-P2-T03-2: `parseSql` never throws: 600 seeded truncations/corruptions of the fixtures plus
+  400 random inputs, under 2 s. _Auto_
+- AC-P2-T03-3: About 1 MB of DDL (500 tables, 0.96 MiB) parses in under 1.5 s. Measured 99–144 ms
+  in Node on the M1, 3 warm runs. _Auto_

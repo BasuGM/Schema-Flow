@@ -98,16 +98,46 @@ finds the same saved layout (Phase 3).
 `selectors.ts`: `getOutgoingRelationships`, `getIncomingRelationships`, `buildAdjacency`,
 `getNeighbors(schema, id, depth)` (undirected BFS, excludes the start table).
 
-### Phase 2 import mapping (planned)
+### Phase 2 import mapping
 
-**SQL** (`node-sql-parser`, dialect builds lazy-loaded): split input into statements and parse
-each independently so one unsupported statement only yields a warning with its line number.
-`CREATE TABLE` → `DraftTable` (columns, inline `PRIMARY KEY`/`UNIQUE`/`REFERENCES`, table-level
-`PRIMARY KEY`/`UNIQUE`/`FOREIGN KEY`/`CHECK`, defaults classified literal/function/expression,
-`SERIAL`/`AUTO_INCREMENT`/`IDENTITY` → `autoincrement`); `ALTER TABLE … ADD CONSTRAINT … FOREIGN KEY`
-→ detached `foreignKeys`; `CREATE [UNIQUE] INDEX` → detached `indexes`; `CREATE TYPE … AS ENUM` →
-`enums`; everything else (`INSERT`, `GRANT`, functions, views…) is skipped with a warning. SQL is
-treated purely as text and never executed.
+**SQL** (implemented in P2-T01…T03, hand-written parser, ADR-012). `src/parsers/sql`:
+
+- **Tokenize:** a dialect-aware tokenizer (strings, quoted identifiers, `$tag$` bodies, nested
+  comments).
+- **Split:** top-level `;` tokens only.
+- **Per statement:** each statement is parsed independently.
+  - `CREATE TABLE` → `DraftTable`: columns; inline and table-level PK / UNIQUE / CHECK / FK with
+    ON DELETE/UPDATE; MySQL `KEY`/`INDEX`.
+  - `ALTER TABLE … ADD [CONSTRAINT]` → table patch, or a detached FK.
+  - `ALTER COLUMN … SET/DROP DEFAULT`, `SET/DROP NOT NULL` and `ADD GENERATED … AS IDENTITY` →
+    column patches.
+  - `CREATE [UNIQUE] INDEX` → detached index; expression indexes are skipped with a warning.
+  - `CREATE TYPE … AS ENUM` → enum.
+- **Defaults** are classified as:
+  - literal (casts stripped);
+  - function (`name(...)`);
+  - expression (`CURRENT_*`, other);
+  - autoincrement (serial, identity, `AUTO_INCREMENT`, `AUTOINCREMENT`, `nextval(...)`).
+- **Tolerance:** unknown column options are skipped, never fatal.
+- **Ignored statements:** `SET`, `SELECT`/`set_config`, `OWNER TO`, `GRANT`/`REVOKE`,
+  `COMMENT ON`, sequences, extensions, functions/triggers, schemas, transactions, `DROP`,
+  `INSERT`, `PRAGMA`, `USE`, `LOCK` are counted into **one** summary warning.
+- **Per-statement warnings with line numbers:** other statements (e.g. `CREATE VIEW`),
+  unparseable statements, expression indexes, and FKs to missing tables (from normalize).
+- **Result:** the draft goes through the existing `normalizeSchema`/`validateSchema`.
+  `parseSql` returns an `ImportResult` and never throws. SQL is treated purely as text and never
+  executed.
+- **Lazy loading:** the whole `src/parsers` module will be loaded with a dynamic `import()` by the
+  Import dialog (P2-T05), so it isn't in the initial bundle.
+- **Not supported:** `COPY … FROM stdin` data blocks (use a schema-only dump, `pg_dump -s`), MySQL
+  `DELIMITER` blocks (reported), and table inheritance or partitions (options ignored).
+
+**Identifier case.** PostgreSQL folds unquoted identifiers to lowercase; MySQL and SQLite
+preserve them. SchemaFlow keeps names **as written** (quotes removed) and matches table and column
+names **case-insensitively** everywhere (`NameLookup`). As a consequence, two tables that differ
+only in case (e.g. quoted `"UserID"` and unquoted `userid`, which PostgreSQL treats as distinct)
+collide: the second is reported as `Duplicate table … (names are matched case-insensitively)` and
+skipped. This is a deliberate trade-off for predictable lookups; revisit if real schemas need it.
 
 **Prisma** (`@mrleebo/prisma-ast`): `model` → table (name from `@@map`, columns from `@map`);
 scalar fields → columns, `?` → nullable, `[]` scalar lists → `isArray`; relation fields are not
@@ -167,8 +197,8 @@ re-render no `TableNode`.
 | eslint / eslint-config-next                          | 9.x / 16.4.6             | flat config; `next lint` no longer exists                         |
 | prettier / prettier-plugin-tailwindcss               | 3.10.1 / 0.8.1           |                                                                   |
 
-Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), `html-to-image`
-(Phase 3).
+No SQL parser dependency (ADR-012). Not installed until needed: `@mrleebo/prisma-ast` (P2-T04),
+`html-to-image` (Phase 3).
 
 ## Decision records
 
@@ -295,6 +325,30 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   also cover re-selecting the same table.
 - **Alternatives:** a screen-space overlay (it would need manual projection of every label
   position on pan); counter-scaling is simpler and keeps React Flow's positioning.
+
+### ADR-012 — Hand-written tolerant DDL parser instead of node-sql-parser (2026-11-13)
+
+- **Decision:** Parse SQL DDL with a small, dependency-free parser in `src/parsers/sql`
+  (≈1,190 code lines). This was the **user's decision** after the escalation below.
+- **Context (probe, read-only, in scratch):** `node-sql-parser@5.4.0` (latest; Apache-2.0; runtime
+  dependency `big-integer`).
+  - Dialect builds are 301 KB (PostgreSQL), 270 KB (MySQL) and 201 KB (SQLite) minified, vs 2.4 MB
+    for the all-dialect `index.js`; about 92 MB unpacked in total.
+  - MySQL and SQLite DDL parsed fine.
+  - The PostgreSQL build rejects the **whole** `CREATE TABLE` on: unquoted user-defined or enum
+    column types (`status order_status`, `status public.order_status`; only a bare quoted name
+    works); `GENERATED ALWAYS AS IDENTITY`; and `REFERENCES t` without a column list. All three
+    are standard in pg_dump output, and the e-commerce fixture needs enum columns.
+- **Alternatives:**
+  - Pre-parse rewrites plus retry-on-error around node-sql-parser: brittle, and undeclared types
+    such as `citext` would still drop tables.
+  - Other libraries: single-dialect, or a large WASM build.
+- **Consequences:**
+  - No parser dependency and no 200–300 KB dialect bundles.
+  - Tolerant by design: unknown column options are skipped, and a bad statement is skipped with
+    a line-numbered warning.
+  - We own correctness. This is covered by 5 fixtures, unit tests, seeded robustness tests and a
+    1 MB performance test (~0.1 s).
 
 ## Known limitations (Phase 1)
 

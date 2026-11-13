@@ -10,8 +10,8 @@ export interface SyntheticOptions {
   seed?: number;
 }
 
-/** mulberry32 — tiny deterministic PRNG so synthetic schemas are reproducible. */
-function prng(seed: number): () => number {
+/** mulberry32 — tiny deterministic PRNG so synthetic schemas (and seeded tests) are reproducible. */
+export function prng(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;

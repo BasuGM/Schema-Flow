@@ -26,20 +26,20 @@ and not recomputed when intermediate tables move; no routes in TB layout; side-p
 after crossing the 900 px breakpoint; Next.js dev badge overlaps the zoom controls (dev only);
 AC-P1-T09-6 (reduced motion) covered by a unit test only.
 
-## Phase 2 — Import, search, full inspector (proposed breakdown)
+## Phase 2 — Import, search, full inspector
 
-| ID     | Task                           | Scope                                                                                                                                                                               |
-| ------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P2-T01 | SQL statement splitter         | Pure splitter (quotes, comments, dollar-quoting) with line numbers; unit tests.                                                                                                     |
-| P2-T02 | SQL → DraftSchema (PostgreSQL) | Install `node-sql-parser`; lazy-load the PostgreSQL build; CREATE TABLE / ALTER TABLE ADD CONSTRAINT / CREATE INDEX / CREATE TYPE ENUM; per-statement warnings; never executes SQL. |
-| P2-T03 | SQL dialects: MySQL & SQLite   | Dialect-specific builds, `AUTO_INCREMENT`, inline `KEY`, SQLite affinity types; fixture tests.                                                                                      |
-| P2-T04 | Prisma → DraftSchema           | Install `@mrleebo/prisma-ast`; models, `@map`/`@@map`, relations, `@id`/`@@id`, `@unique`/`@@unique`, `@@index`, `@default`, enums, implicit m:n `_AToB`.                           |
-| P2-T05 | Import dialog                  | Paste or drop a file, format/dialect detection, parse in a Web Worker if needed for large inputs, preview counts and issues, confirm to replace schema; enables the Import button.  |
-| P2-T06 | Import issues panel            | List warnings/errors with line numbers; link to statements.                                                                                                                         |
-| P2-T07 | Search                         | Command palette (shadcn `command`) over tables and columns; jump to table.                                                                                                          |
-| P2-T08 | Full inspector                 | Tabs: columns (defaults, comments, enum values), keys & indexes, constraints, relationships (clickable to navigate).                                                                |
-| P2-T09 | Neighbourhood highlighting     | Dim unrelated tables when one is selected (`getNeighbors`, depth 1–2), via a `Set<TableId>` in ui-store.                                                                            |
-| P2-T10 | Phase 2 hardening              | Large real-world fixtures (e.g. 150+ table DDL), error-boundary paths, docs, final handoff.                                                                                         |
+| ID     | Task                                      | Scope                                                                                                                                                                                                                                          |
+| ------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P2-T01 | SQL tokenizer, splitter, format detection | **Self-checked** (internal, no UI). Dialect-aware tokenizer; `;`-safe splitter with line numbers; SQL/Prisma detection. Unit tests.                                                                                                            |
+| P2-T02 | SQL → DraftSchema (PostgreSQL)            | **Self-checked** (internal, no UI). Hand-written tolerant parser (ADR-012): CREATE TABLE / ALTER TABLE / CREATE INDEX / CREATE TYPE ENUM; pg_dump support; grouped warnings; never executes SQL. Fixtures `ecommerce`, `pgdump`, `edge-cases`. |
+| P2-T03 | SQL dialects: MySQL & SQLite              | **Self-checked** (internal, no UI). Backticks, `AUTO_INCREMENT`, `KEY`/`UNIQUE KEY`, inline ENUM, `[id]`, `AUTOINCREMENT`, `WITHOUT ROWID`. Fixtures `shop.mysql`, `blog.sqlite`.                                                              |
+| P2-T04 | Prisma → DraftSchema                      | Install `@mrleebo/prisma-ast`; models, `@map`/`@@map`, relations, `@id`/`@@id`, `@unique`/`@@unique`, `@@index`, `@default`, enums, implicit m:n `_AToB`.                                                                                      |
+| P2-T05 | Import dialog                             | Paste or drop a file, format/dialect detection, parse in a Web Worker if needed for large inputs, preview counts and issues, confirm to replace schema; enables the Import button.                                                             |
+| P2-T06 | Import issues panel                       | List warnings/errors with line numbers; link to statements.                                                                                                                                                                                    |
+| P2-T07 | Search                                    | Command palette (shadcn `command`) over tables and columns; jump to table.                                                                                                                                                                     |
+| P2-T08 | Full inspector                            | Tabs: columns (defaults, comments, enum values), keys & indexes, constraints, relationships (clickable to navigate).                                                                                                                           |
+| P2-T09 | Neighbourhood highlighting                | Dim unrelated tables when one is selected (`getNeighbors`, depth 1–2), via a `Set<TableId>` in ui-store.                                                                                                                                       |
+| P2-T10 | Phase 2 hardening                         | Large real-world fixtures (e.g. 150+ table DDL), error-boundary paths, docs, final handoff.                                                                                                                                                    |
 
 ## Phase 3 — Persistence & export (summary)
 
