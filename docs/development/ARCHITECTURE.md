@@ -266,13 +266,22 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   Moving an _intermediate_ table is not detected, so a route may then cross it. TB layouts have no
   routes. `RelationshipEdge` subscribes to its two end nodes via `useInternalNode`.
 
-### ADR-011 — Edge labels anchored at the FK row, above nodes (2026-11-13, QA-002)
+### ADR-011 — Edge labels anchored at the FK row, above nodes (2026-11-13, QA-002; revised for QA-004)
 
 - **Decision:** On-canvas labels for emphasized edges show `fk_cols → table.cols`, are anchored just
   outside the FK handle, and use `z-index: 1001` so nodes never clip them. The constraint name stays
   in the hover tooltip.
-- **Consequences:** Labels may cover part of a neighbouring node while a table is selected; they are
-  only shown for edges touching the selection.
+- **Revision (QA-004):** Showing labels for every edge of the selected table covered neighbouring
+  tables, because rank gaps (~110 px) are narrower than labels (up to ~200 px). Labels now appear
+  only for the **hovered** or **clicked** edge, one at a time, with the full description (constraint
+  name included). The native SVG `<title>` was removed to avoid a duplicate tooltip; edges carry the
+  same text as their accessible name. Edges of the selected table are still highlighted.
+- **Alternatives considered:** a wider `ranksep` (sparser diagrams, still fails for long names);
+  label collision avoidance (complex); labels inside the source node (hides that node's content).
+- **Consequences:** Edges are now local React Flow state with `onEdgesChange`, so click-selection
+  works. Before this fix, edge clicks were silently ignored because edges were passed as fixed props
+  without a change handler, which contradicted ADR-008's "edges remain natively selectable". Non-routed
+  edges use the same horizontal-tangent curve as routed ones, for a consistent look.
 
 ## Known limitations (Phase 1)
 

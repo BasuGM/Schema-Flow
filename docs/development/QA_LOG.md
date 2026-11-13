@@ -65,3 +65,34 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   `src/graph/edge-path.test.ts`, `src/components/canvas/relationship-edge.test.ts` and
   `src/components/workspace/selection-sync.test.tsx`. `npm run check` passes: 18 files / 111 tests.
 - **Re-verification:** pending, see [handoffs/P1-fix-QA-001-003.md](handoffs/P1-fix-QA-001-003.md).
+
+---
+
+## 2026-11-13 — Cowork re-verification: QA-001…003 (c879f58) + Phase 1 open items
+
+- **Handoff verified:** [handoffs/P1-fix-QA-001-003.md](handoffs/P1-fix-QA-001-003.md)
+- **Source:** Claude Cowork report pasted into the Claude Code session on 2026-11-13. Dev server,
+  1440×525 viewport, real pointer and keyboard input plus DOM checks.
+- **Defect status:**
+  - **QA-001: Fixed** (verified). Cowork sampled 200 points along all 13 edge paths; none crosses
+    an unrelated table. Drag → step path; Layout → routed path restored.
+  - **QA-002: Fixed as reported** (verified). Labels are short, sit at the FK rows, are drawn above
+    tables, and don't overlap each other. Follow-up raised as QA-004.
+  - **QA-003: Fixed** (verified). Escape works from the list and the inspector ×; it's ignored in
+    the filter; with a menu open, the first Escape closes the menu.
+- **Steps 1–9:** all PASS. **Regression checklist:** all PASS. Panel toggles and the narrow-window
+  collapse were not re-run this round (they passed in round 1).
+- **Open items:**
+  - AC-P1-T09-4 full Tab order: **PASS**.
+  - AC-P1-T09-6 reduced motion: **NOT TESTED**; Cowork's tooling can't emulate it.
+  - AC-P1-T09-7 production build: **NOT TESTED**; Cowork's shell can't run the macOS
+    node_modules. Cowork asked for the production server to be started on port 3000.
+- **New defects:**
+  - **QA-004** · minor (cosmetic) · _Selected-edge labels cover other tables' column text._ Repro:
+    select `orders` (or `users`) at default sizes. Labels up to ~197 px wide sit in ~110 px rank gaps
+    and overlap addresses, orders, products and users rows. Status: **Fixed — awaiting
+    re-verification.**
+- **Observations:**
+  - Routed edges are curves while the others are step lines, which looks inconsistent: addressed,
+    all edges now use the same curve style.
+  - The dev "N" badge covers the bottom list item's focus ring: dev only, already documented.

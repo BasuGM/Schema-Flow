@@ -8,7 +8,9 @@ import {
   Panel,
   ReactFlow,
   ReactFlowProvider,
+  applyEdgeChanges,
   applyNodeChanges,
+  type EdgeChange,
   type NodeChange,
   type OnNodeDrag,
   type Viewport,
@@ -17,7 +19,7 @@ import { LocateFixed } from "lucide-react";
 import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { schemaToFlow, type FlowElements } from "@/graph/schema-to-flow";
-import type { TableFlowNode } from "@/graph/types";
+import type { RelationshipFlowEdge, TableFlowNode } from "@/graph/types";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
@@ -63,15 +65,24 @@ function SchemaCanvasInner() {
   }, [schema, fingerprint, collapsed, version]);
 
   const [nodes, setNodes] = useState<TableFlowNode[]>(base.nodes);
+  // Edges are local state too so React Flow can apply edge selection (click to pin a label).
+  const [edges, setEdges] = useState<RelationshipFlowEdge[]>(base.edges);
   const [syncedBase, setSyncedBase] = useState(base);
   if (syncedBase !== base) {
     setSyncedBase(base);
     setNodes(base.nodes);
+    setEdges(base.edges);
   }
 
   const onNodesChange = useCallback(
     (changes: NodeChange<TableFlowNode>[]) =>
       setNodes((current) => applyNodeChanges(changes, current)),
+    [],
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<RelationshipFlowEdge>[]) =>
+      setEdges((current) => applyEdgeChanges(changes, current)),
     [],
   );
 
@@ -129,12 +140,13 @@ function SchemaCanvasInner() {
 
   return (
     <div data-testid="schema-canvas" className="h-full w-full bg-canvas">
-      <ReactFlow<TableFlowNode>
+      <ReactFlow<TableFlowNode, RelationshipFlowEdge>
         nodes={nodes}
-        edges={base.edges}
+        edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}

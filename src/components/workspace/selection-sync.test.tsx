@@ -129,4 +129,41 @@ describe("selection sync between list, canvas and inspector", () => {
     const d = edge?.querySelector("path.react-flow__edge-path")?.getAttribute("d") ?? "";
     expect(d.match(/ C /g)?.length ?? 0).toBeGreaterThanOrEqual(3);
   });
+
+  it("highlights the selected table's edges without showing their labels (QA-004)", async () => {
+    const { container } = renderWorkspace();
+    await userEvent.click(screen.getByTestId("table-list-item-orders"));
+    expect(container.querySelectorAll('[data-testid^="edge-label-"]')).toHaveLength(0);
+    const edgePath = container.querySelector(
+      '[data-id="fk:public.orders(user_id)->public.users"] path.react-flow__edge-path',
+    );
+    expect(edgePath?.getAttribute("style")).toContain("var(--brand)");
+  });
+
+  it("shows exactly one full label for the hovered edge and hides it on leave (QA-004)", () => {
+    renderWorkspace();
+    const id = "fk:public.orders(user_id)->public.users";
+    fireEvent.mouseEnter(screen.getByTestId(`edge-hit-${id}`));
+    const labels = document.querySelectorAll('[data-testid^="edge-label-"]');
+    expect(labels).toHaveLength(1);
+    expect(labels[0]).toHaveTextContent("orders_user_fk · orders.user_id → users.id");
+    fireEvent.mouseLeave(screen.getByTestId(`edge-hit-${id}`));
+    expect(document.querySelectorAll('[data-testid^="edge-label-"]')).toHaveLength(0);
+  });
+
+  it("keeps the label of a clicked edge until the canvas is clicked", () => {
+    const { container } = renderWorkspace();
+    const id = "fk:public.payments(order_id)->public.orders";
+    fireEvent.click(container.querySelector(`[data-id="${id}"]`)!);
+    expect(screen.getByTestId(`edge-label-${id}`)).toHaveTextContent("payments_order_fk");
+    fireEvent.click(container.querySelector(".react-flow__pane")!);
+    expect(screen.queryByTestId(`edge-label-${id}`)).toBeNull();
+  });
+
+  it("gives edges a descriptive accessible name", () => {
+    const { container } = renderWorkspace();
+    expect(
+      container.querySelector('[data-id="fk:public.orders(user_id)->public.users"]'),
+    ).toHaveAttribute("aria-label", "Relationship orders_user_fk · orders.user_id → users.id");
+  });
 });

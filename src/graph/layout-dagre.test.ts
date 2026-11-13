@@ -126,13 +126,14 @@ describe("edge routes (QA-001)", () => {
     expect(Object.keys(edgeRoutes).length).toBeLessThan(Object.keys(schema.relationships).length);
   });
 
-  it("keeps every routed edge out of unrelated tables", () => {
+  it("keeps every edge (routed or direct curve) out of unrelated tables", () => {
     const all = boxes(schema, positions);
-    for (const [id, route] of Object.entries(edgeRoutes)) {
-      const rel = schema.relationships[id]!;
+    for (const rel of Object.values(schema.relationships)) {
+      if (rel.from.tableId === rel.to.tableId) continue;
+      const id = rel.id;
       const points = [
         handle(schema, positions, rel.from.columnIds[0]!, "left"),
-        ...route.waypoints,
+        ...(edgeRoutes[id]?.waypoints ?? []),
         handle(schema, positions, rel.to.columnIds[0]!, "right"),
       ];
       for (const seg of routeSegments(points)) {

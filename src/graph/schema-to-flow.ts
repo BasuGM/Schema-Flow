@@ -1,4 +1,5 @@
 import type { DiagramLayout, Schema, Table } from "@/domain/schema/types";
+import { describeRelationship } from "./describe";
 import { columnHandleId, headerHandleId } from "./handles";
 import { visibleColumns } from "./node-metrics";
 import type { RelationshipFlowEdge, TableFlowNode } from "./types";
@@ -58,7 +59,7 @@ export function schemaToFlow(
           selfReference: rel.from.tableId === rel.to.tableId,
           ...(layout.edgeRoutes?.[rel.id] ? { route: layout.edgeRoutes[rel.id] } : {}),
         },
-        ariaLabel: `Relationship from ${rel.from.tableId} to ${rel.to.tableId}`,
+        ariaLabel: `Relationship ${describeRelationship(rel, schema)}`,
       },
     ];
   });

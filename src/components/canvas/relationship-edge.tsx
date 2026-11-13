@@ -4,12 +4,11 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   Position,
-  getSmoothStepPath,
   useInternalNode,
   type EdgeProps,
 } from "@xyflow/react";
-import { memo } from "react";
-import type { Relationship, Schema } from "@/domain/schema/types";
+import { memo, useState } from "react";
+import { describeRelationship } from "@/graph/describe";
 import { labelAnchor, routeSegments, samePosition, segmentsToPath } from "@/graph/edge-path";
 import type { RelationshipFlowEdge } from "@/graph/types";
 import { cn } from "@/lib/utils";
@@ -40,7 +39,11 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
     (s) =>
       s.selectedTableId !== null && (s.selectedTableId === source || s.selectedTableId === target),
   );
-  const emphasized = Boolean(selected) || connectedToSelection;
+  // Labels appear only for the edge being hovered or clicked (QA-004): one at a time, so they never
+  // pile up over neighbouring tables. Edges of the selected table are highlighted without labels.
+  const [hovered, setHovered] = useState(false);
+  const showLabel = hovered || Boolean(selected);
+  const emphasized = showLabel || connectedToSelection;
   // Subscribing to the end nodes re-renders this edge only when one of them changes (e.g. drag).
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
@@ -65,20 +68,16 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
       routeSegments([{ x: sourceX, y: sourceY }, ...route.waypoints, { x: targetX, y: targetY }]),
     );
   } else {
-    [path] = getSmoothStepPath({
-      sourceX,
-      sourceY,
-      sourcePosition,
-      targetX,
-      targetY,
-      targetPosition,
-      borderRadius: 10,
-      offset: 24,
-    });
+    // Same curve style as routed edges, so all edges look consistent.
+    path = segmentsToPath(
+      routeSegments([
+        { x: sourceX, y: sourceY },
+        { x: targetX, y: targetY },
+      ]),
+    );
   }
 
   const description = rel && schema ? describeRelationship(rel, schema) : id;
-  const shortLabel = rel && schema ? shortRelationshipLabel(rel, schema) : id;
   const anchor = labelAnchor(
     { x: sourceX, y: sourceY },
     sourcePosition === Position.Right ? "right" : "left",
@@ -97,9 +96,16 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
           strokeWidth: emphasized ? 2 : 1.25,
         }}
       />
-      <path d={path} fill="none" stroke="transparent" strokeWidth={14} pointerEvents="stroke">
-        <title>{description}</title>
-      </path>
+      <path
+        d={path}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={14}
+        pointerEvents="stroke"
+        data-testid={`edge-hit-${id}`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      />
       <CardinalityMarker
         x={sourceX}
         y={sourceY}
@@ -114,7 +120,7 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
         text="1"
         emphasized={emphasized}
       />
-      {emphasized && (
+      {showLabel && (
         <EdgeLabelRenderer>
           <div
             data-testid={`edge-label-${id}`}
@@ -124,7 +130,7 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
             }}
             className="nodrag nopan pointer-events-none absolute top-0 left-0 rounded border bg-popover px-1.5 py-0.5 font-mono text-[10px] whitespace-nowrap text-popover-foreground shadow-sm"
           >
-            {shortLabel}
+            {description}
           </div>
         </EdgeLabelRenderer>
       )}
@@ -163,30 +169,6 @@ function CardinalityMarker({
       {text}
     </text>
   );
-}
-
-/** e.g. `orders_user_fk · orders.user_id → users.id` */
-export function describeRelationship(rel: Relationship, schema: Schema): string {
-  const col = (id: string, tableId: string) => {
-    const table = schema.tables[tableId];
-    const column = table?.columns.find((c) => c.id === id);
-    return `${table?.name ?? tableId}.${column?.name ?? id}`;
-  };
-  const pairs = rel.from.columnIds.map(
-    (fromId, i) =>
-      `${col(fromId, rel.from.tableId)} → ${col(rel.to.columnIds[i] ?? "", rel.to.tableId)}`,
-  );
-  return [rel.name, pairs.join(", ")].filter(Boolean).join(" · ");
-}
-
-/** Compact on-canvas label anchored at the FK row, e.g. `user_id → users.id`. */
-export function shortRelationshipLabel(rel: Relationship, schema: Schema): string {
-  const names = (tableId: string, ids: string[]) => {
-    const table = schema.tables[tableId];
-    return ids.map((id) => table?.columns.find((c) => c.id === id)?.name ?? id).join(", ");
-  };
-  const target = schema.tables[rel.to.tableId]?.name ?? rel.to.tableId;
-  return `${names(rel.from.tableId, rel.from.columnIds)} → ${target}.${names(rel.to.tableId, rel.to.columnIds)}`;
 }
 
 export const RelationshipEdge = memo(RelationshipEdgeComponent);

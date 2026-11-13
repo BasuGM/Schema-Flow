@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEcommerceSchema } from "@/samples/ecommerce";
-import { describeRelationship, shortRelationshipLabel } from "./relationship-edge";
+import { describeRelationship } from "./describe";
 
 const schema = createEcommerceSchema();
 
@@ -16,21 +16,12 @@ describe("describeRelationship", () => {
     )!;
     expect(describeRelationship(rel, schema)).toBe("shipments.order_id → orders.id");
   });
-});
 
-describe("shortRelationshipLabel (QA-002)", () => {
-  it("names only the FK column(s) and the referenced table.column", () => {
-    const rel = Object.values(schema.relationships).find((r) => r.name === "orders_user_fk")!;
-    expect(shortRelationshipLabel(rel, schema)).toBe("user_id → users.id");
-  });
-
-  it("lists every column of a composite key", () => {
-    const rel = Object.values(schema.relationships).find(
-      (r) => r.from.tableId === "public.payments",
-    )!;
-    expect(shortRelationshipLabel(rel, schema)).toBe("order_id → orders.id");
+  it("lists every column pair of a composite key", () => {
+    const rel = Object.values(schema.relationships)[0]!;
     const composite = {
       ...rel,
+      name: undefined,
       from: {
         tableId: "public.order_items",
         columnIds: ["public.order_items.order_id", "public.order_items.line_no"],
@@ -40,8 +31,8 @@ describe("shortRelationshipLabel (QA-002)", () => {
         columnIds: ["public.order_items.order_id", "public.order_items.line_no"],
       },
     };
-    expect(shortRelationshipLabel(composite, schema)).toBe(
-      "order_id, line_no → order_items.order_id, line_no",
+    expect(describeRelationship(composite, schema)).toBe(
+      "order_items.order_id → order_items.order_id, order_items.line_no → order_items.line_no",
     );
   });
 });

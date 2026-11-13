@@ -7,7 +7,7 @@ import type { FlowElements } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
 import { useUiStore } from "@/stores/ui-store";
 
-function motionDuration(ms: number): number {
+export function motionDuration(ms: number): number {
   if (typeof window === "undefined" || !window.matchMedia) return ms;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
 }

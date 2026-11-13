@@ -152,3 +152,19 @@ These criteria add to or replace the originals; the original wording is kept abo
 - AC-P1-T08-11 (observation): Inspector column rows use two lines: name and badges, then the
   monospace type underneath. Long names such as `shipping_address_id` and types such as
   `varchar(128)` are readable at the default 300 px width. _Manual_
+
+## Fixes for Cowork round 2 (2026-11-13)
+
+- AC-P1-T07-8 (revised again, QA-004; supersedes both earlier versions): Selecting a table
+  highlights its edges in the accent colour **without** labels. Hovering an edge shows one label
+  with the full text (`orders_user_fk · orders.user_id → users.id`) next to its FK row, drawn above
+  tables. Moving the pointer away hides it. Clicking an edge keeps its label until the empty canvas
+  is clicked. At most one hover label is visible at a time. _Auto (`selection-sync.test.tsx`)_; _Manual_
+- AC-P1-T07-12 (observation): All non-self edges use the same smooth curve style, routed or not. No
+  edge in the default layout passes through an unrelated table. _Auto (every edge sampled in
+  `layout-dagre.test.ts`)_; _Manual_
+- AC-P1-T07-13: Each edge has an accessible name such as
+  `Relationship orders_user_fk · orders.user_id → users.id`. _Auto_
+- AC-P1-T09-6 (coverage note): reduced-motion behaviour is covered by a unit test
+  (`use-canvas-commands.test.ts`). A headless Chrome run with forced reduced motion also showed the
+  initial fit completing instantly (Claude Code observation, not independent verification).
