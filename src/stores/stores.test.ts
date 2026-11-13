@@ -1,0 +1,83 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { createEcommerceSchema } from "@/samples/ecommerce";
+import { useLayoutStore } from "./layout-store";
+import { useSchemaStore } from "./schema-store";
+import { useUiStore } from "./ui-store";
+
+const schema = createEcommerceSchema();
+
+beforeEach(() => {
+  useSchemaStore.getState().clear();
+  useLayoutStore.setState({ layouts: {}, version: 0 });
+  useUiStore.getState().reset();
+});
+
+describe("schema-store", () => {
+  it("loads a schema with fingerprint and no issues", () => {
+    useSchemaStore.getState().loadSchema(schema);
+    const s = useSchemaStore.getState();
+    expect(s.status).toBe("ready");
+    expect(s.fingerprint).toMatch(/^sf1-/);
+    expect(s.issues).toEqual([]);
+  });
+});
+
+describe("layout-store", () => {
+  it("computes a layout once per fingerprint and keeps manual positions", () => {
+    const store = useLayoutStore.getState();
+    store.ensureLayout(schema, "fp");
+    const first = useLayoutStore.getState().layouts["fp"];
+    expect(Object.keys(first?.positions ?? {})).toHaveLength(12);
+    expect(first?.direction).toBe("LR");
+
+    store.setPosition("fp", "public.users", { x: 1, y: 2 });
+    store.ensureLayout(schema, "fp");
+    expect(useLayoutStore.getState().layouts["fp"]?.positions["public.users"]).toEqual({
+      x: 1,
+      y: 2,
+    });
+    expect(useLayoutStore.getState().version).toBe(1);
+  });
+
+  it("re-layout replaces manual positions and bumps the version", () => {
+    const store = useLayoutStore.getState();
+    store.ensureLayout(schema, "fp");
+    const auto = useLayoutStore.getState().layouts["fp"]?.positions["public.users"];
+    store.setPosition("fp", "public.users", { x: 9999, y: 9999 });
+    store.relayout(schema, "fp");
+    expect(useLayoutStore.getState().layouts["fp"]?.positions["public.users"]).toEqual(auto);
+    expect(useLayoutStore.getState().version).toBe(2);
+  });
+
+  it("ignores updates for unknown fingerprints", () => {
+    useLayoutStore.getState().setPosition("nope", "x", { x: 0, y: 0 });
+    useLayoutStore.getState().setViewport("nope", { x: 0, y: 0, zoom: 1 });
+    expect(useLayoutStore.getState().layouts).toEqual({});
+  });
+});
+
+describe("ui-store", () => {
+  it("selects, focuses and clears tables", () => {
+    const ui = useUiStore.getState();
+    ui.selectTable("a");
+    expect(useUiStore.getState().selectedTableId).toBe("a");
+    ui.focusTable("b");
+    ui.focusTable("b");
+    expect(useUiStore.getState()).toMatchObject({
+      selectedTableId: "b",
+      focusRequest: { tableId: "b", nonce: 2 },
+    });
+    ui.selectTable(null);
+    expect(useUiStore.getState().selectedTableId).toBeNull();
+  });
+
+  it("does not notify subscribers when selecting the already-selected table", () => {
+    useUiStore.getState().selectTable("a");
+    let calls = 0;
+    const unsub = useUiStore.subscribe(() => (calls += 1));
+    useUiStore.getState().selectTable("a");
+    useUiStore.getState().setPanelOpen("left", true);
+    unsub();
+    expect(calls).toBe(0);
+  });
+});

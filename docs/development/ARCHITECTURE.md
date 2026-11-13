@@ -119,11 +119,11 @@ columns — `@relation(fields: [...], references: [...], onDelete, onUpdate)` on
 
 ## State slices (`src/stores`)
 
-| Store          | Holds                                                                                                                                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                      |
-| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.              |
-| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, a `focusRequest` for "center on table". Theme preference is owned by `next-themes`. |
+| Store          | Holds                                                                                                                                                                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                 |
+| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                         |
+| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
 
 Components use narrow selectors; `useShallow` where a selector returns an object/array.
 
@@ -238,3 +238,28 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   rewriting the nodes array to sync selection.
 - **Consequences:** React Flow's multi-select/box-select are not used in Phase 1. Edges remain
   natively selectable for hover/selected emphasis.
+
+### ADR-009 — Rebuilding React Flow nodes only on layout "version" changes (2026-11-13)
+
+- **Decision:** `SchemaCanvas` derives nodes with `useMemo` keyed on `schema`, `fingerprint`,
+  `collapsed` and `layout-store.version`, reading positions via `getState()`. Between rebuilds,
+  React Flow owns node state (`applyNodeChanges`), synced with the "adjust state during render"
+  pattern (no `setState` in effects). Drag stop writes positions back to `layout-store` without
+  bumping `version`.
+- **Context:** Subscribing to `positions` would rebuild all node objects after every drag stop,
+  re-rendering every `TableNode`.
+- **Consequences:** One documented lint exception: `react-hooks/exhaustive-deps` is disabled on that
+  single `useMemo` because `version` is an intentional trigger that the memo body does not read.
+  This is the only lint suppression in the codebase.
+
+## Known limitations (Phase 1)
+
+- Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).
+- Dagre produces very tall, narrow layouts for large, shallow graphs (e.g. the 200-table synthetic
+  sample has few ranks); readable navigation of such schemas relies on the table list + centering.
+  Better packing of disconnected components is planned for P4-T05.
+- Composite FKs are drawn as a single edge anchored at the first column pair (ADR-007).
+- Edges are not keyboard-focusable; relationship information is available via the inspector counts
+  (full relationship list in P2-T05).
+- In TB direction, edges still attach to the left/right column handles.
+- React Flow's attribution link is kept (MIT licence; hiding it is reserved for Pro subscribers).

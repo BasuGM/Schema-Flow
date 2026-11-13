@@ -78,3 +78,55 @@ Covered by `src/domain/schema/*.test.ts`.
 - AC-P1-T05-3: The self-reference edge is flagged `selfReference: true`. _Auto_
 - AC-P1-T05-4: Dagre layout is deterministic, non-overlapping, and places referenced tables left (LR) / above (TB). _Auto_
 - AC-P1-T05-5: 200-table layout completes well under 5 s (measured ~180 ms in Node). _Auto_
+
+## P1-T06 — App shell
+
+- AC-P1-T06-1: Toolbar shows the logo mark, "SchemaFlow", the schema name `E-commerce sample` and a `12 tables` badge. _Auto (toolbar test)_; _Manual_
+- AC-P1-T06-2: Import and Export are visibly disabled (`aria-disabled="true"`) and their tooltips read "Import is coming in Phase 2" / "Export is coming in Phase 3". _Auto_; _Manual_
+- AC-P1-T06-3: Theme menu switches Light / Dark / System; the choice survives reload (next-themes localStorage) with no flash of the wrong theme and no hydration warning. _Auto (switching)_; _Manual (flash, reload)_
+- AC-P1-T06-4: Three panels (table list · canvas · inspector) are resizable by dragging the separators; side panels have min/max widths and can collapse fully. _Manual_
+- AC-P1-T06-5: Toolbar buttons `toolbar-toggle-left` / `toolbar-toggle-right` hide and show the side panels and expose `aria-pressed`. _Auto (state)_; _Manual (layout)_
+- AC-P1-T06-6: At viewport widths ≤ 900 px both side panels collapse automatically and the canvas fills the width; widening restores them. _Manual_
+- AC-P1-T06-7: Inspector shows the empty state "Select a table to inspect it" when nothing is selected. _Auto_
+
+## P1-T07 — Custom node & edge
+
+- AC-P1-T07-1: Each table node (`table-node-<name>`) shows a header with the table name and column count, and one row per column with name and monospace type. _Auto_
+- AC-P1-T07-2: Primary-key columns show a key icon, are bold and have a tinted row background. _Auto (icon)_; _Manual (visual)_
+- AC-P1-T07-3: Foreign-key columns show a link icon. _Auto_
+- AC-P1-T07-4: Nullable columns show a muted "null" marker after the type. _Auto_
+- AC-P1-T07-5: Every column row has a source handle (left) and target handle (right); edges attach to the exact FK row and referenced row (e.g. `orders.user_id` row → `users.id` row). _Auto (handles)_; _Manual (visual alignment)_
+- AC-P1-T07-6: Edges show cardinality markers: `N` at the FK end and `1` at the referenced end; `payments → orders` shows `1` at both ends. _Manual_
+- AC-P1-T07-7: `categories.parent_id → categories.id` renders as a loop on the left side of the `categories` node. _Manual_
+- AC-P1-T07-8: Hovering an edge shows a native tooltip `<name · >from.col → to.col`; edges connected to the selected table are highlighted in the accent colour and show that label on the canvas. _Auto (label text)_; _Manual_
+- AC-P1-T07-9: No edge is animated. _Manual_
+- AC-P1-T07-10: Nodes are reachable with Tab, have an accessible name ("Table users, 7 columns") and show a visible focus ring. _Auto (tabindex, aria-label)_; _Manual (ring)_
+
+## P1-T08 — Canvas interactions & basic inspector
+
+- AC-P1-T08-1: Clicking a table in the list selects it, centers the canvas on that node and highlights it (accent ring, tinted header); the list item is highlighted (`aria-current="true"`). _Auto (selection)_; _Manual (centering)_
+- AC-P1-T08-2: Clicking a node selects it; list and inspector update. _Auto_
+- AC-P1-T08-3: Clicking empty canvas clears the selection; inspector returns to the empty state. Escape also clears. _Auto_
+- AC-P1-T08-4: With a node focused, Enter (or Space) selects it. _Auto_
+- AC-P1-T08-5: Inspector shows table name, schema (`schema public`), comment if any, counts (columns / outgoing / incoming — must match the reference table) and the column list with PK / FK / UQ / NULL badges. _Auto (orders)_; _Manual (others)_
+- AC-P1-T08-6: Controls (bottom-left) zoom in/out and fit the view; "Reset view" (`canvas-reset-view`, top-right) fits the whole diagram (max zoom 100%). _Manual_
+- AC-P1-T08-7: Toolbar "Layout" (`toolbar-layout`) re-runs Dagre, discarding manual positions, then fits the view. _Auto (store)_; _Manual_
+- AC-P1-T08-8: Settings → "Show minimap" toggles a minimap (bottom-right); it is off by default. _Manual_
+- AC-P1-T08-9: Dragging a node moves it and its edges; the position is kept while the page is open (until "Layout"). Not persisted across reloads (Phase 3). _Manual_
+- AC-P1-T08-10: Table list filter narrows by name (case-insensitive), shows "n / 12", and shows "No tables match …" when empty. _Auto_
+
+## P1-T09 — Hardening
+
+- AC-P1-T09-1: `/?sample=synthetic&tables=200` loads 200 tables; pan, zoom and drag remain responsive (no multi-second freezes). _Manual_
+- AC-P1-T09-2: Above 80 tables, `onlyRenderVisibleElements` is on: at the fitted zoom of the 200-table sample fewer than 200 node elements are in the DOM. _Verified by Claude Code via headless DOM dump: 143 of 200_; _Manual (DevTools Elements)_
+- AC-P1-T09-3: No console errors or warnings in normal use in dev or production (benign: React DevTools suggestion, `[HMR] connected`). _Checked by Claude Code in headless Chrome (load only, no interaction)_; _Manual (with interaction)_
+- AC-P1-T09-4: Keyboard: Tab reaches toolbar buttons, filter, list items, canvas nodes, controls, inspector close; focus is always visible. _Manual_
+- AC-P1-T09-5: Text contrast is adequate in both themes (muted text ≥ 4.5:1 on its background). _Manual (DevTools / Lighthouse)_
+- AC-P1-T09-6: With `prefers-reduced-motion: reduce`, centering / fit view jump instantly instead of animating. _Manual_
+- AC-P1-T09-7: `npm run build` succeeds and `npm run start` serves the static export at http://localhost:3000 with the same behaviour. _Manual (shell)_
+
+### Re-render profiling (manual, optional)
+
+React DevTools → Profiler → enable "Highlight updates when components render":
+selecting a table should flash only the old/new selected nodes, their connected edges, the two list
+items and the inspector. Panning/zooming should not flash any table node.

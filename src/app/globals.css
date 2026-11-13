@@ -130,6 +130,11 @@
   --xy-minimap-node-background-color: var(--muted);
   --xy-handle-background-color: transparent;
   --xy-handle-border-color: transparent;
+  --xy-attribution-background-color: transparent;
+}
+
+.react-flow__attribution a {
+  color: var(--muted-foreground);
 }
 
 .react-flow__controls {
@@ -138,6 +143,13 @@
 
 .react-flow__controls-button svg {
   fill: currentColor;
+}
+
+/* Nodes are keyboard-focusable (Tab) but not React Flow-selectable, so style focus ourselves. */
+.react-flow__node:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: var(--radius);
 }
 
 /* Column handles are invisible attachment points, not drag targets. */
