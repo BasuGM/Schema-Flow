@@ -138,10 +138,23 @@ export interface Viewport extends Position {
   zoom: number;
 }
 
+/**
+ * Obstacle-avoiding route computed by the auto-layout for an edge that spans more than one rank.
+ * Valid only while both end tables are still at the recorded positions.
+ */
+export interface EdgeRoute {
+  /** Intermediate waypoints, ordered from the FK (source) side to the referenced (target) side. */
+  waypoints: Position[];
+  sourceAt: Position;
+  targetAt: Position;
+}
+
 /** Layout state is kept separate from schema data and keyed by schema fingerprint. */
 export interface DiagramLayout {
   fingerprint: string;
   positions: Record<TableId, Position>;
+  /** Present after auto-layout; only edges that need routing have an entry. */
+  edgeRoutes?: Record<RelationshipId, EdgeRoute>;
   collapsed: Record<TableId, CollapseMode>;
   viewport?: Viewport;
   direction: LayoutDirection;

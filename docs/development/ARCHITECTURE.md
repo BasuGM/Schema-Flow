@@ -227,7 +227,7 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   Self-references draw a loop on the left side of the node.
 - **Alternatives:** Four handles per column with side switching (more DOM, more complexity);
   one edge per column pair (visual noise).
-- **Consequences:** Edges never cross their own node in LR layout. In TB layout edges still use
+- **Consequences:** Edges never cross their own node in LR layout (see ADR-010 for routing around other nodes). In TB layout edges still use
   side handles. Columns hidden by a collapse mode fall back to header handles.
 
 ### ADR-008 — Node selection owned by `ui-store` (2026-11-13)
@@ -252,6 +252,28 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   single `useMemo` because `version` is an intentional trigger that the memo body does not read.
   This is the only lint suppression in the codebase.
 
+### ADR-010 — Use Dagre's edge routes for long edges (2026-11-13, QA-001)
+
+- **Decision:** Dagre runs as a multigraph (one edge per relationship). For LR layouts, edges that
+  span more than one rank keep Dagre's interior waypoints (`DiagramLayout.edgeRoutes`). They render
+  as a cubic path with horizontal tangents through those waypoints, but only while both end tables
+  are still at the positions recorded with the route. Otherwise the edge uses smoothstep.
+- **Context:** Cowork found QA-001: smoothstep ignores intermediate tables, so long edges were
+  drawn behind unrelated nodes.
+- **Alternatives:** Draw edges above nodes (lines across tables); a custom obstacle-avoiding
+  router (too heavy for Phase 1).
+- **Consequences:** Dragging a table drops the route for its edges until the next "Layout".
+  Moving an _intermediate_ table is not detected, so a route may then cross it. TB layouts have no
+  routes. `RelationshipEdge` subscribes to its two end nodes via `useInternalNode`.
+
+### ADR-011 — Edge labels anchored at the FK row, above nodes (2026-11-13, QA-002)
+
+- **Decision:** On-canvas labels for emphasized edges show `fk_cols → table.cols`, are anchored just
+  outside the FK handle, and use `z-index: 1001` so nodes never clip them. The constraint name stays
+  in the hover tooltip.
+- **Consequences:** Labels may cover part of a neighbouring node while a table is selected; they are
+  only shown for edges touching the selection.
+
 ## Known limitations (Phase 1)
 
 - Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).
@@ -259,6 +281,11 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   sample has few ranks); readable navigation of such schemas relies on the table list + centering.
   Better packing of disconnected components is planned for P4-T05.
 - Composite FKs are drawn as a single edge anchored at the first column pair (ADR-007).
+- Long-edge routes are dropped for edges whose end table was dragged, and don't account for
+  intermediate tables that were dragged (ADR-010).
+- Side-panel widths after crossing the 900 px breakpoint are restored by the panel library and may
+  differ from the original widths (Cowork observation, cosmetic).
+- The Next.js dev indicator overlaps the canvas zoom controls in dev builds only.
 - Edges are not keyboard-focusable; relationship information is available via the inspector counts
   (full relationship list in P2-T05).
 - In TB direction, edges still attach to the left/right column handles.

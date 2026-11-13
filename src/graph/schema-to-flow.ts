@@ -18,7 +18,7 @@ export interface FlowElements {
  */
 export function schemaToFlow(
   schema: Schema,
-  layout: Pick<DiagramLayout, "positions" | "collapsed">,
+  layout: Pick<DiagramLayout, "positions" | "collapsed" | "edgeRoutes">,
 ): FlowElements {
   const visible = new Map<string, Set<string>>();
   const nodes: TableFlowNode[] = schema.tableOrder.flatMap((id) => {
@@ -53,7 +53,11 @@ export function schemaToFlow(
         target: rel.to.tableId,
         sourceHandle: handleFor(rel.from.tableId, rel.from.columnIds[0], "source"),
         targetHandle: handleFor(rel.to.tableId, rel.to.columnIds[0], "target"),
-        data: { relationshipId: rel.id, selfReference: rel.from.tableId === rel.to.tableId },
+        data: {
+          relationshipId: rel.id,
+          selfReference: rel.from.tableId === rel.to.tableId,
+          ...(layout.edgeRoutes?.[rel.id] ? { route: layout.edgeRoutes[rel.id] } : {}),
+        },
         ariaLabel: `Relationship from ${rel.from.tableId} to ${rel.to.tableId}`,
       },
     ];

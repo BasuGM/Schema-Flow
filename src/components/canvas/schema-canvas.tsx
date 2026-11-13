@@ -90,7 +90,6 @@ function SchemaCanvasInner() {
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement;
-      if (event.key === "Escape") selectTable(null);
       if (
         (event.key === "Enter" || event.key === " ") &&
         target.classList.contains("react-flow__node")

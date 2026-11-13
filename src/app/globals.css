@@ -103,6 +103,11 @@
   --fk: oklch(0.72 0.13 258);
 }
 
+.dark .react-flow {
+  --xy-minimap-mask-background-color: oklch(0 0 0 / 45%);
+  --xy-minimap-node-background-color: oklch(0.35 0 0);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

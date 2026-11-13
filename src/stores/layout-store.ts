@@ -28,9 +28,11 @@ function computeLayout(
 ): DiagramLayout {
   const dir = direction ?? prev?.direction ?? "LR";
   const collapsed = prev?.collapsed ?? {};
+  const { positions, edgeRoutes } = layoutWithDagre(schema, { direction: dir, collapsed });
   return {
     fingerprint,
-    positions: layoutWithDagre(schema, { direction: dir, collapsed }),
+    positions,
+    edgeRoutes,
     collapsed,
     direction: dir,
     ...(prev?.viewport ? { viewport: prev.viewport } : {}),

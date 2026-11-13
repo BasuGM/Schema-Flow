@@ -1,9 +1,14 @@
 import type { Edge, Node } from "@xyflow/react";
-import type { CollapseMode, RelationshipId, TableId } from "@/domain/schema/types";
+import type { CollapseMode, EdgeRoute, RelationshipId, TableId } from "@/domain/schema/types";
 
 /** Minimal node data: components look the table up by id from the schema store. */
 export type TableNodeData = { tableId: TableId; mode: CollapseMode };
 export type TableFlowNode = Node<TableNodeData, "table">;
 
-export type RelationshipEdgeData = { relationshipId: RelationshipId; selfReference: boolean };
+export type RelationshipEdgeData = {
+  relationshipId: RelationshipId;
+  selfReference: boolean;
+  /** Auto-layout route; used only while both end tables are still at `sourceAt`/`targetAt`. */
+  route?: EdgeRoute;
+};
 export type RelationshipFlowEdge = Edge<RelationshipEdgeData, "relationship">;

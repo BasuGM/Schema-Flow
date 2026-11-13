@@ -7,15 +7,17 @@ import { Inspector } from "./inspector";
 import { TableList } from "./table-list";
 import { Toolbar } from "./toolbar";
 import { usePanelSync } from "./use-panel-sync";
+import { useEscapeToClear } from "./use-escape-to-clear";
 import { useSampleLoader } from "./use-sample-loader";
 
 export function Workspace() {
   useSampleLoader();
   const left = usePanelSync("left");
   const right = usePanelSync("right");
+  const onKeyDown = useEscapeToClear();
 
   return (
-    <div className="flex h-full flex-col" data-testid="workspace">
+    <div className="flex h-full flex-col" data-testid="workspace" onKeyDown={onKeyDown}>
       <Toolbar />
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel

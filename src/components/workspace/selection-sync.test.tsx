@@ -9,17 +9,23 @@ import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
 import { Inspector } from "./inspector";
 import { TableList } from "./table-list";
+import { useEscapeToClear } from "./use-escape-to-clear";
 
-function renderWorkspace() {
-  return render(
-    <div>
+function Harness() {
+  const onKeyDown = useEscapeToClear();
+  return (
+    <div onKeyDown={onKeyDown}>
       <TableList />
       <div style={{ width: 1000, height: 700 }}>
         <SchemaCanvas />
       </div>
       <Inspector />
-    </div>,
+    </div>
   );
+}
+
+function renderWorkspace() {
+  return render(<Harness />);
 }
 
 const nodeWrapper = (name: string) =>
@@ -87,5 +93,40 @@ describe("selection sync between list, canvas and inspector", () => {
       x: 5000,
       y: 5000,
     });
+  });
+
+  it("Escape clears a selection made from the table list (QA-003)", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("table-list-item-users"));
+    expect(useUiStore.getState().selectedTableId).toBe("public.users");
+    await user.keyboard("{Escape}");
+    expect(useUiStore.getState().selectedTableId).toBeNull();
+    expect(screen.getByTestId("inspector-empty")).toBeInTheDocument();
+  });
+
+  it("Escape clears a selection while the inspector close button has focus", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("table-list-item-orders"));
+    screen.getByTestId("inspector-close").focus();
+    await user.keyboard("{Escape}");
+    expect(useUiStore.getState().selectedTableId).toBeNull();
+  });
+
+  it("Escape inside the filter input does not clear the selection", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("table-list-item-orders"));
+    await user.click(screen.getByTestId("table-filter"));
+    await user.keyboard("{Escape}");
+    expect(useUiStore.getState().selectedTableId).toBe("public.orders");
+  });
+
+  it("draws the long orders → users edge along its auto-layout route (QA-001)", () => {
+    const { container } = renderWorkspace();
+    const edge = container.querySelector('[data-id="fk:public.orders(user_id)->public.users"]');
+    const d = edge?.querySelector("path.react-flow__edge-path")?.getAttribute("d") ?? "";
+    expect(d.match(/ C /g)?.length ?? 0).toBeGreaterThanOrEqual(3);
   });
 });

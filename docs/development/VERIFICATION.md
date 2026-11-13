@@ -130,3 +130,25 @@ Covered by `src/domain/schema/*.test.ts`.
 React DevTools → Profiler → enable "Highlight updates when components render":
 selecting a table should flash only the old/new selected nodes, their connected edges, the two list
 items and the inspector. Panning/zooming should not flash any table node.
+
+## Fixes for Cowork defects (2026-11-13)
+
+These criteria add to or replace the originals; the original wording is kept above for history.
+
+- AC-P1-T07-11 (QA-001): With the default layout, no relationship line passes behind a table it
+  doesn't connect. In particular, `orders.user_id → users.id` and `reviews.user_id → users.id`
+  route around `addresses`/`coupons`/`products`. After you drag either end table, that edge falls
+  back to a direct step path; "Layout" restores the routed version.
+  _Auto (`layout-dagre.test.ts` samples every routed curve against all node boxes;
+  `selection-sync.test.tsx` checks the rendered path)_; _Manual_
+- AC-P1-T07-8 (revised, QA-002): Edges touching the selected table show a compact label
+  (`user_id → users.id`) just outside the FK row, drawn **above** nodes and never clipped. Labels of
+  different relationships don't overlap. The hover tooltip still shows the full text, including
+  the constraint name (`orders_user_fk · orders.user_id → users.id`).
+  _Auto (label text and anchor)_; _Manual_
+- AC-P1-T08-3 (revised, QA-003): Escape clears the selection wherever focus is: canvas, node,
+  table list item, inspector, toolbar button. Exceptions: inside the filter input, and while a
+  menu is open (Escape closes the menu first). _Auto_; _Manual_
+- AC-P1-T08-11 (observation): Inspector column rows use two lines: name and badges, then the
+  monospace type underneath. Long names such as `shipping_address_id` and types such as
+  `varchar(128)` are readable at the default 300 px width. _Manual_

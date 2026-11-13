@@ -6,17 +6,17 @@ been pasted into a session and logged in [QA_LOG.md](QA_LOG.md).
 
 ## Phase 1 — Foundation, model, interactive canvas
 
-| ID     | Task                                  | Status                       | Notes                                              |
-| ------ | ------------------------------------- | ---------------------------- | -------------------------------------------------- |
-| P1-T01 | Inspect & scaffold                    | Self-checked                 | Shell-verifiable; handoff P1-T01-T05               |
-| P1-T02 | Documentation & agent rules           | Self-checked                 | Docs only; handoff P1-T01-T05                      |
-| P1-T03 | Domain model                          | Self-checked                 | Internal; unit tests in `src/domain`               |
-| P1-T04 | Sample schemas                        | Awaiting Cowork verification | Unit tests; browser counts in handoff P1-final     |
-| P1-T05 | Graph transform & layout              | Self-checked                 | Internal; unit tests in `src/graph`                |
-| P1-T06 | App shell                             | Awaiting Cowork verification | Handoff P1-final                                   |
-| P1-T07 | Custom node & edge                    | Awaiting Cowork verification | Handoff P1-final                                   |
-| P1-T08 | Canvas interactions & basic inspector | Awaiting Cowork verification | Handoff P1-final                                   |
-| P1-T09 | Hardening                             | Awaiting Cowork verification | Handoff P1-final; headless console/DOM checks only |
+| ID     | Task                                  | Status                       | Notes                                                                                                  |
+| ------ | ------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| P1-T01 | Inspect & scaffold                    | Self-checked                 | Shell-verifiable; handoff P1-T01-T05                                                                   |
+| P1-T02 | Documentation & agent rules           | Self-checked                 | Docs only; handoff P1-T01-T05                                                                          |
+| P1-T03 | Domain model                          | Self-checked                 | Internal; unit tests in `src/domain`                                                                   |
+| P1-T04 | Sample schemas                        | Verified                     | Cowork 2026-11-13: counts, 200 & 1000-table samples pass (QA_LOG)                                      |
+| P1-T05 | Graph transform & layout              | Self-checked                 | Internal; unit tests in `src/graph`                                                                    |
+| P1-T06 | App shell                             | Verified with known issues   | Cowork 2026-11-13 pass; theme flash not frame-checked; panel widths after breakpoint differ (cosmetic) |
+| P1-T07 | Custom node & edge                    | Awaiting Cowork verification | Re-verification of QA-001/QA-002 fixes; handoff P1-fix-QA-001-003                                      |
+| P1-T08 | Canvas interactions & basic inspector | Awaiting Cowork verification | Re-verification of QA-003 fix; other ACs passed by Cowork                                              |
+| P1-T09 | Hardening                             | Awaiting Cowork verification | Cowork passed perf/console in dev; reduced motion, full tab order, production build not yet tested     |
 
 ## Phase 2 — Import, search, full inspector (proposed breakdown)
 

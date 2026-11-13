@@ -103,7 +103,7 @@ function Stat({ label, value, testId }: { label: string; value: number; testId: 
 function ColumnItem({ column }: { column: Column }) {
   return (
     <li
-      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent/60"
+      className="grid grid-cols-[0.875rem_minmax(0,1fr)_auto] items-center gap-x-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent/60"
       data-testid={`inspector-column-${column.name}`}
     >
       <span className="flex w-3.5 shrink-0 justify-center" aria-hidden>
@@ -113,13 +113,10 @@ function ColumnItem({ column }: { column: Column }) {
           <Link2 className="size-3 text-fk" />
         ) : null}
       </span>
-      <span className={cn("min-w-0 truncate", column.isPrimaryKey && "font-semibold")}>
+      <span className={cn("truncate", column.isPrimaryKey && "font-semibold")} title={column.name}>
         {column.name}
       </span>
-      <span className="ml-auto truncate font-mono text-xs text-muted-foreground">
-        {column.dataType.raw}
-      </span>
-      <span className="flex shrink-0 gap-1">
+      <span className="flex justify-end gap-1">
         {column.isPrimaryKey && (
           <Badge variant="outline" className="h-4 px-1 text-[10px] text-pk">
             PK
@@ -140,6 +137,13 @@ function ColumnItem({ column }: { column: Column }) {
             NULL
           </Badge>
         )}
+      </span>
+      <span
+        className="col-span-2 col-start-2 truncate font-mono text-xs text-muted-foreground"
+        title={column.dataType.raw}
+        data-testid="inspector-column-type"
+      >
+        {column.dataType.raw}
       </span>
     </li>
   );
