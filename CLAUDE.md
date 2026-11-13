@@ -12,6 +12,9 @@ never leaves the browser. No backend, no Docker, no AI integrations, 2D only.
   running (`vitest run`, not `vitest --watch`). Machine is an 8 GB M1 shared with VS Code/Chrome.
 - `npm run check` — typecheck → lint → test → build (fail fast). Must be green before a commit.
 - `npm run test` / `npm run test:coverage` / `npm run typecheck` / `npm run lint` / `npm run format`.
+- Production check: stop the dev server, `npm run build` (static export to `out/`), then
+  `npm run start`, which serves `out/` with `python3 -m http.server 3000`. It is a static file
+  server, not `next start`.
 - Dev-only perf sample: `/?sample=synthetic&tables=200`.
 
 ## Architecture boundaries

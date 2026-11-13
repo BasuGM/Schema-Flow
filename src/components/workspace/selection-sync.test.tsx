@@ -166,4 +166,54 @@ describe("selection sync between list, canvas and inspector", () => {
       container.querySelector('[data-id="fk:public.orders(user_id)->public.users"]'),
     ).toHaveAttribute("aria-label", "Relationship orders_user_fk · orders.user_id → users.id");
   });
+
+  it("counter-scales the hover label by the current zoom (QA-005)", () => {
+    const { container } = renderWorkspace();
+    const id = "fk:public.orders(user_id)->public.users";
+    fireEvent.mouseEnter(screen.getByTestId(`edge-hit-${id}`));
+    const transform = (screen.getByTestId(`edge-label-${id}`) as HTMLElement).style.transform;
+    const zoom = readCanvasZoom(container);
+    expect(transform).toContain(`scale(${Math.round((1 / zoom) * 1000) / 1000})`);
+  });
+
+  it("gives a clicked edge a distinct selected state", () => {
+    const { container } = renderWorkspace();
+    const id = "fk:public.payments(order_id)->public.orders";
+    expect(screen.getByTestId(`edge-${id}`)).toHaveAttribute("data-edge-state", "default");
+    fireEvent.click(container.querySelector(`[data-id="${id}"]`)!);
+    expect(screen.getByTestId(`edge-${id}`)).toHaveAttribute("data-edge-state", "selected");
+    act(() => useUiStore.getState().selectTable(null));
+    fireEvent.click(nodeWrapper("payments"));
+    expect(screen.getByTestId(`edge-${id}`)).toHaveAttribute("data-edge-state", "highlighted");
+  });
+
+  it.each([
+    ["clicking a list item", () => fireEvent.click(screen.getByTestId("table-list-item-users"))],
+    ["clicking a node", () => fireEvent.click(nodeWrapper("users"))],
+    [
+      "pressing Enter on a focused node",
+      () => {
+        const node = nodeWrapper("users");
+        node.focus();
+        fireEvent.keyDown(node, { key: "Enter" });
+      },
+    ],
+    ["re-selecting the already-selected table", () => fireEvent.click(nodeWrapper("orders"))],
+  ])("selecting a table by %s clears a clicked edge and its pinned label", (_name, selectTable) => {
+    const { container } = renderWorkspace();
+    act(() => useUiStore.getState().selectTable("public.orders"));
+    const id = "fk:public.payments(order_id)->public.orders";
+    fireEvent.click(container.querySelector(`[data-id="${id}"]`)!);
+    expect(screen.getByTestId(`edge-label-${id}`)).toBeInTheDocument();
+    act(() => selectTable());
+    expect(screen.queryByTestId(`edge-label-${id}`)).toBeNull();
+    expect(screen.getByTestId(`edge-${id}`)).not.toHaveAttribute("data-edge-state", "selected");
+  });
 });
+
+/** Zoom as applied by React Flow to the viewport element (`translate(...) scale(z)`). */
+function readCanvasZoom(container: HTMLElement): number {
+  const style =
+    container.querySelector<HTMLElement>(".react-flow__viewport")?.style.transform ?? "";
+  return Number(style.match(/scale\(([\d.]+)\)/)?.[1] ?? Number.NaN);
+}

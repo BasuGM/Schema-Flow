@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { labelAnchor, routeSegments, samePosition, segmentsToPath } from "./edge-path";
+import { labelTransform, routeSegments, samePosition, segmentsToPath } from "./edge-path";
 
 describe("routeSegments / segmentsToPath", () => {
   it("builds one cubic per consecutive point pair with horizontal tangents", () => {
@@ -31,9 +31,23 @@ describe("samePosition", () => {
   });
 });
 
-describe("labelAnchor (QA-002)", () => {
+describe("labelTransform (QA-005)", () => {
+  it("counter-scales by 1/zoom so labels keep a constant on-screen size", () => {
+    expect(labelTransform({ x: 100, y: 40 }, "left", 1)).toBe(
+      "translate(100px, 40px) scale(1) translate(-12px, 0) translate(-100%, -50%)",
+    );
+    expect(labelTransform({ x: 100, y: 40 }, "left", 0.354)).toContain("scale(2.825)");
+    expect(labelTransform({ x: 100, y: 40 }, "left", 0.05)).toContain("scale(20)");
+  });
+
   it("places the label outside the FK handle on the side the edge leaves from", () => {
-    expect(labelAnchor({ x: 100, y: 40 }, "left")).toEqual({ x: 82, y: 40, translateX: "-100%" });
-    expect(labelAnchor({ x: 100, y: 40 }, "right")).toEqual({ x: 118, y: 40, translateX: "0%" });
+    expect(labelTransform({ x: 0, y: 0 }, "right", 2, 8)).toBe(
+      "translate(0px, 0px) scale(0.5) translate(8px, 0) translate(0%, -50%)",
+    );
+  });
+
+  it("falls back to scale 1 for an invalid zoom", () => {
+    expect(labelTransform({ x: 0, y: 0 }, "left", 0)).toContain("scale(1)");
+    expect(labelTransform({ x: 0, y: 0 }, "left", Number.NaN)).toContain("scale(1)");
   });
 });

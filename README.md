@@ -16,17 +16,17 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-| Script                  | What it does                                              |
-| ----------------------- | --------------------------------------------------------- |
-| `npm run dev`           | Next.js dev server                                        |
-| `npm run build`         | Static export to `out/`                                   |
-| `npm run start`         | Serve `out/` on port 3000 (uses `python3 -m http.server`) |
-| `npm run typecheck`     | `tsc --noEmit`                                            |
-| `npm run lint`          | ESLint (flat config)                                      |
-| `npm run format`        | Prettier (with Tailwind class sorting)                    |
-| `npm run test`          | Vitest, single run                                        |
-| `npm run test:coverage` | Vitest with V8 coverage                                   |
-| `npm run check`         | typecheck → lint → test → build, failing fast             |
+| Script                  | What it does                                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`           | Next.js dev server                                                                                                           |
+| `npm run build`         | Static export to `out/`                                                                                                      |
+| `npm run start`         | Serve the static export in `out/` on port 3000 via `python3 -m http.server` (run `npm run build` first; stop the dev server) |
+| `npm run typecheck`     | `tsc --noEmit`                                                                                                               |
+| `npm run lint`          | ESLint (flat config)                                                                                                         |
+| `npm run format`        | Prettier (with Tailwind class sorting)                                                                                       |
+| `npm run test`          | Vitest, single run                                                                                                           |
+| `npm run test:coverage` | Vitest with V8 coverage                                                                                                      |
+| `npm run check`         | typecheck → lint → test → build, failing fast                                                                                |
 
 ### Sample schemas
 

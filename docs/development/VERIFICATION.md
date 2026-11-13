@@ -168,3 +168,25 @@ These criteria add to or replace the originals; the original wording is kept abo
 - AC-P1-T09-6 (coverage note): reduced-motion behaviour is covered by a unit test
   (`use-canvas-commands.test.ts`). A headless Chrome run with forced reduced motion also showed the
   initial fit completing instantly (Claude Code observation, not independent verification).
+
+## Phase 1 close-out (2026-11-13)
+
+- AC-P1-T07-14 (QA-005): Hover and click edge labels keep a constant on-screen size (about 11 px
+  text) at any zoom, including Reset-view zoom (about 0.35) and 0.05 on the 200-table sample. They
+  stay anchored beside the FK row (12 px screen gap) and above tables.
+  _Auto (`labelTransform` unit tests; integration test checks `scale(1/zoom)`)_; _Manual_
+- AC-P1-T07-15: A clicked edge has a distinct **selected** style: a 3 px accent line with a soft 8 px
+  halo. **Highlighted** edges (touching the selected table, or hovered) are a 2 px accent line, and
+  default edges a 1.25 px grey line. Exposed as `data-edge-state="default|highlighted|selected"` on
+  `data-testid="edge-<relationshipId>"`. _Auto_; _Manual_
+- AC-P1-T08-12: Selecting a table by canvas click, list click or Enter on a focused node, including
+  re-selecting the already-selected table, clears any clicked edge and its pinned label.
+  _Auto (4 cases)_; _Manual_
+
+### How to check the production build
+
+1. Stop the dev server (only one server on port 3000).
+2. `npm run build`: a static export to `out/`.
+3. Serve `out/` with any static file server. The project's `npm run start` does exactly this, with
+   `python3 -m http.server 3000 --directory out`. Open http://localhost:3000.
+4. Afterwards stop it and run `npm run dev` again.

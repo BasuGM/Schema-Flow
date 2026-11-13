@@ -16,7 +16,7 @@ import {
   type Viewport,
 } from "@xyflow/react";
 import { LocateFixed } from "lucide-react";
-import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { schemaToFlow, type FlowElements } from "@/graph/schema-to-flow";
 import type { RelationshipFlowEdge, TableFlowNode } from "@/graph/types";
@@ -34,6 +34,13 @@ const nodeTypes = { table: TableNode };
 const edgeTypes = { relationship: RelationshipEdge };
 const EMPTY: FlowElements = { nodes: [], edges: [] };
 const FIT_VIEW_OPTIONS = { padding: 0.15, maxZoom: 1 };
+
+/** Unpins any clicked edge; returns the same array when nothing was selected (no re-render). */
+function deselectEdges(edges: RelationshipFlowEdge[]): RelationshipFlowEdge[] {
+  return edges.some((e) => e.selected)
+    ? edges.map((e) => (e.selected ? { ...e, selected: false } : e))
+    : edges;
+}
 
 export function SchemaCanvas() {
   return (
@@ -74,6 +81,18 @@ function SchemaCanvasInner() {
     setEdges(base.edges);
   }
 
+  // Selecting a table (canvas, list or keyboard) clears a clicked edge and its pinned label.
+  const clearEdgeSelection = useCallback(() => setEdges(deselectEdges), []);
+  useEffect(
+    () =>
+      useUiStore.subscribe((s, prev) => {
+        const changed =
+          s.selectedTableId !== prev.selectedTableId || s.focusRequest !== prev.focusRequest;
+        if (changed && s.selectedTableId !== null) clearEdgeSelection();
+      }),
+    [clearEdgeSelection],
+  );
+
   const onNodesChange = useCallback(
     (changes: NodeChange<TableFlowNode>[]) =>
       setNodes((current) => applyNodeChanges(changes, current)),
@@ -106,15 +125,19 @@ function SchemaCanvasInner() {
         target.classList.contains("react-flow__node")
       ) {
         event.preventDefault();
+        clearEdgeSelection();
         selectTable(target.dataset.id ?? null);
       }
     },
-    [selectTable],
+    [selectTable, clearEdgeSelection],
   );
 
   const onNodeClick = useCallback(
-    (_e: unknown, node: TableFlowNode) => selectTable(node.id),
-    [selectTable],
+    (_e: unknown, node: TableFlowNode) => {
+      clearEdgeSelection();
+      selectTable(node.id);
+    },
+    [selectTable, clearEdgeSelection],
   );
   const onPaneClick = useCallback(() => selectTable(null), [selectTable]);
   const onMoveEnd = useCallback(

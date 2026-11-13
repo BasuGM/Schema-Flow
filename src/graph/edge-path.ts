@@ -46,15 +46,21 @@ export function samePosition(
 }
 
 /**
- * Where a selected edge's label goes: just outside the FK (source) handle, on the side the edge
- * leaves from. Each FK row has its own handle, so labels of different relationships don't stack.
+ * CSS transform for an edge label that keeps a constant on-screen size at any zoom (QA-005).
+ * The label is anchored on the FK handle in flow coordinates, then counter-scaled by 1/zoom, so the
+ * gap and font size are in screen pixels. `transform-origin` must be `0 0`.
  */
-export function labelAnchor(
-  source: Position,
+export function labelTransform(
+  anchor: Position,
   side: "left" | "right",
-  gap = 18,
-): { x: number; y: number; translateX: string } {
-  return side === "left"
-    ? { x: source.x - gap, y: source.y, translateX: "-100%" }
-    : { x: source.x + gap, y: source.y, translateX: "0%" };
+  zoom: number,
+  gapPx = 12,
+): string {
+  const scale = 1 / (zoom > 0 && Number.isFinite(zoom) ? zoom : 1);
+  const r = (n: number) => Math.round(n * 1000) / 1000;
+  const shift =
+    side === "left"
+      ? `translate(${-gapPx}px, 0) translate(-100%, -50%)`
+      : `translate(${gapPx}px, 0) translate(0%, -50%)`;
+  return `translate(${r(anchor.x)}px, ${r(anchor.y)}px) scale(${r(scale)}) ${shift}`;
 }

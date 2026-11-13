@@ -5,11 +5,12 @@ import {
   EdgeLabelRenderer,
   Position,
   useInternalNode,
+  useStore,
   type EdgeProps,
 } from "@xyflow/react";
 import { memo, useState } from "react";
 import { describeRelationship } from "@/graph/describe";
-import { labelAnchor, routeSegments, samePosition, segmentsToPath } from "@/graph/edge-path";
+import { labelTransform, routeSegments, samePosition, segmentsToPath } from "@/graph/edge-path";
 import type { RelationshipFlowEdge } from "@/graph/types";
 import { cn } from "@/lib/utils";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -44,6 +45,7 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
   const [hovered, setHovered] = useState(false);
   const showLabel = hovered || Boolean(selected);
   const emphasized = showLabel || connectedToSelection;
+  const state = selected ? "selected" : emphasized ? "highlighted" : "default";
   // Subscribing to the end nodes re-renders this edge only when one of them changes (e.g. drag).
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
@@ -78,22 +80,20 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
   }
 
   const description = rel && schema ? describeRelationship(rel, schema) : id;
-  const anchor = labelAnchor(
-    { x: sourceX, y: sourceY },
-    sourcePosition === Position.Right ? "right" : "left",
-    data?.selfReference ? 64 : 18,
-  );
   const many = rel?.cardinality !== "one-to-one";
 
   return (
-    <>
+    <g data-edge-state={state} data-testid={`edge-${id}`}>
+      {state === "selected" && (
+        <path d={path} fill="none" stroke="var(--brand)" strokeOpacity={0.25} strokeWidth={8} />
+      )}
       <BaseEdge
         id={id}
         path={path}
         interactionWidth={0}
         style={{
-          stroke: emphasized ? "var(--brand)" : "var(--edge)",
-          strokeWidth: emphasized ? 2 : 1.25,
+          stroke: state === "default" ? "var(--edge)" : "var(--brand)",
+          strokeWidth: STROKE_WIDTH[state],
         }}
       />
       <path
@@ -121,20 +121,56 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
         emphasized={emphasized}
       />
       {showLabel && (
-        <EdgeLabelRenderer>
-          <div
-            data-testid={`edge-label-${id}`}
-            style={{
-              transform: `translate(${anchor.x}px, ${anchor.y}px) translate(${anchor.translateX}, -50%)`,
-              zIndex: LABEL_Z_INDEX,
-            }}
-            className="nodrag nopan pointer-events-none absolute top-0 left-0 rounded border bg-popover px-1.5 py-0.5 font-mono text-[10px] whitespace-nowrap text-popover-foreground shadow-sm"
-          >
-            {description}
-          </div>
-        </EdgeLabelRenderer>
+        <EdgeLabel
+          id={id}
+          text={description}
+          x={sourceX}
+          y={sourceY}
+          side={sourcePosition === Position.Right ? "right" : "left"}
+          gapPx={data?.selfReference ? 52 : 12}
+        />
       )}
-    </>
+    </g>
+  );
+}
+
+const STROKE_WIDTH = { default: 1.25, highlighted: 2, selected: 3 } as const;
+const zoomSelector = (s: { transform: [number, number, number] }) => s.transform[2];
+
+/**
+ * Rendered only while a label is visible, so only this component (not every edge) re-renders on
+ * zoom. Counter-scaled to a constant screen size (QA-005).
+ */
+function EdgeLabel({
+  id,
+  text,
+  x,
+  y,
+  side,
+  gapPx,
+}: {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  side: "left" | "right";
+  gapPx: number;
+}) {
+  const zoom = useStore(zoomSelector);
+  return (
+    <EdgeLabelRenderer>
+      <div
+        data-testid={`edge-label-${id}`}
+        style={{
+          transform: labelTransform({ x, y }, side, zoom, gapPx),
+          transformOrigin: "0 0",
+          zIndex: LABEL_Z_INDEX,
+        }}
+        className="nodrag nopan pointer-events-none absolute top-0 left-0 rounded border bg-popover px-1.5 py-0.5 font-mono text-[11px] whitespace-nowrap text-popover-foreground shadow-sm"
+      >
+        {text}
+      </div>
+    </EdgeLabelRenderer>
   );
 }
 

@@ -6,17 +6,25 @@ been pasted into a session and logged in [QA_LOG.md](QA_LOG.md).
 
 ## Phase 1 — Foundation, model, interactive canvas
 
-| ID     | Task                                  | Status                       | Notes                                                                                                                     |
-| ------ | ------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| P1-T01 | Inspect & scaffold                    | Self-checked                 | Shell-verifiable; handoff P1-T01-T05                                                                                      |
-| P1-T02 | Documentation & agent rules           | Self-checked                 | Docs only; handoff P1-T01-T05                                                                                             |
-| P1-T03 | Domain model                          | Self-checked                 | Internal; unit tests in `src/domain`                                                                                      |
-| P1-T04 | Sample schemas                        | Verified                     | Cowork 2026-11-13: counts, 200 & 1000-table samples pass (QA_LOG)                                                         |
-| P1-T05 | Graph transform & layout              | Self-checked                 | Internal; unit tests in `src/graph`                                                                                       |
-| P1-T06 | App shell                             | Verified with known issues   | Cowork 2026-11-13 pass; theme flash not frame-checked; panel widths after breakpoint differ (cosmetic)                    |
-| P1-T07 | Custom node & edge                    | Awaiting Cowork verification | QA-001/002 verified fixed (QA_LOG round 2); QA-004 fix awaiting re-verification; handoff P1-fix-QA-004                    |
-| P1-T08 | Canvas interactions & basic inspector | Verified                     | Cowork 2026-11-13 rounds 1–2: all ACs pass incl. QA-003 fix (QA_LOG)                                                      |
-| P1-T09 | Hardening                             | Awaiting Cowork verification | T09-1/2/3/4 verified by Cowork; T09-6 not emulable by Cowork (unit-tested); T09-7 production build pending on prod server |
+| ID     | Task                                  | Status                       | Notes                                                                                                        |
+| ------ | ------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| P1-T01 | Inspect & scaffold                    | Self-checked                 | Shell-verifiable; handoff P1-T01-T05                                                                         |
+| P1-T02 | Documentation & agent rules           | Self-checked                 | Docs only; handoff P1-T01-T05                                                                                |
+| P1-T03 | Domain model                          | Self-checked                 | Internal; unit tests in `src/domain`                                                                         |
+| P1-T04 | Sample schemas                        | Verified                     | Cowork 2026-11-13: counts, 200 & 1000-table samples pass (QA_LOG)                                            |
+| P1-T05 | Graph transform & layout              | Self-checked                 | Internal; unit tests in `src/graph`                                                                          |
+| P1-T06 | App shell                             | Verified with known issues   | Cowork 2026-11-13 pass; theme flash not frame-checked; panel widths after breakpoint differ (cosmetic)       |
+| P1-T07 | Custom node & edge                    | Awaiting Cowork verification | QA-001/002/004 verified fixed; QA-005 fix + selected-edge style awaiting re-verification (handoff P1-QA-005) |
+| P1-T08 | Canvas interactions & basic inspector | Awaiting Cowork verification | All earlier ACs verified; new AC-P1-T08-12 (table selection clears edge) awaiting verification               |
+| P1-T09 | Hardening                             | Verified with known issues   | Cowork: T09-1/2/3/4/7 pass; T09-6 (reduced motion) not emulable by Cowork — unit test only                   |
+
+**Phase 1 overall:** Awaiting Cowork verification of QA-005 and AC-P1-T08-12. Once those are
+confirmed it becomes **Verified with known issues**. Remaining known issues: layout not persisted
+across reloads; tall Dagre layouts for large shallow schemas; one edge per composite FK; edges not
+keyboard-focusable (labels need a pointer); long-edge routes dropped after dragging an end table
+and not recomputed when intermediate tables move; no routes in TB layout; side-panel widths change
+after crossing the 900 px breakpoint; Next.js dev badge overlaps the zoom controls (dev only);
+AC-P1-T09-6 (reduced motion) covered by a unit test only.
 
 ## Phase 2 — Import, search, full inspector (proposed breakdown)
 

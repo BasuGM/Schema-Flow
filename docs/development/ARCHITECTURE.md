@@ -283,6 +283,19 @@ Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), 
   without a change handler, which contradicted ADR-008's "edges remain natively selectable". Non-routed
   edges use the same horizontal-tangent curve as routed ones, for a consistent look.
 
+### ADR-011a — Constant-size edge labels and edge selection (2026-11-13, QA-005)
+
+- **Decision:** Labels are counter-scaled with `scale(1/zoom)` (`labelTransform` in
+  `src/graph/edge-path.ts`), so they keep a constant screen size and a 12 px screen gap from the FK
+  handle. Only the visible `EdgeLabel` subscribes to zoom; edges without a label don't re-render
+  on zoom.
+- **Edge selection:** edges have three states (default, highlighted, selected), exposed as
+  `data-edge-state`. Selecting a table clears a clicked edge, via a `ui-store` subscription for
+  selection and focus-request changes plus direct calls in node-click and Enter handlers, which
+  also cover re-selecting the same table.
+- **Alternatives:** a screen-space overlay (it would need manual projection of every label
+  position on pan); counter-scaling is simpler and keeps React Flow's positioning.
+
 ## Known limitations (Phase 1)
 
 - Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).

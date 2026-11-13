@@ -105,3 +105,24 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Environment change:** the dev server was stopped and the production static export is being
   served on http://localhost:3000 (`npm run start`), as Cowork requested for AC-P1-T09-7.
 - **Re-verification:** pending, see [handoffs/P1-fix-QA-004.md](handoffs/P1-fix-QA-004.md).
+
+---
+
+## 2026-11-13 — Cowork re-verification round 3: QA-004 (f382257) + production build
+
+- **Handoff verified:** [handoffs/P1-fix-QA-004.md](handoffs/P1-fix-QA-004.md)
+- **Source:** the user pasted a summary of Cowork's round-3 report into the Claude Code session on
+  2026-11-13. Verified on the production static build served on http://localhost:3000.
+- **Result:**
+  - **QA-004: Fixed** (verified in production).
+  - **AC-P1-T09-7** (production build): **PASS**.
+  - **AC-P1-T09-6** (reduced motion): **NOT TESTED** by Cowork; covered by a unit test only.
+- **New defect:**
+  - **QA-005** · minor · _Hover and click edge labels scale with canvas zoom._ At the fitted zoom
+    (0.354), the 10 px label renders at about 3.5 px; at 0.05 on the 200-table sample it is
+    unreadable. Status: **Fixed — awaiting re-verification** (see the next entry).
+- **Product decision (user, same session):** selecting a table (canvas, list or keyboard) clears
+  any clicked edge and its pinned label, and a clicked edge gets a distinct selected style.
+- **Docs correction:** the earlier handoffs said the production server was `npm run start`.
+  That is accurate: the script runs `python3 -m http.server 3000 --directory out`, i.e. a static
+  server for the `out/` export. VERIFICATION, README and CLAUDE.md now spell this out.
