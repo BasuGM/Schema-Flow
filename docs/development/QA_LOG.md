@@ -126,3 +126,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Docs correction:** the earlier handoffs said the production server was `npm run start`.
   That is accurate: the script runs `python3 -m http.server 3000 --directory out`, i.e. a static
   server for the `out/` export. VERIFICATION, README and CLAUDE.md now spell this out.
+
+---
+
+## 2026-11-13 — QA-005 fix + edge-selection decision
+
+- **Fix commit:** `3afa62a`. Labels are counter-scaled by 1/zoom. Selecting a table clears a
+  clicked edge. Distinct selected-edge style. Regression tests are in `edge-path.test.ts` and
+  `selection-sync.test.tsx`. `npm run check` passes: 19 files / 124 tests.
+- **Environment:** dev server back on http://localhost:3000.
+- **Re-verification:** pending, see [handoffs/P1-QA-005.md](handoffs/P1-QA-005.md).
