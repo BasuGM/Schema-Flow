@@ -1,0 +1,165 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@xyflow/react/dist/base.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-canvas: var(--canvas);
+  --color-canvas-dot: var(--canvas-dot);
+  --color-edge: var(--edge);
+  --color-pk: var(--pk);
+  --color-fk: var(--fk);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/* Light theme. One accent colour (--brand); everything else is neutral. */
+:root {
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.2 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0 0);
+  --primary: oklch(0.24 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.24 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.95 0 0);
+  --accent-foreground: oklch(0.24 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.91 0 0);
+  --input: oklch(0.91 0 0);
+  --ring: oklch(0.55 0.17 258);
+  --brand: oklch(0.52 0.18 258);
+  --brand-foreground: oklch(0.985 0 0);
+  --brand-muted: oklch(0.95 0.03 258);
+  --canvas: oklch(0.975 0 0);
+  --canvas-dot: oklch(0.82 0 0);
+  --edge: oklch(0.62 0 0);
+  --pk: oklch(0.55 0.13 75);
+  --fk: oklch(0.52 0.18 258);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(0.17 0 0);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.215 0 0);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.215 0 0);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.92 0 0);
+  --primary-foreground: oklch(0.2 0 0);
+  --secondary: oklch(0.27 0 0);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.26 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.28 0 0);
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.7 0.14 258);
+  --brand: oklch(0.7 0.14 258);
+  --brand-foreground: oklch(0.17 0 0);
+  --brand-muted: oklch(0.3 0.06 258);
+  --canvas: oklch(0.15 0 0);
+  --canvas-dot: oklch(0.32 0 0);
+  --edge: oklch(0.55 0 0);
+  --pk: oklch(0.8 0.13 80);
+  --fk: oklch(0.72 0.13 258);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    @apply h-full;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}
+
+/* React Flow theming: map library variables onto our tokens. */
+.react-flow {
+  --xy-background-color: var(--canvas);
+  --xy-edge-stroke: var(--edge);
+  --xy-edge-stroke-selected: var(--brand);
+  --xy-controls-button-background-color: var(--card);
+  --xy-controls-button-background-color-hover: var(--accent);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-minimap-background-color: var(--card);
+  --xy-minimap-mask-background-color: oklch(0.5 0 0 / 12%);
+  --xy-minimap-node-background-color: var(--muted);
+  --xy-handle-background-color: transparent;
+  --xy-handle-border-color: transparent;
+}
+
+.react-flow__controls {
+  @apply overflow-hidden rounded-md border shadow-sm;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+/* Column handles are invisible attachment points, not drag targets. */
+.react-flow__handle.column-handle {
+  width: 6px;
+  height: 6px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .react-flow__viewport {
+    transition: none !important;
+  }
+}
