@@ -1,0 +1,240 @@
+# Architecture
+
+SchemaFlow is a static, client-only Next.js app. A schema (sample now; SQL/Prisma import in
+Phase 2) is normalized into one in-memory `Schema` model, from which the React Flow diagram, the
+table list and the inspector are derived. Nothing is sent to a server and imported SQL is never
+executed.
+
+## Data flow
+
+```mermaid
+flowchart LR
+  subgraph pure["Pure TypeScript (no React)"]
+    S[samples/*] --> D[DraftSchema]
+    P["parsers/* (Phase 2)"] --> D
+    D --> N[normalizeSchema] --> M[(Schema)]
+    M --> V[validateSchema]
+    M --> F[fingerprintSchema]
+    M --> L[layoutWithDagre] --> POS[positions]
+    M --> T[schemaToFlow]
+    POS --> T
+  end
+  subgraph state["Zustand stores"]
+    SS[schema-store]:::s
+    LS[layout-store]:::s
+    US[ui-store]:::s
+  end
+  M --> SS
+  POS --> LS
+  T --> RF[React Flow canvas]
+  SS --> RF & LIST[Table list] & INS[Inspector]
+  LS --> T
+  US --> RF & LIST & INS
+  classDef s fill:#eef,stroke:#88a
+```
+
+1. `src/app/page.tsx` (server component, static) renders the client `Workspace`.
+2. On mount, `Workspace` reads `?sample=…` from `window.location.search`, builds the sample and
+   calls `schema-store.loadSchema()`. `layout-store` computes Dagre positions for the schema's
+   fingerprint if none exist.
+3. `SchemaCanvas` derives nodes/edges with `schemaToFlow()` when the schema, collapse modes or a
+   layout "version" (re-layout / reset) changes. Between those events, React Flow owns transient
+   node state (`applyNodeChanges`) and drag-stop writes the final position back to `layout-store`.
+4. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
+   with a boolean selector (`s.selectedTableId === id`), so a selection change re-renders only the
+   affected node(s)/edges — the nodes array is not rebuilt.
+
+## Module boundaries
+
+| Path                  | Responsibility                                             | May import                   |
+| --------------------- | ---------------------------------------------------------- | ---------------------------- |
+| `src/domain/schema`   | Types, IDs, normalize, validate, fingerprint, selectors    | nothing app-specific         |
+| `src/samples`         | E-commerce sample, synthetic generator, `?sample=` parsing | domain                       |
+| `src/graph`           | `schemaToFlow`, Dagre layout, node metrics, handle IDs     | domain, `@xyflow` types only |
+| `src/stores`          | Zustand slices                                             | domain, graph                |
+| `src/components`      | React UI (`workspace/`, `canvas/`, `ui/` = shadcn)         | everything above             |
+| `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                               | domain                       |
+| `src/analysis` (P4)   | Health checks                                              | domain                       |
+| `src/generators` (P3) | Schema → SQL/Prisma/Mermaid                                | domain                       |
+
+Rules: pure modules have zero React/Next/DOM imports and are unit-tested; parsers never import
+React Flow; canvas components never import parsers. `src/graph` imports only _types_ from
+`@xyflow/react`.
+
+## Data model
+
+Defined in `src/domain/schema/types.ts`, following the Phase 1 spec with these refinements:
+
+- `ImportResult` is a discriminated union on `ok` (`ok: true` guarantees `schema`).
+- Named helper types (`DataType`, `KeyConstraint`, `TableIndex`, `CheckConstraint`,
+  `RelationshipEnd`, `EnumType`, `CollapseMode`, `LayoutDirection`, `Viewport`) instead of inline
+  object types.
+- `Column.isUnique` means "covered alone by a unique constraint or unique index" (PK excluded).
+- PK columns are forced `nullable: false` during normalization.
+- `DraftSchema` (`draft.ts`) is the importer contract: string names, optional inline `references`,
+  table-level `foreignKeys`, detached `foreignKeys`/`indexes` (ALTER TABLE / CREATE INDEX) and
+  `defaultSchemaName` (e.g. `public`).
+
+`normalizeSchema(draft)`:
+
+- IDs: `tableId = schema ? "schema.name" : "name"`, `columnId = "<tableId>.<column>"`,
+  `relationshipId = "fk:<from>(<cols>)-><to>"` (suffixed `#2…` if duplicated).
+- Names resolve case-insensitively (`NameLookup`). An explicit schema must match exactly; otherwise
+  the default schema is tried, then the bare name. Names that differ only in case are ambiguous.
+- Unresolved tables/columns, missing target PKs and column-count mismatches become `warning`
+  issues and the relationship is skipped. Duplicate/empty table names are `error`s (table skipped).
+  Nothing throws for user data.
+- `cardinality = one-to-one` when the FK column set equals (as a set) the PK, a unique constraint
+  or a unique index of the FK table; otherwise `many-to-one`.
+
+`validateSchema(schema)` re-checks invariants (key/id agreement, unique column IDs, ownership,
+key columns exist, relationships reference existing tables and their own columns, equal column
+counts, `tableOrder` consistency). The sample must produce zero issues.
+
+`fingerprintSchema` hashes sorted, lower-cased `table(columns)` strings with cyrb53
+(`sf1-<base36>`): independent of order, types and metadata, so re-importing the same tables
+finds the same saved layout (Phase 3).
+
+`selectors.ts`: `getOutgoingRelationships`, `getIncomingRelationships`, `buildAdjacency`,
+`getNeighbors(schema, id, depth)` (undirected BFS, excludes the start table).
+
+### Phase 2 import mapping (planned)
+
+**SQL** (`node-sql-parser`, dialect builds lazy-loaded): split input into statements and parse
+each independently so one unsupported statement only yields a warning with its line number.
+`CREATE TABLE` → `DraftTable` (columns, inline `PRIMARY KEY`/`UNIQUE`/`REFERENCES`, table-level
+`PRIMARY KEY`/`UNIQUE`/`FOREIGN KEY`/`CHECK`, defaults classified literal/function/expression,
+`SERIAL`/`AUTO_INCREMENT`/`IDENTITY` → `autoincrement`); `ALTER TABLE … ADD CONSTRAINT … FOREIGN KEY`
+→ detached `foreignKeys`; `CREATE [UNIQUE] INDEX` → detached `indexes`; `CREATE TYPE … AS ENUM` →
+`enums`; everything else (`INSERT`, `GRANT`, functions, views…) is skipped with a warning. SQL is
+treated purely as text and never executed.
+
+**Prisma** (`@mrleebo/prisma-ast`): `model` → table (name from `@@map`, columns from `@map`);
+scalar fields → columns, `?` → nullable, `[]` scalar lists → `isArray`; relation fields are not
+columns — `@relation(fields: [...], references: [...], onDelete, onUpdate)` on the FK side becomes a
+`DraftForeignKey`; `@id`/`@@id` → PK; `@unique`/`@@unique` → unique constraints; `@@index` → indexes;
+`@default(autoincrement()|now()|uuid()|literal)` → defaults; `enum` → enums. Implicit m:n relations
+(list fields on both sides without `@relation(fields)`) produce a synthetic `_AToB` table
+(`origin: "implicit"`, columns `A`/`B`) with two `prisma-implicit` relationships.
+
+## State slices (`src/stores`)
+
+| Store          | Holds                                                                                                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                      |
+| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.              |
+| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, a `focusRequest` for "center on table". Theme preference is owned by `next-themes`. |
+
+Components use narrow selectors; `useShallow` where a selector returns an object/array.
+
+## Performance strategy
+
+- Nodes carry only `{ tableId, mode }`; components look up the (immutable) table by ID.
+- `nodeTypes`/`edgeTypes` are module-scope constants; `TableNode`/`RelationshipEdge` are `memo`ed.
+- Selection/highlight are per-component boolean selectors — no nodes-array rebuild on select.
+- Positions are written to `layout-store` on drag **stop**, not on every drag frame.
+- `onlyRenderVisibleElements` is enabled automatically above 80 tables
+  (`LARGE_SCHEMA_THRESHOLD` in `src/components/canvas/schema-canvas.tsx`).
+- No animated edges; MiniMap off by default; no continuous animation loops; viewport transitions
+  are skipped under `prefers-reduced-motion`.
+- Dagre runs synchronously on load/re-layout (~180 ms for 200 tables in Node on an M1).
+
+Profiling guidance: React DevTools → Profiler → "Highlight updates when components render".
+Selecting a table should re-render only the previously and newly selected `TableNode`s, their
+connected `RelationshipEdge`s, the inspector and the matching list items. Panning/zooming should
+re-render no `TableNode`.
+
+## Chosen versions (2026-11-13)
+
+| Package                                              | Version                  | Notes                                                             |
+| ---------------------------------------------------- | ------------------------ | ----------------------------------------------------------------- |
+| next                                                 | 16.4.6                   | App Router, Turbopack, `output: "export"`                         |
+| react / react-dom                                    | 19.3.0                   |                                                                   |
+| typescript                                           | 5.x (`^5`)               | as pinned by create-next-app; TS 7 not yet adopted (ADR-005)      |
+| tailwindcss / @tailwindcss/postcss                   | 4.3.5                    | CSS-first config in `globals.css`                                 |
+| shadcn (CLI, dev)                                    | 4.23.0                   | style `radix-nova`, base `radix`                                  |
+| radix-ui                                             | 1.8.x                    | single-package Radix primitives used by shadcn                    |
+| cn                                                   | 0.5.x                    | shadcn's compiled `clsx` + `tailwind-merge` replacement (ADR-004) |
+| lucide-react                                         | 1.72.x                   | icons                                                             |
+| react-resizable-panels                               | 4.22.x                   | via shadcn `resizable`                                            |
+| @xyflow/react                                        | 12.12.1                  | base stylesheet imported in `globals.css`                         |
+| zustand                                              | 5.1.0                    |                                                                   |
+| @dagrejs/dagre                                       | 3.1.3                    | ESM, named `Graph`/`layout` exports                               |
+| next-themes                                          | 0.4.6                    | class strategy                                                    |
+| vitest / @vitest/coverage-v8                         | 5.1.0                    | Vite 8, JSX via built-in oxc transform                            |
+| jsdom                                                | 31.0.1                   |                                                                   |
+| @testing-library/react / user-event / jest-dom / dom | 16.3 / 14.6 / 7.0 / 10.4 |                                                                   |
+| eslint / eslint-config-next                          | 9.x / 16.4.6             | flat config; `next lint` no longer exists                         |
+| prettier / prettier-plugin-tailwindcss               | 3.10.1 / 0.8.1           |                                                                   |
+
+Not installed until needed: `node-sql-parser`, `@mrleebo/prisma-ast` (Phase 2), `html-to-image`
+(Phase 3).
+
+## Decision records
+
+### ADR-001 — Tailwind via `@tailwindcss/postcss` (2026-11-13)
+
+- **Decision:** Use `@tailwindcss/postcss` with `postcss.config.mjs`.
+- **Context:** create-next-app 16.4 scaffolds a Turbopack-specific `@tailwindcss/turbopack` loader;
+  the Next.js docs bundled in `node_modules/next/dist/docs` and the project spec use PostCSS.
+- **Alternatives:** Turbopack loader (bundler-specific, less widely documented).
+- **Consequences:** Works with Turbopack and webpack; shadcn CLI detected Tailwind v4 correctly.
+
+### ADR-002 — Static export, Cache Components disabled (2026-11-13)
+
+- **Decision:** `output: "export"`; removed the scaffold's `cacheComponents`/`partialPrefetching`.
+- **Context:** The app is fully client-side. Cache Components "requires the Node.js runtime"
+  (bundled docs), which conflicts with a static export.
+- **Alternatives:** Keep a server build (unnecessary hosting requirements).
+- **Consequences:** `npm run build` emits `out/`; `npm run start` serves it with
+  `python3 -m http.server` (no extra npm dependency). No server actions, route handlers or
+  request-time APIs may be used. Query params are read on the client in an effect.
+
+### ADR-003 — No `@vitejs/plugin-react` (2026-11-13)
+
+- **Decision:** Run Vitest without the React plugin; JSX is compiled by Vite 8's built-in oxc
+  transform (`oxc.jsx.runtime = "automatic"`).
+- **Context:** `@vitejs/plugin-react@6.3` has optional Babel 8 peers that conflict with shadcn's
+  Babel 7 tooling (npm ERESOLVE). Fast Refresh is irrelevant for tests.
+- **Consequences:** One fewer dependency; component tests opt into jsdom per file.
+
+### ADR-004 — Keep shadcn's `cn` package (2026-11-13)
+
+- **Decision:** Keep `cn` (maintained by shadcn, repo shadcn-ui/cn) which shadcn 4.23 installs in
+  place of `clsx` + `tailwind-merge`.
+- **Alternatives:** Hand-written `cn` with `clsx` + `tailwind-merge` (two packages instead of one).
+- **Consequences:** `src/lib/utils.ts` re-exports `cn`; generated components import from `cn`.
+
+### ADR-005 — Stay on TypeScript 5.x and ESLint 9.x (2026-11-13)
+
+- **Decision:** Keep the versions create-next-app pins (`typescript@^5`, `eslint@^9`).
+- **Context:** TypeScript 7.0 and ESLint 10 are published, but `eslint-config-next@16.4.6`
+  and the Next build's type-check integration target the pinned majors.
+- **Consequences:** Revisit when `eslint-config-next` declares support (Phase 4 maintenance).
+
+### ADR-006 — Synthetic sample available in all builds (2026-11-13)
+
+- **Decision:** `/?sample=synthetic&tables=N&seed=S` works in dev and production builds.
+- **Context:** The spec calls the generator dev-only, but performance is only meaningful on a
+  production build. The code is ~70 lines with no dependencies.
+- **Consequences:** Documented as a testing aid; table count clamped to 1–1000.
+
+### ADR-007 — Edge anchoring and handle sides (2026-11-13)
+
+- **Decision:** Each column row has a `source` handle on its **left** edge and a `target` handle on
+  its **right** edge; Dagre edges run parent → child, so referenced tables sit to the left in LR.
+  Composite FKs draw one edge anchored at the first column pair (label lists all pairs).
+  Self-references draw a loop on the left side of the node.
+- **Alternatives:** Four handles per column with side switching (more DOM, more complexity);
+  one edge per column pair (visual noise).
+- **Consequences:** Edges never cross their own node in LR layout. In TB layout edges still use
+  side handles. Columns hidden by a collapse mode fall back to header handles.
+
+### ADR-008 — Node selection owned by `ui-store` (2026-11-13)
+
+- **Decision:** Nodes are `selectable: false` in React Flow; clicks/Enter set
+  `ui-store.selectedTableId`, and nodes read it with a boolean selector.
+- **Context:** Keeps a single source of truth shared by canvas, list and inspector, and avoids
+  rewriting the nodes array to sync selection.
+- **Consequences:** React Flow's multi-select/box-select are not used in Phase 1. Edges remain
+  natively selectable for hover/selected emphasis.
