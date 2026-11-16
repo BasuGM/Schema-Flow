@@ -1,7 +1,8 @@
 "use client";
 
-import { Link2, Search } from "lucide-react";
+import { Link2, Search, X } from "lucide-react";
 import { memo, useMemo } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { displayTableName } from "@/domain/schema/selectors";
 import type { TableId } from "@/domain/schema/types";
@@ -9,7 +10,11 @@ import { cn } from "@/lib/utils";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 
-export function TableList() {
+/**
+ * The table list. With `onClose` it is the phone sheet (ADR-021): it gets a close button, and
+ * picking a table closes the sheet so the centred table is visible.
+ */
+export function TableList({ onClose }: { onClose?: () => void } = {}) {
   const schema = useSchemaStore((s) => s.schema);
   const filter = useUiStore((s) => s.tableFilter);
   const setFilter = useUiStore((s) => s.setTableFilter);
@@ -31,16 +36,29 @@ export function TableList() {
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Tables
         </h2>
-        {schema && (
-          <span
-            className="text-xs text-muted-foreground tabular-nums"
-            data-testid="table-list-count"
-          >
-            {ids.length === schema.tableOrder.length
-              ? ids.length
-              : `${ids.length} / ${schema.tableOrder.length}`}
-          </span>
-        )}
+        <div className="flex items-center gap-1">
+          {schema && (
+            <span
+              className="text-xs text-muted-foreground tabular-nums"
+              data-testid="table-list-count"
+            >
+              {ids.length === schema.tableOrder.length
+                ? ids.length
+                : `${ids.length} / ${schema.tableOrder.length}`}
+            </span>
+          )}
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Close tables"
+              onClick={onClose}
+              data-testid="table-list-sheet-close"
+            >
+              <X aria-hidden />
+            </Button>
+          )}
+        </div>
       </div>
       <div className="relative px-3 pb-2">
         <Search
@@ -67,7 +85,7 @@ export function TableList() {
       ) : (
         <ul className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
           {ids.map((id) => (
-            <TableListItem key={id} tableId={id} />
+            <TableListItem key={id} tableId={id} closeOnPick={!!onClose} />
           ))}
         </ul>
       )}
@@ -75,7 +93,13 @@ export function TableList() {
   );
 }
 
-const TableListItem = memo(function TableListItem({ tableId }: { tableId: TableId }) {
+const TableListItem = memo(function TableListItem({
+  tableId,
+  closeOnPick,
+}: {
+  tableId: TableId;
+  closeOnPick: boolean;
+}) {
   const table = useSchemaStore((s) => s.schema?.tables[tableId]);
   const title = useSchemaStore((s) => {
     const t = s.schema?.tables[tableId];
@@ -90,7 +114,10 @@ const TableListItem = memo(function TableListItem({ tableId }: { tableId: TableI
     <li>
       <button
         type="button"
-        onClick={() => focusTable(tableId)}
+        onClick={() => {
+          focusTable(tableId);
+          if (closeOnPick) useUiStore.getState().setPanelOpen("left", false);
+        }}
         aria-current={selected || undefined}
         title={table.id}
         data-testid={`table-list-item-${title}`}

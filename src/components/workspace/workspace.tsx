@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { SHEET_QUERY } from "@/components/issues/issues-sheet";
@@ -12,22 +13,54 @@ import { CanvasArea } from "./canvas-area";
 import { Inspector } from "@/components/inspector/inspector";
 import { TableList } from "./table-list";
 import { InertPanel } from "./inert-panel";
+import { SideSheet } from "./side-sheet";
 import { Toolbar } from "./toolbar";
 import { usePanelSync } from "./use-panel-sync";
 import { useEscapeToClear } from "./use-escape-to-clear";
 import { useSampleLoader } from "./use-sample-loader";
 
+const toggle = (side: "left" | "right") => () => {
+  const ui = useUiStore.getState();
+  ui.setPanelOpen(side, !(side === "left" ? ui.leftPanelOpen : ui.rightPanelOpen));
+};
+const close = (side: "left" | "right") => () => useUiStore.getState().setPanelOpen(side, false);
+
 export function Workspace() {
   useSampleLoader();
-  const left = usePanelSync("left");
-  // Below md the inspector opens as an overlay sheet: 240 px beside a 320 px canvas can't fit.
+  // Below md both side panels open as overlay sheets: 200–240 px of panel beside the 320 px
+  // minimum canvas can't fit (ADR-017 for the inspector, ADR-021 for the table list).
   const sheet = useMediaQuery(SHEET_QUERY);
+  const left = usePanelSync("left", sheet);
   const right = usePanelSync("right", sheet);
   const leftOpen = useUiStore((s) => s.leftPanelOpen);
   const rightOpen = useUiStore((s) => s.rightPanelOpen);
   const fingerprint = useSchemaStore((s) => s.fingerprint);
+  useOneSheetAtATime(sheet, leftOpen, rightOpen);
   useEscapeToClear();
   useSearchShortcut();
+
+  const tableList = (onClose?: () => void) => (
+    <ErrorBoundary
+      region="table list"
+      testId="table-list-error"
+      resetKeys={[fingerprint]}
+      {...(onClose ? { onClose } : {})}
+    >
+      <QaCrash region="table-list" />
+      <TableList {...(onClose ? { onClose } : {})} />
+    </ErrorBoundary>
+  );
+  const inspector = (onClose?: () => void) => (
+    <ErrorBoundary
+      region="inspector"
+      testId="inspector-error"
+      resetKeys={[fingerprint]}
+      {...(onClose ? { onClose } : {})}
+    >
+      <QaCrash region="inspector" />
+      <Inspector sheet={!!onClose} />
+    </ErrorBoundary>
+  );
 
   return (
     <div className="flex h-full flex-col" data-testid="workspace">
@@ -45,22 +78,15 @@ export function Workspace() {
             collapsible
             collapsedSize={0}
           >
-            <InertPanel side="left" open={leftOpen}>
-              <ErrorBoundary
-                region="table list"
-                testId="table-list-error"
-                resetKeys={[fingerprint]}
-              >
-                <QaCrash region="table-list" />
-                <TableList />
-              </ErrorBoundary>
+            <InertPanel side="left" open={leftOpen && !sheet}>
+              {!sheet && tableList()}
             </InertPanel>
           </ResizablePanel>
-          <ResizableHandle aria-label="Resize table list" />
+          <ResizableHandle aria-label="Resize table list" onEnter={toggle("left")} />
           <ResizablePanel id="canvas" minSize={320}>
             <CanvasArea />
           </ResizablePanel>
-          <ResizableHandle aria-label="Resize inspector" />
+          <ResizableHandle aria-label="Resize inspector" onEnter={toggle("right")} />
           <ResizablePanel
             id="inspector"
             panelRef={right.panelRef}
@@ -72,36 +98,36 @@ export function Workspace() {
             collapsedSize={0}
           >
             <InertPanel side="right" open={rightOpen && !sheet}>
-              {!sheet && (
-                <ErrorBoundary
-                  region="inspector"
-                  testId="inspector-error"
-                  resetKeys={[fingerprint]}
-                >
-                  <QaCrash region="inspector" />
-                  <Inspector />
-                </ErrorBoundary>
-              )}
+              {!sheet && inspector()}
             </InertPanel>
           </ResizablePanel>
         </ResizablePanelGroup>
+        {sheet && leftOpen && (
+          <SideSheet side="left" testId="table-list-sheet" onClose={close("left")}>
+            {tableList(close("left"))}
+          </SideSheet>
+        )}
         {sheet && rightOpen && (
-          <div
-            className="absolute inset-y-0 right-0 z-30 w-[min(100%,22rem)] border-l shadow-lg"
-            data-testid="inspector-sheet"
-          >
-            <ErrorBoundary
-              region="inspector"
-              testId="inspector-error"
-              resetKeys={[fingerprint]}
-              onClose={() => useUiStore.getState().setPanelOpen("right", false)}
-            >
-              <QaCrash region="inspector" />
-              <Inspector sheet />
-            </ErrorBoundary>
-          </div>
+          <SideSheet side="right" testId="inspector-sheet" onClose={close("right")}>
+            {inspector(close("right"))}
+          </SideSheet>
         )}
       </div>
     </div>
   );
+}
+
+/**
+ * On phones the two sheets would cover each other (and the whole canvas): opening one closes the
+ * other. Runs before paint, so both are never drawn together.
+ */
+function useOneSheetAtATime(sheet: boolean, leftOpen: boolean, rightOpen: boolean): void {
+  const previous = useRef({ leftOpen, rightOpen });
+  useLayoutEffect(() => {
+    const was = previous.current;
+    previous.current = { leftOpen, rightOpen };
+    if (!sheet || !leftOpen || !rightOpen) return;
+    // Keep the one that was just opened.
+    useUiStore.getState().setPanelOpen(was.rightOpen && !was.leftOpen ? "right" : "left", false);
+  }, [sheet, leftOpen, rightOpen]);
 }

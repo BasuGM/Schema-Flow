@@ -36,6 +36,7 @@ export function Toolbar() {
         size="icon"
         aria-label="Toggle table list"
         aria-pressed={leftOpen}
+        aria-expanded={leftOpen}
         onClick={() => setPanelOpen("left", !leftOpen)}
         data-testid="toolbar-toggle-left"
       >
@@ -98,6 +99,7 @@ export function Toolbar() {
           size="icon"
           aria-label="Toggle inspector"
           aria-pressed={rightOpen}
+          aria-expanded={rightOpen}
           onClick={() => setPanelOpen("right", !rightOpen)}
           data-testid="toolbar-toggle-right"
         >

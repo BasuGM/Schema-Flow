@@ -52,6 +52,9 @@ export function CanvasArea() {
       </ResizablePanel>
       <ResizableHandle
         aria-label="Resize issues panel"
+        onEnter={() =>
+          useUiStore.getState().setIssuesPanelOpen(!useUiStore.getState().issuesPanelOpen)
+        }
         className={cn(!docked && "hidden")}
         {...handleProps}
       />
@@ -143,8 +146,9 @@ function useIssuesPanelSync(docked: boolean, sheet: boolean) {
     onPointerDown: () => {
       interacting.current = true;
     },
-    onKeyDown: () => {
-      interacting.current = true;
+    onKeyDown: (event: { key: string }) => {
+      // Enter opens or closes the panel through the store (onEnter), not by resizing it.
+      if (event.key !== "Enter") interacting.current = true;
     },
     onKeyUp: () => {
       interacting.current = false;
