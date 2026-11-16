@@ -469,3 +469,26 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Bundle:** +17.1 KB raw / +4.8 KB gzip initial JS. Parsers still lazy.
 - **Cowork result:** Pending — not independently verified. See
   [handoffs/P2-T08.md](handoffs/P2-T08.md).
+
+---
+
+## 2026-11-16 — Cowork re-verification round 10 at 30260fe: P2-T08 all pass; QA-017
+
+- **Handoff verified:** [handoffs/P2-T08.md](handoffs/P2-T08.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16.
+- **Verified:** P2-T08 steps 1–12 all PASS (AC-P2-T08-1…8 and the revised AC-P1-T08-5); P2-T08 →
+  **Verified**. QA-016 **Fixed** (AC-P2-T07-10). Cowork accepted Claude Code's correction of the
+  QA-016 diagnosis (one element whose `data-testid` switched, not a newly inserted region).
+- **New defect:**
+  - **QA-017** · minor · a11y · _A collapsed side panel stays focusable._
+    - Repro: collapse the inspector (toolbar toggle, or drag the divider to 0 px), then Tab
+      through the page.
+    - Actual: focus reaches the invisible `inspector-close` button. All 13 inspector controls
+      stay mounted, not hidden and not inert, so screen readers can still read the hidden panel.
+    - Expected: a collapsed panel's content is `inert` (or unmounted) and focus never lands in it.
+    - Claude Code's reading of the code: both side panels always render their content
+      (`<TableList />`, `<Inspector />`) and collapsing only sets the panel to 0 px, so the left
+      table list (P1-T06) has the same defect. Not yet checked in a browser.
+    - Folded into P2-T09, with a jsdom test for `inert` on collapse. Status: **Open — scheduled
+      in P2-T09.**
