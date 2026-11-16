@@ -26,9 +26,15 @@ import { useUiStore } from "@/stores/ui-store";
 import { RelationshipEdge } from "./relationship-edge";
 import { TableNode } from "./table-node";
 import { useCanvasCommands } from "./use-canvas-commands";
+import { useFocusSetSync } from "./use-focus-set-sync";
 
 /** Above this many tables, React Flow only renders nodes/edges inside the viewport. */
 export const LARGE_SCHEMA_THRESHOLD = 80;
+/**
+ * Above this many tables + relationships, dimming switches instantly instead of fading: hundreds of
+ * simultaneous opacity transitions cost frames on a zoomed-out large schema (P2-T09).
+ */
+export const DIM_TRANSITION_LIMIT = 300;
 
 const nodeTypes = { table: TableNode };
 const edgeTypes = { relationship: RelationshipEdge };
@@ -61,6 +67,7 @@ function SchemaCanvasInner() {
   const selectTable = useUiStore((s) => s.selectTable);
   const setPosition = useLayoutStore((s) => s.setPosition);
   const setViewport = useLayoutStore((s) => s.setViewport);
+  useFocusSetSync();
 
   // Rebuild nodes/edges only when the schema, collapse modes or layout version change. Positions are
   // read from the store at that moment; afterwards React Flow owns transient drag state.
@@ -164,7 +171,11 @@ function SchemaCanvasInner() {
   }
 
   return (
-    <div data-testid="schema-canvas" className="h-full w-full bg-canvas">
+    <div
+      data-testid="schema-canvas"
+      data-instant-dim={base.nodes.length + base.edges.length > DIM_TRANSITION_LIMIT || undefined}
+      className="h-full w-full bg-canvas"
+    >
       <ReactFlow<TableFlowNode, RelationshipFlowEdge>
         nodes={nodes}
         edges={edges}

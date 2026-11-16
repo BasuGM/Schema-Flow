@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { normalizeSchema } from "./normalize";
-import { getIncomingRelationships, getNeighbors, getOutgoingRelationships } from "./selectors";
+import {
+  getAdjacency,
+  getFocusSet,
+  getIncomingRelationships,
+  getNeighbors,
+  getOutgoingRelationships,
+} from "./selectors";
 import { draft } from "./test-helpers";
 
 // a -> b -> c -> d, e -> b, f isolated, c self-references
@@ -37,5 +43,28 @@ describe("getNeighbors", () => {
   it("returns empty sets for isolated or unknown tables", () => {
     expect(getNeighbors(schema, "f").size).toBe(0);
     expect(getNeighbors(schema, "zzz", 3).size).toBe(0);
+  });
+});
+
+describe("getFocusSet", () => {
+  const sorted = (set: ReadonlySet<string> | null) => (set ? [...set].sort() : null);
+
+  it("is the table plus its neighbours up to depth; depth 0 is off", () => {
+    expect(sorted(getFocusSet(schema, "b", 1))).toEqual(["a", "b", "c", "e"]);
+    expect(sorted(getFocusSet(schema, "b", 2))).toEqual(["a", "b", "c", "d", "e"]);
+    expect(getFocusSet(schema, "b", 0)).toBeNull();
+  });
+
+  it("handles self-references, cycles, isolated and unknown tables", () => {
+    expect(sorted(getFocusSet(schema, "c", 1))).toEqual(["b", "c", "d"]);
+    const cyclic = normalizeSchema(draft([t("x", ["y"]), t("y", ["z"]), t("z", ["x"])]));
+    expect(sorted(getFocusSet(cyclic, "x", 2))).toEqual(["x", "y", "z"]);
+    expect(sorted(getFocusSet(schema, "f", 2))).toEqual(["f"]);
+    expect(getFocusSet(schema, "zzz", 1)).toBeNull();
+  });
+
+  it("caches the adjacency per schema object", () => {
+    expect(getAdjacency(schema)).toBe(getAdjacency(schema));
+    expect(getAdjacency(structuredClone(schema))).not.toBe(getAdjacency(schema));
   });
 });

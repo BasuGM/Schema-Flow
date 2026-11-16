@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
+import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 /**
  * Phones only (below `sm`): Layout, Theme and Settings in one menu, so the toolbar fits 390 px and
@@ -72,6 +73,8 @@ export function MoreMenu({
         >
           Show minimap
         </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <NeighbourhoodRadio testIdPrefix="more" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

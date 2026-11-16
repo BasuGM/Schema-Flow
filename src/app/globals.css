@@ -71,6 +71,10 @@
   --edge: oklch(0.62 0 0);
   --pk: oklch(0.55 0.13 75);
   --fk: oklch(0.52 0.18 258);
+  /* Neighbourhood highlighting (P2-T09): opacity of tables and edges outside the focus set. */
+  --dim-node: 0.3;
+  --dim-node-hover: 0.7;
+  --dim-edge: 0.15;
   --radius: 0.5rem;
 }
 
@@ -101,6 +105,9 @@
   --edge: oklch(0.55 0 0);
   --pk: oklch(0.8 0.13 80);
   --fk: oklch(0.72 0.13 258);
+  --dim-node: 0.4;
+  --dim-node-hover: 0.75;
+  --dim-edge: 0.25;
 }
 
 .dark .react-flow {
@@ -155,6 +162,31 @@
   outline: 2px solid var(--ring);
   outline-offset: 3px;
   border-radius: var(--radius);
+}
+
+/* Neighbourhood highlighting (P2-T09). A dimmed table brightens on hover or keyboard focus so it
+   still reads as clickable; the focus outline sits on the (undimmed) React Flow wrapper. */
+.table-node {
+  transition:
+    opacity 150ms ease,
+    box-shadow 150ms ease;
+}
+.table-node[data-dimmed="true"] {
+  opacity: var(--dim-node);
+}
+.react-flow__node:hover > .table-node[data-dimmed="true"],
+.react-flow__node:focus-visible > .table-node[data-dimmed="true"] {
+  opacity: var(--dim-node-hover);
+}
+.relationship-edge {
+  transition: opacity 150ms ease;
+}
+.relationship-edge[data-dimmed="true"] {
+  opacity: var(--dim-edge);
+}
+[data-instant-dim] .table-node,
+[data-instant-dim] .relationship-edge {
+  transition: none;
 }
 
 /* Column handles are invisible attachment points, not drag targets. */

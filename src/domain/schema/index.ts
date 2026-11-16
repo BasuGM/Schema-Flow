@@ -7,6 +7,8 @@ export { validateSchema } from "./validate";
 export { fingerprintSchema, hashString } from "./fingerprint";
 export {
   buildAdjacency,
+  getAdjacency,
+  getFocusSet,
   getIncomingRelationships,
   getNeighbors,
   getOutgoingRelationships,

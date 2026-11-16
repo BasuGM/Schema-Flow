@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
 import { Inspector } from "@/components/inspector/inspector";
 import { TableList } from "./table-list";
 import { Toolbar } from "./toolbar";
+import { NARROW_QUERY } from "./use-panel-sync";
+import { Workspace } from "./workspace";
 
 beforeEach(() => resetStores());
 
@@ -112,5 +114,78 @@ describe("Toolbar", () => {
     await userEvent.click(screen.getByTestId("toolbar-toggle-left"));
     expect(useUiStore.getState().leftPanelOpen).toBe(false);
     expect(screen.getByTestId("toolbar-toggle-left")).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+describe("Collapsed side panels are inert (QA-017)", () => {
+  const renderWorkspace = () =>
+    render(
+      <TooltipProvider>
+        <Workspace />
+      </TooltipProvider>,
+    );
+  const setOpen = (side: "left" | "right", open: boolean) =>
+    act(() => useUiStore.getState().setPanelOpen(side, open));
+
+  it.each([
+    ["left", "table-filter"],
+    ["right", "inspector-close"],
+  ] as const)("collapsing the %s panel makes its content inert", (side, control) => {
+    renderWorkspace();
+    act(() => useUiStore.getState().selectTable("public.orders"));
+    const content = screen.getByTestId(`panel-content-${side}`);
+    const target = () => within(content).getByTestId(control);
+    expect(content).not.toHaveAttribute("inert");
+    expect(target().closest("[inert]")).toBeNull();
+
+    setOpen(side, false);
+    expect(content).toHaveAttribute("inert");
+    // Hidden from assistive technology and unfocusable: the control has an inert ancestor.
+    expect(target().closest("[inert]")).toBe(content);
+
+    setOpen(side, true);
+    expect(content).not.toHaveAttribute("inert");
+  });
+
+  it("moves focus from a collapsing panel to its toolbar toggle", () => {
+    renderWorkspace();
+    act(() => useUiStore.getState().selectTable("public.orders"));
+    act(() => screen.getByTestId("table-filter").focus());
+    setOpen("left", false);
+    expect(document.activeElement).toBe(screen.getByTestId("toolbar-toggle-left"));
+
+    act(() =>
+      within(screen.getByTestId("panel-content-right")).getByTestId("inspector-close").focus(),
+    );
+    setOpen("right", false);
+    expect(document.activeElement).toBe(screen.getByTestId("toolbar-toggle-right"));
+  });
+
+  it("the narrow-viewport auto-collapse moves focus to the toggle, not <body>", () => {
+    const listeners: (() => void)[] = [];
+    let narrow = false;
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (query: string) =>
+        ({
+          get matches() {
+            return query === NARROW_QUERY && narrow;
+          },
+          media: query,
+          addEventListener: (_: string, fn: () => void) => {
+            if (query === NARROW_QUERY) listeners.push(fn);
+          },
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList,
+    );
+    renderWorkspace();
+    act(() => useUiStore.getState().selectTable("public.orders"));
+    act(() =>
+      within(screen.getByTestId("panel-content-right")).getByTestId("inspector-close").focus(),
+    );
+    narrow = true;
+    act(() => listeners.forEach((fn) => fn()));
+    expect(useUiStore.getState()).toMatchObject({ leftPanelOpen: false, rightPanelOpen: false });
+    expect(document.activeElement).toBe(screen.getByTestId("toolbar-toggle-right"));
+    vi.restoreAllMocks();
   });
 });

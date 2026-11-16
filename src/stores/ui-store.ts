@@ -16,6 +16,9 @@ export interface FocusRequest {
   nonce: number;
 }
 
+/** Neighbourhood highlighting depth (P2-T09): 0 = off. */
+export type NeighbourhoodDepth = 0 | 1 | 2;
+
 export type InspectorTab = "columns" | "keys" | "relations";
 
 /** Where Relations navigation came from, so "Back" restores the table and the tab. */
@@ -54,6 +57,13 @@ interface UiState {
   /** Inspector tab (P2-T08); plain table selection never changes it. */
   inspectorTab: InspectorTab;
   inspectorBack: InspectorBack | null;
+  /** A setting: survives selections and new imports. */
+  neighbourhoodDepth: NeighbourhoodDepth;
+  /**
+   * The selected table and its neighbours within `neighbourhoodDepth`; everything else is dimmed.
+   * Derived by `useFocusSetSync`; `null` = nothing dimmed.
+   */
+  focusSet: ReadonlySet<TableId> | null;
   selectTable: (id: TableId | null) => void;
   /** Escape: clear the table selection and any clicked (pinned) edge. */
   clearSelection: () => void;
@@ -64,6 +74,8 @@ interface UiState {
   focusTable: (id: TableId, columnId?: ColumnId, options?: FocusOptions) => void;
   setInspectorTab: (tab: InspectorTab) => void;
   setInspectorBack: (back: InspectorBack | null) => void;
+  setNeighbourhoodDepth: (depth: NeighbourhoodDepth) => void;
+  setFocusSet: (set: ReadonlySet<TableId> | null) => void;
   setTableFilter: (filter: string) => void;
   setShowMiniMap: (show: boolean) => void;
   setPanelOpen: (panel: "left" | "right", open: boolean) => void;
@@ -87,6 +99,8 @@ const initial = {
   highlightedColumn: null,
   inspectorTab: "columns" as InspectorTab,
   inspectorBack: null,
+  neighbourhoodDepth: 1 as NeighbourhoodDepth,
+  focusSet: null,
 } satisfies Partial<UiState>;
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -102,6 +116,7 @@ export const useUiStore = create<UiState>()((set) => ({
       selectedTableId: null,
       highlightedColumn: null,
       inspectorBack: null,
+      focusSet: null,
       clearRequest: s.clearRequest + 1,
     })),
   focusTable: (id, columnId, options = {}) =>
@@ -120,6 +135,9 @@ export const useUiStore = create<UiState>()((set) => ({
   setInspectorTab: (inspectorTab) =>
     set((s) => (s.inspectorTab === inspectorTab ? s : { inspectorTab })),
   setInspectorBack: (inspectorBack) => set({ inspectorBack }),
+  setNeighbourhoodDepth: (neighbourhoodDepth) =>
+    set((s) => (s.neighbourhoodDepth === neighbourhoodDepth ? s : { neighbourhoodDepth })),
+  setFocusSet: (focusSet) => set((s) => (s.focusSet === focusSet ? s : { focusSet })),
   setTableFilter: (tableFilter) => set({ tableFilter }),
   setShowMiniMap: (showMiniMap) => set({ showMiniMap }),
   setPanelOpen: (panel, open) =>
@@ -139,6 +157,7 @@ export const useUiStore = create<UiState>()((set) => ({
       searchOpen: false,
       inspectorTab: "columns",
       inspectorBack: null,
+      focusSet: null,
     })),
   reset: () => set(initial),
 }));

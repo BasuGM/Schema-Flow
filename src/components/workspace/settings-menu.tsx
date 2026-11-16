@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
+import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 export function SettingsMenu() {
   const showMiniMap = useUiStore((s) => s.showMiniMap);
@@ -32,6 +33,8 @@ export function SettingsMenu() {
         >
           Show minimap
         </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <NeighbourhoodRadio testIdPrefix="settings" />
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>More settings arrive in later phases</DropdownMenuItem>
       </DropdownMenuContent>

@@ -8,6 +8,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { CanvasArea } from "./canvas-area";
 import { Inspector } from "@/components/inspector/inspector";
 import { TableList } from "./table-list";
+import { InertPanel } from "./inert-panel";
 import { Toolbar } from "./toolbar";
 import { usePanelSync } from "./use-panel-sync";
 import { useEscapeToClear } from "./use-escape-to-clear";
@@ -19,6 +20,7 @@ export function Workspace() {
   // Below md the inspector opens as an overlay sheet: 240 px beside a 320 px canvas can't fit.
   const sheet = useMediaQuery(SHEET_QUERY);
   const right = usePanelSync("right", sheet);
+  const leftOpen = useUiStore((s) => s.leftPanelOpen);
   const rightOpen = useUiStore((s) => s.rightPanelOpen);
   useEscapeToClear();
   useSearchShortcut();
@@ -38,7 +40,9 @@ export function Workspace() {
             collapsible
             collapsedSize={0}
           >
-            <TableList />
+            <InertPanel side="left" open={leftOpen}>
+              <TableList />
+            </InertPanel>
           </ResizablePanel>
           <ResizableHandle aria-label="Resize table list" />
           <ResizablePanel id="canvas" minSize={320}>
@@ -55,7 +59,9 @@ export function Workspace() {
             collapsible
             collapsedSize={0}
           >
-            {!sheet && <Inspector />}
+            <InertPanel side="right" open={rightOpen && !sheet}>
+              {!sheet && <Inspector />}
+            </InertPanel>
           </ResizablePanel>
         </ResizablePanelGroup>
         {sheet && rightOpen && (

@@ -46,12 +46,18 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
     (s) =>
       s.selectedTableId !== null && (s.selectedTableId === source || s.selectedTableId === target),
   );
+  // Neighbourhood highlighting (P2-T09): dimmed unless both ends are in the focus set.
+  const outOfFocus = useUiStore(
+    (s) => s.focusSet !== null && !(s.focusSet.has(source) && s.focusSet.has(target)),
+  );
   // Labels appear only for the edge being hovered or clicked (QA-004): one at a time, so they never
   // pile up over neighbouring tables. Edges of the selected table are highlighted without labels.
   const [hovered, setHovered] = useState(false);
   const showLabel = hovered || Boolean(selected);
   const emphasized = showLabel || connectedToSelection;
   const state = selected ? "selected" : emphasized ? "highlighted" : "default";
+  // A hovered or clicked edge is drawn at full opacity while its label shows.
+  const dimmed = outOfFocus && !showLabel;
   // Subscribing to the end nodes re-renders this edge only when one of them changes (e.g. drag).
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
@@ -89,7 +95,12 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
   const many = rel?.cardinality !== "one-to-one";
 
   return (
-    <g data-edge-state={state} data-testid={`edge-${id}`}>
+    <g
+      className="relationship-edge"
+      data-edge-state={state}
+      data-dimmed={dimmed || undefined}
+      data-testid={`edge-${id}`}
+    >
       {state === "selected" && (
         <path d={path} fill="none" stroke="var(--brand)" strokeOpacity={0.25} strokeWidth={8} />
       )}

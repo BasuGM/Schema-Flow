@@ -48,6 +48,33 @@ export function getNeighbors(
   return result;
 }
 
+const adjacencyCache = new WeakMap<Schema, Map<TableId, Set<TableId>>>();
+
+/** `buildAdjacency`, built once per schema object (schemas are immutable once loaded). */
+export function getAdjacency(schema: Schema): Map<TableId, Set<TableId>> {
+  let adj = adjacencyCache.get(schema);
+  if (!adj) {
+    adj = buildAdjacency(schema);
+    adjacencyCache.set(schema, adj);
+  }
+  return adj;
+}
+
+/**
+ * Neighbourhood highlighting (P2-T09): the table plus every table within `depth` hops in either
+ * direction. `null` means nothing is dimmed: depth 0 (off) or an unknown table.
+ */
+export function getFocusSet(
+  schema: Schema,
+  table: TableId,
+  depth: number,
+): ReadonlySet<TableId> | null {
+  if (depth <= 0 || !schema.tables[table]) return null;
+  const set = getNeighbors(schema, table, depth, getAdjacency(schema));
+  set.add(table);
+  return set;
+}
+
 /**
  * The schema name is shown unless it is the source's default: none at all (MySQL, SQLite, Prisma
  * without `@@schema`) or `public` on PostgreSQL (SQL or Prisma). Used by search and the inspector.

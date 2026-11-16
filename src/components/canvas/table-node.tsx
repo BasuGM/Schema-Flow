@@ -20,6 +20,8 @@ import { useUiStore } from "@/stores/ui-store";
 function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
   const table = useSchemaStore((s) => s.schema?.tables[data.tableId]);
   const selected = useUiStore((s) => s.selectedTableId === id);
+  // Neighbourhood highlighting (P2-T09): a boolean, so only nodes whose state flips re-render.
+  const dimmed = useUiStore((s) => s.focusSet !== null && !s.focusSet.has(id));
   // A primitive per node: only the node that owns the highlighted column re-renders.
   const highlighted = useUiStore((s) =>
     s.highlightedColumn?.tableId === id ? s.highlightedColumn.columnId : null,
@@ -35,9 +37,10 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
     <div
       data-testid={`table-node-${table.name}`}
       data-selected={selected}
+      data-dimmed={dimmed || undefined}
       style={{ width: NODE_WIDTH }}
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow",
+        "table-node rounded-lg border bg-card text-card-foreground shadow-sm",
         selected ? "border-brand ring-2 ring-brand/40" : "hover:shadow-md",
       )}
     >
