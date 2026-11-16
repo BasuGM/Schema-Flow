@@ -9,6 +9,7 @@ import {
   NODE_HEADER_HEIGHT,
   NODE_ROW_HEIGHT,
   NODE_WIDTH,
+  renderedColumns,
   visibleColumns,
 } from "@/graph/node-metrics";
 import type { TableFlowNode } from "@/graph/types";
@@ -19,8 +20,16 @@ import { useUiStore } from "@/stores/ui-store";
 function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
   const table = useSchemaStore((s) => s.schema?.tables[data.tableId]);
   const selected = useUiStore((s) => s.selectedTableId === id);
+  // A primitive per node: only the node that owns the highlighted column re-renders.
+  const highlighted = useUiStore((s) =>
+    s.highlightedColumn?.tableId === id ? s.highlightedColumn.columnId : null,
+  );
   if (!table) return null;
-  const columns = visibleColumns(table, data.mode);
+  const columns = renderedColumns(table, data.mode, highlighted);
+  const revealedId =
+    highlighted && !visibleColumns(table, data.mode).some((c) => c.id === highlighted)
+      ? highlighted
+      : null;
 
   return (
     <div
@@ -65,7 +74,12 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
       {columns.length > 0 && (
         <ul className="py-1.5">
           {columns.map((column) => (
-            <ColumnRow key={column.id} column={column} />
+            <ColumnRow
+              key={column.id}
+              column={column}
+              highlighted={column.id === highlighted}
+              revealed={column.id === revealedId}
+            />
           ))}
         </ul>
       )}
@@ -73,7 +87,15 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
   );
 }
 
-function ColumnRow({ column }: { column: Column }) {
+interface ColumnRowProps {
+  column: Column;
+  /** Found by search (P2-T07). */
+  highlighted: boolean;
+  /** Hidden by the node's collapse mode, shown only because it is highlighted. */
+  revealed: boolean;
+}
+
+function ColumnRow({ column, highlighted, revealed }: ColumnRowProps) {
   const kind = column.isPrimaryKey
     ? "primary key"
     : column.isForeignKey
@@ -85,9 +107,14 @@ function ColumnRow({ column }: { column: Column }) {
       data-testid={`column-${column.name}`}
       data-pk={column.isPrimaryKey || undefined}
       data-fk={column.isForeignKey || undefined}
+      data-highlighted={highlighted || undefined}
+      data-revealed={revealed || undefined}
+      title={revealed ? "Hidden column, shown because search found it" : undefined}
       className={cn(
         "relative flex items-center gap-2 px-3 text-xs",
         column.isPrimaryKey && "bg-pk/8",
+        highlighted && "bg-brand-muted ring-2 ring-brand ring-inset",
+        revealed && "italic",
       )}
     >
       <span className="flex w-3.5 shrink-0 justify-center" aria-hidden>

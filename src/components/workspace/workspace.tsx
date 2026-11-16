@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchShortcut } from "@/components/search/use-search-shortcut";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { CanvasArea } from "./canvas-area";
 import { Inspector } from "./inspector";
@@ -14,6 +15,7 @@ export function Workspace() {
   const left = usePanelSync("left");
   const right = usePanelSync("right");
   useEscapeToClear();
+  useSearchShortcut();
 
   return (
     <div className="flex h-full flex-col" data-testid="workspace">

@@ -15,7 +15,11 @@ never leaves the browser. No backend, no Docker, no AI integrations, 2D only.
 - Production check: stop the dev server, `npm run build` (static export to `out/`), then
   `npm run start`, which serves `out/` with `python3 -m http.server 3000`. It is a static file
   server, not `next start`.
-- Dev-only perf sample: `/?sample=synthetic&tables=200`.
+- Dev-only perf sample: `/?sample=synthetic&tables=200` (capped at 1,000 tables).
+- Wall-clock budgets live in `*performance.test.ts`; Vitest runs them in their own project after
+  the other tests, one file at a time.
+- Phone toolbar regression: `node scripts/headless/toolbar-width.mjs` (needs Chrome and the server
+  running) must print PASS for light and dark at 390×844.
 
 ## Architecture boundaries
 

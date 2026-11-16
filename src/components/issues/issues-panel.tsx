@@ -1,11 +1,12 @@
 "use client";
 
 import { Check, Copy, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { countIssues, issuesToText, sortIssues } from "@/domain/schema/issues";
 import { copyText } from "@/lib/copy-text";
 import { cn } from "@/lib/utils";
+import { revealTable } from "@/stores/reveal";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { IssueRow } from "./issue-row";
@@ -43,15 +44,6 @@ export function IssuesPanel({ className }: { className?: string }) {
         ),
     [sorted, filter],
   );
-
-  const onShowTable = useCallback((tableId: string) => {
-    const ui = useUiStore.getState();
-    const name = useSchemaStore.getState().schema?.tables[tableId]?.name ?? "";
-    // The table list hides non-matching tables; make sure the shown table is listed.
-    const q = ui.tableFilter.trim().toLowerCase();
-    if (q && !name.toLowerCase().includes(q)) ui.setTableFilter("");
-    ui.focusTable(tableId);
-  }, []);
 
   const onCopy = async () => setCopy(await copyText(issuesToText(sorted)));
 
@@ -138,7 +130,7 @@ export function IssuesPanel({ className }: { className?: string }) {
                   key={key}
                   issue={issue}
                   tableName={issue.tableId ? tables?.[issue.tableId]?.name : undefined}
-                  onShowTable={onShowTable}
+                  onShowTable={revealTable}
                 />
               ))}
             </ul>

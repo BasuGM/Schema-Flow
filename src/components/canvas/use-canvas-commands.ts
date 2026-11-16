@@ -3,9 +3,10 @@
 import { useReactFlow, useStoreApi, type FitViewOptions } from "@xyflow/react";
 import { useCallback, useEffect, useRef } from "react";
 import { SHEET_HEIGHT_PERCENT, SHEET_QUERY } from "@/components/issues/issues-sheet";
-import { NODE_WIDTH } from "@/graph/node-metrics";
+import { NODE_WIDTH, renderedColumns, rowCenterOffset } from "@/graph/node-metrics";
 import type { FlowElements } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
+import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 
 /** After a new layout, canvas size changes within this window re-fit (see below). */
@@ -54,7 +55,18 @@ export function useCanvasCommands(base: FlowElements) {
     const { x, y } = node.internals.positionAbsolute;
     const width = node.measured.width ?? NODE_WIDTH;
     const height = node.measured.height ?? 0;
-    void setCenter(x + width / 2, y + Math.min(height / 2, 200), {
+    // A column (search hit) centers on its row, which may be far down a long table.
+    const table = focusRequest.columnId
+      ? useSchemaStore.getState().schema?.tables[focusRequest.tableId]
+      : undefined;
+    const rowOffset =
+      table && focusRequest.columnId
+        ? rowCenterOffset(
+            renderedColumns(table, node.data.mode, focusRequest.columnId),
+            focusRequest.columnId,
+          )
+        : null;
+    void setCenter(x + width / 2, y + (rowOffset ?? Math.min(height / 2, 200)), {
       zoom: Math.max(getZoom(), 0.9),
       duration: motionDuration(300),
     });

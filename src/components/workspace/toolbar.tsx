@@ -3,11 +3,13 @@
 import { Download, PanelLeft, PanelRight, Workflow } from "lucide-react";
 import { ImportDialog } from "@/components/import/import-dialog";
 import { IssuesButton } from "@/components/issues/issues-button";
+import { SearchDialog } from "@/components/search/search-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
+import { MoreMenu } from "./more-menu";
 import { SettingsMenu } from "./settings-menu";
 import { ThemeToggle } from "./theme-toggle";
 import { ToolbarButton } from "./toolbar-button";
@@ -62,6 +64,7 @@ export function Toolbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-0.5">
+        <SearchDialog />
         <ImportDialog />
         <IssuesButton />
         {/* A disabled placeholder; hidden on phones so the toolbar fits 390 px (QA-012). */}
@@ -74,18 +77,22 @@ export function Toolbar() {
           <Download aria-hidden />
           <span className="hidden md:inline">Export</span>
         </ToolbarButton>
-        <ToolbarButton
-          tooltip="Re-run automatic layout (discards manual positions)"
-          onClick={relayout}
-          unavailable={!schemaName}
-          data-testid="toolbar-layout"
-        >
-          <Workflow aria-hidden />
-          <span className="hidden md:inline">Layout</span>
-        </ToolbarButton>
-        <Separator orientation="vertical" className="mx-1 h-5!" />
-        <ThemeToggle />
-        <SettingsMenu />
+        {/* Below `sm` these three live in the More menu, so the toolbar fits 390 px. */}
+        <div className="hidden items-center gap-0.5 sm:flex">
+          <ToolbarButton
+            tooltip="Re-run automatic layout (discards manual positions)"
+            onClick={relayout}
+            unavailable={!schemaName}
+            data-testid="toolbar-layout"
+          >
+            <Workflow aria-hidden />
+            <span className="hidden md:inline">Layout</span>
+          </ToolbarButton>
+          <Separator orientation="vertical" className="mx-1 h-5!" />
+          <ThemeToggle />
+          <SettingsMenu />
+        </div>
+        <MoreMenu onRelayout={relayout} canRelayout={!!schemaName} />
         <ToolbarButton
           tooltip={rightOpen ? "Hide inspector" : "Show inspector"}
           size="icon"
