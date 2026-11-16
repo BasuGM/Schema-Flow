@@ -1,4 +1,5 @@
-import type { ColumnId, Schema, Table, TableId } from "@/domain/schema/types";
+import { showsSchemaName } from "@/domain/schema/selectors";
+import type { ColumnId, Schema, TableId } from "@/domain/schema/types";
 import { prepareField, type Field } from "./field";
 
 export interface TableEntry {
@@ -25,15 +26,6 @@ export interface ColumnEntry {
 export interface SearchIndex {
   tables: TableEntry[];
   columns: ColumnEntry[];
-}
-
-/**
- * The schema name is shown unless it is the source's default: none at all (MySQL, SQLite, Prisma
- * without `@@schema`) or `public` on PostgreSQL (SQL or Prisma).
- */
-export function showsSchemaName(schema: Schema, table: Table): boolean {
-  if (!table.schemaName) return false;
-  return !(schema.source.dialect === "postgresql" && table.schemaName === "public");
 }
 
 export function buildSearchIndex(schema: Schema): SearchIndex {

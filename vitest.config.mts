@@ -21,14 +21,14 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["src/**/*.test.{ts,tsx}"],
-          exclude: ["src/**/*performance.test.ts"],
+          exclude: ["src/**/*performance.test.{ts,tsx}"],
         },
       },
       {
         extends: true,
         test: {
           name: "performance",
-          include: ["src/**/*performance.test.ts"],
+          include: ["src/**/*performance.test.{ts,tsx}"],
           fileParallelism: false,
           sequence: { groupOrder: 1 },
         },

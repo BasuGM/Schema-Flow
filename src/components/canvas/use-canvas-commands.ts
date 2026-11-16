@@ -3,7 +3,12 @@
 import { useReactFlow, useStoreApi, type FitViewOptions } from "@xyflow/react";
 import { useCallback, useEffect, useRef } from "react";
 import { SHEET_HEIGHT_PERCENT, SHEET_QUERY } from "@/components/issues/issues-sheet";
-import { NODE_WIDTH, renderedColumns, rowCenterOffset } from "@/graph/node-metrics";
+import {
+  NODE_ROW_HEIGHT,
+  NODE_WIDTH,
+  renderedColumns,
+  rowCenterOffset,
+} from "@/graph/node-metrics";
 import type { FlowElements } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -48,6 +53,7 @@ export function useCanvasCommands(base: FlowElements) {
     });
   }, [fitView]);
 
+  const flowStore = useStoreApi();
   useEffect(() => {
     if (!focusRequest) return;
     const node = getInternalNode(focusRequest.tableId);
@@ -55,7 +61,7 @@ export function useCanvasCommands(base: FlowElements) {
     const { x, y } = node.internals.positionAbsolute;
     const width = node.measured.width ?? NODE_WIDTH;
     const height = node.measured.height ?? 0;
-    // A column (search hit) centers on its row, which may be far down a long table.
+    // A column (search hit, link) centers on its row, which may be far down a long table.
     const table = focusRequest.columnId
       ? useSchemaStore.getState().schema?.tables[focusRequest.tableId]
       : undefined;
@@ -66,11 +72,26 @@ export function useCanvasCommands(base: FlowElements) {
             focusRequest.columnId,
           )
         : null;
-    void setCenter(x + width / 2, y + (rowOffset ?? Math.min(height / 2, 200)), {
+    const target = { x: x + width / 2, y: y + (rowOffset ?? Math.min(height / 2, 200)) };
+    if (focusRequest.mode === "ensure-visible") {
+      // Reading through columns in the inspector must not make the diagram jump: pan only when
+      // the row (or the table header) is outside the visible canvas.
+      const { width: w, height: h, transform } = flowStore.getState();
+      const [tx, ty, zoom] = transform;
+      const half = (rowOffset === null ? NODE_ROW_HEIGHT : NODE_ROW_HEIGHT / 2) * zoom;
+      const left = x * zoom + tx;
+      const right = (x + width) * zoom + tx;
+      const cy = target.y * zoom + ty;
+      const visible = left >= 0 && right <= w && cy - half >= 0 && cy + half <= h;
+      if (visible) return;
+      void setCenter(target.x, target.y, { zoom, duration: motionDuration(300) });
+      return;
+    }
+    void setCenter(target.x, target.y, {
       zoom: Math.max(getZoom(), 0.9),
       duration: motionDuration(300),
     });
-  }, [focusRequest, getInternalNode, setCenter, getZoom]);
+  }, [focusRequest, getInternalNode, setCenter, getZoom, flowStore]);
 
   // Re-fit whenever the node set is rebuilt from a new layout (initial load, re-layout, new schema).
   const firstBase = useRef(true);
@@ -89,10 +110,9 @@ export function useCanvasCommands(base: FlowElements) {
   // later. Size changes shortly after a new layout re-fit to the final size; any other resize
   // (the user opening, closing or dragging the panel) keeps the viewport. Subscribing to the store
   // (not `useStore`) avoids re-rendering the canvas on every resize frame.
-  const store = useStoreApi();
   useEffect(() => {
     let frame = 0;
-    const unsubscribe = store.subscribe((s, prev) => {
+    const unsubscribe = flowStore.subscribe((s, prev) => {
       if (s.width === prev.width && s.height === prev.height) return;
       if (performance.now() > fitWindowEnd.current) return;
       cancelAnimationFrame(frame);
@@ -102,7 +122,7 @@ export function useCanvasCommands(base: FlowElements) {
       unsubscribe();
       cancelAnimationFrame(frame);
     };
-  }, [store, resetView]);
+  }, [flowStore, resetView]);
 
   return { resetView };
 }

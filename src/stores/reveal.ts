@@ -1,16 +1,34 @@
 import type { ColumnId, TableId } from "@/domain/schema/types";
 import { useSchemaStore } from "./schema-store";
-import { useUiStore } from "./ui-store";
+import { useUiStore, type FocusOptions } from "./ui-store";
 
 /**
- * Select and center a table (issues panel "Show table", search). The table list hides tables that
- * don't match its filter, so a filter that would hide this one is cleared. With a column, the
- * canvas centers on that row and highlights it.
+ * Select and center a table (table list, issues panel "Show table", search, inspector links). The
+ * table list hides tables that don't match its filter, so a filter that would hide this one is
+ * cleared. With a column, the canvas centers on that row (or, with `mode: "ensure-visible"`, pans
+ * only if it is off-screen) and highlights it.
  */
-export function revealTable(tableId: TableId, columnId?: ColumnId): void {
+export function revealTable(tableId: TableId, columnId?: ColumnId, options?: FocusOptions): void {
   const ui = useUiStore.getState();
   const name = useSchemaStore.getState().schema?.tables[tableId]?.name ?? "";
   const q = ui.tableFilter.trim().toLowerCase();
   if (q && !name.toLowerCase().includes(q)) ui.setTableFilter("");
-  ui.focusTable(tableId, columnId);
+  ui.focusTable(tableId, columnId, options);
+}
+
+/**
+ * Inspector Relations navigation: go to the related table (highlighting the referenced column),
+ * stay on Relations, and remember where we came from for "Back".
+ */
+export function navigateToRelated(tableId: TableId, columnId?: ColumnId): void {
+  const { selectedTableId: from, inspectorTab: tab } = useUiStore.getState();
+  revealTable(tableId, columnId, { tab: "relations" });
+  if (from && from !== tableId) useUiStore.getState().setInspectorBack({ tableId: from, tab });
+}
+
+/** "Back": the table and the tab the user was on before Relations navigation. */
+export function inspectorGoBack(): void {
+  const back = useUiStore.getState().inspectorBack;
+  if (!back) return;
+  revealTable(back.tableId, undefined, { tab: back.tab });
 }

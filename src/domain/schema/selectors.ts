@@ -1,4 +1,4 @@
-import type { Relationship, Schema, TableId } from "./types";
+import type { Relationship, Schema, Table, TableId } from "./types";
 
 export function getOutgoingRelationships(schema: Schema, table: TableId): Relationship[] {
   return Object.values(schema.relationships).filter((r) => r.from.tableId === table);
@@ -46,4 +46,18 @@ export function getNeighbors(
     frontier = next;
   }
   return result;
+}
+
+/**
+ * The schema name is shown unless it is the source's default: none at all (MySQL, SQLite, Prisma
+ * without `@@schema`) or `public` on PostgreSQL (SQL or Prisma). Used by search and the inspector.
+ */
+export function showsSchemaName(schema: Schema, table: Table): boolean {
+  if (!table.schemaName) return false;
+  return !(schema.source.dialect === "postgresql" && table.schemaName === "public");
+}
+
+/** `billing.invoices`, or just `users` when the schema name is the default. */
+export function displayTableName(schema: Schema, table: Table): string {
+  return showsSchemaName(schema, table) ? `${table.schemaName}.${table.name}` : table.name;
 }

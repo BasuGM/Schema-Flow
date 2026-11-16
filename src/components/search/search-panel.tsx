@@ -112,13 +112,28 @@ export function SearchPanel({
           data-testid="search-input"
         />
       </div>
-      <p
-        aria-live="polite"
-        className="px-3 pt-2 pb-1 text-xs text-muted-foreground"
-        data-testid={total === 0 && !empty ? "search-empty" : "search-status"}
-      >
+      {/* QA-016: one live region, mounted for as long as the dialog is open; only its text
+          changes. The visible status and the no-match message are separate, non-live elements. */}
+      <p aria-live="polite" className="sr-only" data-testid="search-live">
         {status}
       </p>
+      {total === 0 && !empty ? (
+        <p
+          key="empty"
+          className="px-3 pt-2 pb-1 text-xs text-muted-foreground"
+          data-testid="search-empty"
+        >
+          {status}
+        </p>
+      ) : (
+        <p
+          key="status"
+          className="px-3 pt-2 pb-1 text-xs text-muted-foreground"
+          data-testid="search-status"
+        >
+          {status}
+        </p>
+      )}
       <div
         id={listId}
         role="listbox"

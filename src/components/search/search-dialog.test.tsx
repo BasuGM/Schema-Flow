@@ -238,6 +238,29 @@ describe("Search dialog", () => {
   });
 });
 
+describe("Search live region (QA-016)", () => {
+  it("keeps one polite live region and changes only its text", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    await openWithButton(user);
+    const live = screen.getByTestId("search-live");
+    expect(live).toHaveAttribute("aria-live", "polite");
+    expect(live).toHaveTextContent("Type to search 12 tables and 71 columns");
+    await type(user, "user");
+    expect(screen.getByTestId("search-live")).toBe(live);
+    expect(live).toHaveTextContent("4 results");
+    await type(user, "zzz");
+    expect(screen.getByTestId("search-live")).toBe(live);
+    expect(live).toHaveTextContent("No tables or columns match “userzzz”.");
+    expect(screen.getByTestId("search-empty")).not.toHaveAttribute("aria-live");
+    await user.clear(input());
+    await type(user, "ord.user");
+    expect(screen.getByTestId("search-live")).toBe(live);
+    expect(live).toHaveTextContent("1 result");
+    expect(document.querySelectorAll("[role=dialog] [aria-live]")).toHaveLength(1);
+  });
+});
+
 describe("Search re-render isolation", () => {
   it("opening search and typing don't re-render the canvas", async () => {
     const commits = vi.fn();

@@ -8,7 +8,26 @@ import type { ColumnId, TableId } from "@/domain/schema/types";
 export interface FocusRequest {
   tableId: TableId;
   columnId?: ColumnId;
+  /**
+   * `center` (default): explicit "go to" actions (list, search, links). `ensure-visible`: pan only
+   * if the target row is off-screen (clicking a column in the inspector).
+   */
+  mode?: "center" | "ensure-visible";
   nonce: number;
+}
+
+export type InspectorTab = "columns" | "keys" | "relations";
+
+/** Where Relations navigation came from, so "Back" restores the table and the tab. */
+export interface InspectorBack {
+  tableId: TableId;
+  tab: InspectorTab;
+}
+
+export interface FocusOptions {
+  mode?: FocusRequest["mode"];
+  /** Tab to show; omitted = a column highlight switches to Columns, a table keeps the tab. */
+  tab?: InspectorTab;
 }
 
 /** A column found by search, highlighted in its table node (P2-T07). */
@@ -32,6 +51,9 @@ interface UiState {
   searchOpen: boolean;
   /** Cleared when the selection changes, on Escape and on a new schema. */
   highlightedColumn: HighlightedColumn | null;
+  /** Inspector tab (P2-T08); plain table selection never changes it. */
+  inspectorTab: InspectorTab;
+  inspectorBack: InspectorBack | null;
   selectTable: (id: TableId | null) => void;
   /** Escape: clear the table selection and any clicked (pinned) edge. */
   clearSelection: () => void;
@@ -39,7 +61,9 @@ interface UiState {
    * Select a table and center the canvas on it (e.g. from the sidebar list). With a column, center
    * on its row and highlight it.
    */
-  focusTable: (id: TableId, columnId?: ColumnId) => void;
+  focusTable: (id: TableId, columnId?: ColumnId, options?: FocusOptions) => void;
+  setInspectorTab: (tab: InspectorTab) => void;
+  setInspectorBack: (back: InspectorBack | null) => void;
   setTableFilter: (filter: string) => void;
   setShowMiniMap: (show: boolean) => void;
   setPanelOpen: (panel: "left" | "right", open: boolean) => void;
@@ -61,24 +85,41 @@ const initial = {
   issuesPanelOpen: false,
   searchOpen: false,
   highlightedColumn: null,
+  inspectorTab: "columns" as InspectorTab,
+  inspectorBack: null,
 } satisfies Partial<UiState>;
 
 export const useUiStore = create<UiState>()((set) => ({
   ...initial,
   selectTable: (id) =>
-    set((s) => (s.selectedTableId === id ? s : { selectedTableId: id, highlightedColumn: null })),
+    set((s) =>
+      s.selectedTableId === id
+        ? s
+        : { selectedTableId: id, highlightedColumn: null, inspectorBack: null },
+    ),
   clearSelection: () =>
     set((s) => ({
       selectedTableId: null,
       highlightedColumn: null,
+      inspectorBack: null,
       clearRequest: s.clearRequest + 1,
     })),
-  focusTable: (id, columnId) =>
+  focusTable: (id, columnId, options = {}) =>
     set((s) => ({
       selectedTableId: id,
       highlightedColumn: columnId ? { tableId: id, columnId } : null,
-      focusRequest: { tableId: id, columnId, nonce: (s.focusRequest?.nonce ?? 0) + 1 },
+      inspectorBack: null,
+      inspectorTab: options.tab ?? (columnId ? "columns" : s.inspectorTab),
+      focusRequest: {
+        tableId: id,
+        columnId,
+        mode: options.mode,
+        nonce: (s.focusRequest?.nonce ?? 0) + 1,
+      },
     })),
+  setInspectorTab: (inspectorTab) =>
+    set((s) => (s.inspectorTab === inspectorTab ? s : { inspectorTab })),
+  setInspectorBack: (inspectorBack) => set({ inspectorBack }),
   setTableFilter: (tableFilter) => set({ tableFilter }),
   setShowMiniMap: (showMiniMap) => set({ showMiniMap }),
   setPanelOpen: (panel, open) =>
@@ -96,6 +137,8 @@ export const useUiStore = create<UiState>()((set) => ({
       clearRequest: s.clearRequest + 1,
       tableFilter: "",
       searchOpen: false,
+      inspectorTab: "columns",
+      inspectorBack: null,
     })),
   reset: () => set(initial),
 }));

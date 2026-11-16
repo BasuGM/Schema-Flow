@@ -7,7 +7,7 @@ import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
-import { Inspector } from "./inspector";
+import { Inspector } from "@/components/inspector/inspector";
 import { TableList } from "./table-list";
 import { useEscapeToClear } from "./use-escape-to-clear";
 

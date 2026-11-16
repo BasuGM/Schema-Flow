@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
-import { Inspector } from "./inspector";
+import { Inspector } from "@/components/inspector/inspector";
 import { TableList } from "./table-list";
 import { Toolbar } from "./toolbar";
 
