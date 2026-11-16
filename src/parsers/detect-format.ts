@@ -6,7 +6,9 @@ export interface DetectedFormat {
   dialect?: SqlDialect;
 }
 
-const PRISMA = /^\s*(model|enum|datasource|generator)\s+\w+\s*\{/m;
+// Whitespace classes never span lines under /m: `^\s*` matched newlines and backtracked
+// quadratically on long runs of blank lines (QA-013).
+const PRISMA = /^[ \t]*(model|enum|datasource|generator)[ \t]+\w+[ \t]*\{/m;
 const SQL = /\b(create|alter)\s+(table|index|unique|type|sequence)\b/i;
 
 /**
@@ -17,7 +19,7 @@ export function detectFormat(text: string): DetectedFormat {
   const looksPrisma = PRISMA.test(text) || /@@(id|unique|index|map)\b/.test(text);
   const looksSql = SQL.test(text);
   if (looksPrisma && !looksSql) return { format: "prisma" };
-  if (!looksSql && !/;\s*$/m.test(text)) return { format: "unknown" };
+  if (!looksSql && !/;[ \t\r]*$/m.test(text)) return { format: "unknown" };
   return { format: "sql", dialect: detectSqlDialect(text) };
 }
 

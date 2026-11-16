@@ -37,7 +37,9 @@ export function lexPrisma(src: string): { tokens: PrismaToken[]; issues: ImportI
   while (i < n) {
     const c = src[i]!;
     if (c === "\n") {
-      push("nl", c);
+      // Consecutive line breaks are one separator; collapsing them keeps a file of blank lines
+      // from becoming millions of tokens (QA-013). Tokens still carry their own line numbers.
+      if (tokens.at(-1)?.kind !== "nl") push("nl", c);
       line++;
       i++;
       continue;

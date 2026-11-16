@@ -3,13 +3,21 @@ import type { ColumnDefault } from "@/domain/schema/types";
 const EXPRESSION_KEYWORDS =
   /^(current_timestamp|current_date|current_time|localtimestamp|localtime|current_user|session_user|user)\b/i;
 
+const TYPE_WORD = String.raw`[\w."[\]]+`;
+const CAST_SUFFIX = new RegExp(
+  String.raw`::\s*${TYPE_WORD}(?:\s+${TYPE_WORD})*(?:\(\s*\d+(?:\s*,\s*\d+)?\s*\))?(?:\[\])*$`,
+  "u",
+);
+
 /** Removes redundant outer parentheses and trailing `::type` casts: `('a'::text)` → `'a'`. */
 function stripCastsAndParens(text: string): string {
   let t = text.trim();
   for (;;) {
     const before = t;
     if (t.startsWith("(") && t.endsWith(")") && balanced(t.slice(1, -1))) t = t.slice(1, -1).trim();
-    t = t.replace(/::\s*[\w ."[\]]+(\(\s*\d+(\s*,\s*\d+)?\s*\))?(\[\])*\s*$/u, "").trim();
+    // `t` is trimmed, so no trailing `\s*`; words of a multi-word type are separated by `\s+` so no
+    // two repeating groups can both match a space (that backtracked polynomially, QA-013 audit).
+    t = t.replace(CAST_SUFFIX, "").trim();
     if (t === before) return t;
   }
 }

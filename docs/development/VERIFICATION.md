@@ -329,3 +329,11 @@ choosing SQLite gives the same counts.
 - AC-P2-T01-6 (QA-011): Format detection finds DDL or Prisma models after a header longer than
   200,000 characters. _Auto_
 - AC-P1-T06-8 (QA-012): At 390 px wide the toolbar fits without horizontal page overflow. _Manual_
+
+### Fix for Cowork round 7 (QA-013, 2026-11-16)
+
+- AC-P2-T01-7 (QA-013): Long runs of blank or whitespace-only lines don't freeze the tab. 5 MB of
+  `\n` or of ` \n` goes through `parseSchemaText` (Auto, SQL and Prisma, with and without a
+  leading table) in under 1 s each: measured 17–135 ms. The reported repro
+  (`CREATE TABLE a (id int);` + 80,000 `\n`) is detected in 0 ms (16.5 s before). _Auto
+  (`src/parsers/whitespace-performance.test.ts`; the repro and cast tests fail on the old code)_

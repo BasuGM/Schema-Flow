@@ -255,3 +255,43 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   - `loadSchema` appended validation issues that importers had already added (duplicates for
     broken schemas). Fixed with a regression test.
 - **Cowork result:** Pending — not independently verified. See [handoffs/P2-T05.md](handoffs/P2-T05.md).
+
+---
+
+## 2026-11-16 — Cowork re-verification round 7 at 3a17db4: P2-T05 all pass; QA-013
+
+- **Handoff verified:** [handoffs/P2-T05.md](handoffs/P2-T05.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16.
+- **Verified:** all 15 P2-T05 steps PASS. QA-010, QA-011 and QA-012 **Fixed**.
+  AC-P2-T05-1…10, AC-P2-T01-6, AC-P1-T06-8 and AC-P2-T04-7 verified. P2-T05 → **Verified**.
+- **New defect:**
+  - **QA-013** · major · _Long runs of blank or whitespace-only lines freeze the main thread._
+    `CREATE TABLE a (id int);` followed by 80,000 `\n` took about 4 s (Cowork) / 16.5 s (Claude
+    Code's M1 under test) in `detectFormat`, and so in `parseSql`, which calls it. ~1 MB hung the
+    tab.
+    - Root cause: `PRISMA = /^\s*(model|…)…/m`. Under `/m`, `^\s*` matches line breaks and
+      backtracks quadratically.
+    - Fix: whitespace in line-anchored patterns is `[ \t]` (and `[ \t\r]` before `$`).
+    - **Audit of every regex in `src/parsers`:**
+      - `detect-format.ts`: `PRISMA` fixed, and `/;\s*$/m` tightened to `/;[ \t\r]*$/m`.
+      - `sql/parse-default.ts`: the cast-suffix stripper had space in two adjacent repeating
+        groups (`[\w ."[\]]+` then `\s*$`). A cast followed by 20,000 spaces took about 1 s, and
+        50,000 spaces took 6.4 s. It is rewritten so words are separated by `\s+`, with no
+        trailing `\s*` since the input is trimmed; now 1 ms.
+      - The other patterns are anchored on literal words, bounded (64-char slice), sticky
+        single-token matchers, or have disjoint classes. No change needed.
+    - Related: the Prisma lexer emitted one token per line break, so 5 MB of `\n` would have been
+      5 million token objects. Consecutive line breaks are now collapsed into one token.
+    - Regression tests: `src/parsers/whitespace-performance.test.ts`. 5 MB of `\n` and ` \n`,
+      every format, each run in under 1 s (measured 17–135 ms). The repro and cast tests fail on
+      the old code (16.5 s, 6.4 s).
+    - Timing note: the first full `npm run check` after adding the test failed two budgets
+      (1.27 s for one 5 MB case; the SQL robustness suite took 2.5 s against 2 s). Both pass alone
+      (102 ms, ~0.5 s), so this was contention between parallel test workers. The new test now
+      takes the fastest of up to 3 runs, retrying only when over budget, so a quadratic regression
+      still fails. Three consecutive full checks then passed (249 tests each). The robustness
+      budget is unchanged.
+    - Status: **Fixed — awaiting re-verification.**
+- **Observation (no fix now):** Dagre takes over 90 s on a 2,000-table linear FK chain; realistic
+  2,000-table schemas take about 3 s. Added to ROADMAP Phase 3 as a possible guard.
