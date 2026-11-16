@@ -1,9 +1,12 @@
 "use client";
 
+import { ErrorBoundary } from "@/components/errors/error-boundary";
+import { QaCrash } from "@/components/errors/qa-crash";
 import { SHEET_QUERY } from "@/components/issues/issues-sheet";
 import { useSearchShortcut } from "@/components/search/use-search-shortcut";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { CanvasArea } from "./canvas-area";
 import { Inspector } from "@/components/inspector/inspector";
@@ -22,11 +25,13 @@ export function Workspace() {
   const right = usePanelSync("right", sheet);
   const leftOpen = useUiStore((s) => s.leftPanelOpen);
   const rightOpen = useUiStore((s) => s.rightPanelOpen);
+  const fingerprint = useSchemaStore((s) => s.fingerprint);
   useEscapeToClear();
   useSearchShortcut();
 
   return (
     <div className="flex h-full flex-col" data-testid="workspace">
+      <QaCrash region="app" />
       <Toolbar />
       <div className="relative min-h-0 flex-1">
         <ResizablePanelGroup orientation="horizontal" className="h-full">
@@ -41,7 +46,14 @@ export function Workspace() {
             collapsedSize={0}
           >
             <InertPanel side="left" open={leftOpen}>
-              <TableList />
+              <ErrorBoundary
+                region="table list"
+                testId="table-list-error"
+                resetKeys={[fingerprint]}
+              >
+                <QaCrash region="table-list" />
+                <TableList />
+              </ErrorBoundary>
             </InertPanel>
           </ResizablePanel>
           <ResizableHandle aria-label="Resize table list" />
@@ -60,7 +72,16 @@ export function Workspace() {
             collapsedSize={0}
           >
             <InertPanel side="right" open={rightOpen && !sheet}>
-              {!sheet && <Inspector />}
+              {!sheet && (
+                <ErrorBoundary
+                  region="inspector"
+                  testId="inspector-error"
+                  resetKeys={[fingerprint]}
+                >
+                  <QaCrash region="inspector" />
+                  <Inspector />
+                </ErrorBoundary>
+              )}
             </InertPanel>
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -69,7 +90,15 @@ export function Workspace() {
             className="absolute inset-y-0 right-0 z-30 w-[min(100%,22rem)] border-l shadow-lg"
             data-testid="inspector-sheet"
           >
-            <Inspector sheet />
+            <ErrorBoundary
+              region="inspector"
+              testId="inspector-error"
+              resetKeys={[fingerprint]}
+              onClose={() => useUiStore.getState().setPanelOpen("right", false)}
+            >
+              <QaCrash region="inspector" />
+              <Inspector sheet />
+            </ErrorBoundary>
           </div>
         )}
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { ErrorBoundary } from "@/components/errors/error-boundary";
+import { QaCrash } from "@/components/errors/qa-crash";
 import { Search } from "lucide-react";
 import { useCallback, useRef } from "react";
 import {
@@ -81,7 +83,10 @@ export function SearchDialog() {
         <DialogDescription className="sr-only">
           Type to filter, use the arrow keys to move, and Enter to show the result on the canvas.
         </DialogDescription>
-        <SearchPanel onChoose={onChoose} />
+        <ErrorBoundary region="search" testId="search-error" onClose={() => setOpen(false)}>
+          <QaCrash region="search" />
+          <SearchPanel onChoose={onChoose} />
+        </ErrorBoundary>
       </DialogContent>
     </Dialog>
   );

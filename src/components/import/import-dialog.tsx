@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ErrorBoundary } from "@/components/errors/error-boundary";
+import { QaCrash } from "@/components/errors/qa-crash";
 import { ToolbarButton } from "@/components/workspace/toolbar-button";
 import { useReturnFocusTooltip } from "@/components/workspace/use-return-focus-tooltip";
 import type { Schema } from "@/domain/schema/types";
@@ -173,18 +175,25 @@ export function ImportDialog() {
           )}
           data-testid="import-dropzone"
         >
-          <ImportSource
-            draft={draft}
-            format={format}
-            detectedLabel={detected}
-            textareaRef={textareaRef}
-            removeRef={removeRef}
-            onTextInput={onTextInput}
-            onFile={onFile}
-            onRemoveFile={() => setDraft(EMPTY_DRAFT)}
-            onFormatChange={setFormat}
-          />
-          <ImportPreview state={state} />
+          <ErrorBoundary
+            region="import form"
+            testId="import-error"
+            onClose={() => onOpenChange(false)}
+          >
+            <QaCrash region="import" />
+            <ImportSource
+              draft={draft}
+              format={format}
+              detectedLabel={detected}
+              textareaRef={textareaRef}
+              removeRef={removeRef}
+              onTextInput={onTextInput}
+              onFile={onFile}
+              onRemoveFile={() => setDraft(EMPTY_DRAFT)}
+              onFormatChange={setFormat}
+            />
+            <ImportPreview state={state} />
+          </ErrorBoundary>
         </div>
         <DialogFooter className="mx-0 mb-0 items-center px-4 py-3 sm:justify-between">
           <p className="text-xs text-muted-foreground" data-testid="import-replace-note">

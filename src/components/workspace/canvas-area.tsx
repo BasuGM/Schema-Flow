@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import type { PanelImperativeHandle, PanelSize } from "react-resizable-panels";
 import { CanvasErrorBoundary } from "@/components/canvas/canvas-error-boundary";
+import { ErrorBoundary } from "@/components/errors/error-boundary";
+import { QaCrash } from "@/components/errors/qa-crash";
 import { SchemaCanvas } from "@/components/canvas/schema-canvas";
 import { IssuesPanel } from "@/components/issues/issues-panel";
 import { SHEET_HEIGHT_PERCENT, SHEET_QUERY } from "@/components/issues/issues-sheet";
@@ -33,6 +35,7 @@ export function CanvasArea() {
         <div className="relative h-full">
           <main className="h-full" aria-label="Diagram">
             <CanvasErrorBoundary>
+              <QaCrash region="canvas" />
               <SchemaCanvas />
             </CanvasErrorBoundary>
           </main>
@@ -42,7 +45,7 @@ export function CanvasArea() {
               style={{ height: `${SHEET_HEIGHT_PERCENT}%` }}
               data-testid="issues-sheet"
             >
-              <IssuesPanel key={fingerprint} />
+              <IssuesRegion fingerprint={fingerprint} />
             </div>
           )}
         </div>
@@ -61,9 +64,24 @@ export function CanvasArea() {
         collapsible
         collapsedSize={0}
       >
-        {docked && <IssuesPanel key={fingerprint} />}
+        {docked && <IssuesRegion fingerprint={fingerprint} />}
       </ResizablePanel>
     </ResizablePanelGroup>
+  );
+}
+
+/** The issues panel (docked or sheet) in its own error boundary (ADR-020). */
+function IssuesRegion({ fingerprint }: { fingerprint: string }) {
+  return (
+    <ErrorBoundary
+      region="issues panel"
+      testId="issues-error"
+      resetKeys={[fingerprint]}
+      onClose={() => useUiStore.getState().setIssuesPanelOpen(false)}
+    >
+      <QaCrash region="issues" />
+      <IssuesPanel key={fingerprint} />
+    </ErrorBoundary>
   );
 }
 
