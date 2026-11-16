@@ -1,0 +1,45 @@
+// Edge cases for the tolerant Prisma parser (P2-T04).
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id       Int    @id
+  owner    Person @relation(fields: [ownerId], references: [id])
+  ownerId  Int
+  broken   String @default(
+  note     String @map("note_text") // a plain comment
+  wallet   Wallet @relation(fields: [walletId], references: [uuid])
+  walletId Int
+  ghost    Ghost
+  @@index([
+    ownerId,
+    walletId
+  ])
+}
+
+model Person {
+  id       Int       @id
+  accounts Account[]
+  /// The person's display name.
+  name     String
+}
+
+modle Typo {
+  id Int @id
+}
+
+model Account2 {
+  id Int @id
+
+  @@map("Account")
+}
+
+view Summary {
+  id Int @unique
+}
+
+model Wallet {
+  id    Int    @id
+  label String "oops

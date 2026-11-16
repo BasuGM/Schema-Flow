@@ -1,0 +1,101 @@
+// Blog schema (PostgreSQL) — P2-T04 fixture.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// Application users.
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique @db.VarChar(255)
+  name      String?
+  role      Role      @default(READER)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  profile   Profile?
+  posts     Post[]
+  comments  Comment[]
+  followers User[]    @relation("Follows")
+  following User[]    @relation("Follows")
+
+  @@map("users")
+}
+
+model Profile {
+  id     Int     @id @default(autoincrement())
+  bio    String? /// Shown on the author page.
+  userId Int     @unique @map("user_id")
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Post {
+  id         String     @id @default(uuid()) @db.Uuid
+  title      String     @db.VarChar(200)
+  body       String
+  published  Boolean    @default(false)
+  tags       String[]
+  authorId   Int        @map("author_id")
+  author     User       @relation(fields: [authorId], references: [id])
+  categories Category[]
+  comments   Comment[]
+  postTags   PostTag[]
+  location   Unsupported("point")?
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  @@index([authorId, published(sort: Desc)])
+  @@map("posts")
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id    Int       @id @default(autoincrement())
+  label String
+  posts PostTag[]
+}
+
+model PostTag {
+  postId String @map("post_id") @db.Uuid
+  tagId  Int    @map("tag_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, map: "post_tags_post_fk")
+  tag    Tag    @relation(fields: [tagId], references: [id])
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Comment {
+  id       Int       @id @default(autoincrement())
+  body     String
+  postId   String    @db.Uuid
+  post     Post      @relation(fields: [postId], references: [id])
+  authorId Int?
+  author   User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  parentId Int?
+  parent   Comment?  @relation("Replies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("Replies")
+}
+
+enum Role {
+  ADMIN
+  AUTHOR @map("author")
+  READER
+
+  @@map("role")
+}
+
+view PostStats {
+  postId   String @unique
+  comments Int
+}

@@ -1,0 +1,56 @@
+// Shop schema (MySQL) — P2-T04 fixture: composite keys and a composite foreign key.
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id     Int     @id @default(autoincrement()) @db.UnsignedInt
+  email  String  @unique(map: "uq_customer_email") @db.VarChar(191)
+  orders Order[]
+
+  @@map("customers")
+}
+
+model Order {
+  id         BigInt      @id @default(autoincrement())
+  customerId Int         @map("customer_id") @db.UnsignedInt
+  total      Decimal     @db.Decimal(10, 2)
+  status     OrderStatus @default(PENDING)
+  note       String?     @db.Text
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  lines      OrderLine[]
+
+  @@index([customerId], map: "idx_order_customer")
+  @@fulltext([note])
+  @@map("orders")
+}
+
+model OrderLine {
+  orderId  BigInt    @map("order_id")
+  lineNo   Int       @map("line_no")
+  sku      String    @db.VarChar(64)
+  qty      Int       @default(1)
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  shipment Shipment?
+
+  @@id([orderId, lineNo])
+  @@unique([orderId, sku], name: "order_sku")
+  @@map("order_lines")
+}
+
+model Shipment {
+  id      Int       @id @default(autoincrement())
+  orderId BigInt    @map("order_id")
+  lineNo  Int       @map("line_no")
+  line    OrderLine @relation(fields: [orderId, lineNo], references: [orderId, lineNo])
+
+  @@unique([orderId, lineNo])
+  @@map("shipments")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+}
