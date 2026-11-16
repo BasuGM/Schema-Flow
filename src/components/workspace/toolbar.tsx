@@ -64,9 +64,11 @@ export function Toolbar() {
       <div className="ml-auto flex items-center gap-0.5">
         <ImportDialog />
         <IssuesButton />
+        {/* A disabled placeholder; hidden on phones so the toolbar fits 390 px (QA-012). */}
         <ToolbarButton
           tooltip="Export is coming in Phase 3"
           unavailable
+          className="hidden sm:inline-flex"
           data-testid="toolbar-export"
         >
           <Download aria-hidden />

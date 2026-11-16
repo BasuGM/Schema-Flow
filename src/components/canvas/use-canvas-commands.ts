@@ -1,11 +1,14 @@
 "use client";
 
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, useStoreApi } from "@xyflow/react";
 import { useCallback, useEffect, useRef } from "react";
 import { NODE_WIDTH } from "@/graph/node-metrics";
 import type { FlowElements } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
 import { useUiStore } from "@/stores/ui-store";
+
+/** After a new layout, canvas size changes within this window re-fit (see below). */
+const FIT_WINDOW_MS = 600;
 
 export function motionDuration(ms: number): number {
   if (typeof window === "undefined" || !window.matchMedia) return ms;
@@ -39,14 +42,35 @@ export function useCanvasCommands(base: FlowElements) {
 
   // Re-fit whenever the node set is rebuilt from a new layout (initial load, re-layout, new schema).
   const firstBase = useRef(true);
+  const fitWindowEnd = useRef(0);
   useEffect(() => {
     if (firstBase.current) {
       firstBase.current = false;
       return;
     }
+    fitWindowEnd.current = performance.now() + FIT_WINDOW_MS;
     const frame = requestAnimationFrame(() => resetView());
     return () => cancelAnimationFrame(frame);
   }, [base, resetView]);
+
+  // An import can open the issues panel in the same update, shrinking the canvas a few frames
+  // later. Size changes shortly after a new layout re-fit to the final size; any other resize
+  // (the user opening, closing or dragging the panel) keeps the viewport. Subscribing to the store
+  // (not `useStore`) avoids re-rendering the canvas on every resize frame.
+  const store = useStoreApi();
+  useEffect(() => {
+    let frame = 0;
+    const unsubscribe = store.subscribe((s, prev) => {
+      if (s.width === prev.width && s.height === prev.height) return;
+      if (performance.now() > fitWindowEnd.current) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => resetView());
+    });
+    return () => {
+      unsubscribe();
+      cancelAnimationFrame(frame);
+    };
+  }, [store, resetView]);
 
   return { resetView };
 }
