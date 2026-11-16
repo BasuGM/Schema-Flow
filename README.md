@@ -4,8 +4,30 @@ A browser-based, interactive database schema explorer. Import SQL DDL or a Prism
 explore it as a 2D entity relationship diagram. Everything runs locally in the browser: imported
 SQL is parsed as text, never executed, and schema data is never sent anywhere.
 
-> Status: Phase 1 (core model, sample schema, interactive canvas). Import arrives in Phase 2.
-> See [docs/development/ROADMAP.md](docs/development/ROADMAP.md).
+> Status: Phases 1 and 2 are built: interactive canvas, import, search, full inspector and
+> neighbourhood highlighting. Phase 2's final verification is in progress; export and layout
+> persistence come in Phase 3. See [docs/development/ROADMAP.md](docs/development/ROADMAP.md).
+
+## What it does
+
+- **Import** SQL DDL (PostgreSQL, MySQL, SQLite — including `pg_dump` and `mysqldump` output) or a
+  Prisma schema: paste it, choose a file or drop one (up to 5 MB). The text is tokenized by
+  SchemaFlow's own tolerant parsers. It is never executed and never leaves the browser.
+  Statements that don't matter for a diagram (data, grants, functions, …) are skipped and
+  summarised; problems are listed in an issues panel with line numbers, and one bad statement
+  never blocks the rest. PostgreSQL partitions are folded into their partitioned table.
+- **Explore** the schema as an auto-laid-out diagram: tables with their columns, keys and
+  nullability, and relationships with cardinality. Select a table in the list or on the canvas
+  to see its columns, keys and relations in the inspector, follow foreign keys, and dim everything
+  outside its 1- or 2-hop neighbourhood.
+- **Search** tables and columns (⌘K / Ctrl+K or `/`) and jump to the result.
+- Light and dark themes, keyboard navigation, and a phone layout with the panels as sheets.
+- Tested on real schemas: GitLab's `structure.sql` (992 tables after folding partitions),
+  Sakila, and generated 180-table `mysqldump` and 200-model Prisma files
+  (see [tests/fixtures/real/SOURCES.md](tests/fixtures/real/SOURCES.md)).
+
+Large schemas are laid out on the main thread: GitLab's 992 tables take about 3 s on an M1
+(the Import button shows "Laying out N tables…" meanwhile).
 
 ## Getting started
 
@@ -27,6 +49,10 @@ npm run dev        # http://localhost:3000
 | `npm run test`          | Vitest, single run                                                                                                           |
 | `npm run test:coverage` | Vitest with V8 coverage                                                                                                      |
 | `npm run check`         | typecheck → lint → test → build, failing fast                                                                                |
+
+Headless checks (need Chrome and a running server): `node scripts/headless/toolbar-width.mjs`
+(phone toolbar) and `node scripts/headless/large-schema-perf.mjs` (frame costs on a
+2,000-table schema).
 
 ### Sample schemas
 

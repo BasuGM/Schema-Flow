@@ -563,3 +563,71 @@ Dimming at the default 1 hop changes how every selection looks. These verified A
 (all tests pass) and are listed in the handoff for a visual re-check: AC-P1-T07-8 / AC-P1-T08-*
 (selection ring and brand-coloured edges of the selected table), AC-P2-T06 "Show table",
 AC-P2-T07 search reveal and centring, AC-P2-T08-3 / -5 (FK links, Relations navigation and Back).
+
+## P2-T10 — Phase 2 hardening
+
+### Real-world fixtures (`tests/fixtures/real/`)
+
+Expected counts come from the source files; [SOURCES.md](../../tests/fixtures/real/SOURCES.md)
+gives the commands to recount them. Issues are grouped by kind (names blanked).
+
+| Fixture                         | Format detected | Tables                                       | Columns | Relationships     | Issues (all warnings)                                                                                                                                                   |
+| ------------------------------- | --------------- | -------------------------------------------- | ------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gitlab-structure.postgres.sql` | PostgreSQL SQL  | 992 (+434 partitions folded into 19 parents) | 9982    | 1720              | 140: expression index ×120, CREATE VIEW ×15, EXCLUDE ×2, unsupported ALTER TABLE action ×1 (ENABLE ALWAYS TRIGGER), partitions folded ×1, skipped-statements summary ×1 |
+| `sakila-schema.mysql.sql`       | MySQL SQL       | 16                                           | 90      | 22                | 8: CREATE VIEW ×7, skipped-statements summary ×1                                                                                                                        |
+| `mysqldump-180.mysql.sql`       | MySQL SQL       | 180                                          | 1625    | 306 (9 composite) | 1: skipped-statements summary (DROP, LOCK/UNLOCK, INSERT)                                                                                                               |
+| `large-200.prisma`              | Prisma schema   | 220 (200 models + 20 implicit join tables)   | 1692    | 354               | none                                                                                                                                                                    |
+
+- AC-P2-T10-1: Each real fixture imports through the dialog with exactly the counts above (the
+  dialog counts line shows tables · columns · relationships), no crash, and only the expected
+  console lines (none during a normal import). GitLab's `issue_search_data` lists 64 partitions
+  in the inspector ("Partitioned · 64 partitions folded in"). Tables outside the default schema
+  show `schema.table` on the canvas, in the list and in their test IDs (e.g.
+  `table-node-billing.invoices` in `sql/edge-cases.postgres.sql`); the list filter matches the
+  qualified name. Generated fixtures match their generators byte for byte. _Auto_; _Manual_
+- AC-P2-T10-2: Importing 150 or more tables shows "Laying out N tables…" on the Import button
+  (disabled, Cancel disabled, dialog `aria-busy`) and paints it before the layout runs; smaller
+  imports are unchanged. GitLab parse + layout + flow on the M1: ≈ 0.4 s + 2.5 s + 10 ms
+  (performance test budgets 1.2 s / 7.5 s / 100 ms). _Auto_; _Manual_
+- AC-P2-T10-3: In a QA build (`NEXT_PUBLIC_QA_HOOKS=1`), `schemaflowQa.crash(r)` for each region
+  shows that region's fallback (`canvas-error`, `table-list-error`, `inspector-error`,
+  `issues-error`, `search-error`, `import-error`) with "The <region> could not be displayed.",
+  the message and Try again; the rest of the workspace keeps working. Try again while still
+  crashing shows the fallback again without a loop; after `schemaflowQa.heal()` it recovers. A new
+  import resets a failed panel region. In the inspector and issues sheets and both dialogs, Close
+  and Escape close the sheet or dialog; focus moves to Try again when the region held it. Each
+  crash logs exactly two console errors: React's `Error: QA hook: …` and
+  `SchemaFlow: the <region> could not be displayed.` _Auto_; _Manual_
+- AC-P2-T10-4: In the QA build, `crash("app")` shows `app-error` ("SchemaFlow hit an unexpected
+  error.", Try again, Reload) and `crash("root")` shows `global-error`; Try again after `heal()`
+  restores the workspace. The normal build contains no QA hook code (`schemaflowQa` is
+  undefined). _Manual_
+- AC-P2-T10-5: Below 768 px the table list opens as a sheet (`table-list-sheet`, ≤ 20 rem) with
+  focus on the sheet, not a 0 px panel; `toolbar-toggle-left` has `aria-expanded` matching it.
+  Picking a table closes the sheet, selects and centres the table, and leaves the inspector
+  closed (the table is visible); focus returns to the toggle. Escape and "Close tables" close it
+  without clearing the selection; the filter text survives. Opening one sheet closes the other.
+  Widening past 768 px with the sheet open docks the list (focus on the toggle, no horizontal
+  overflow). Light and dark; `toolbar-width.mjs` passes. _Auto_; _Manual_
+- AC-P2-T10-6: Enter on "Resize table list", "Resize inspector" or "Resize issues panel" collapses
+  that panel (content `inert`, toggle `aria-expanded="false"`) and Enter again restores its
+  previous width (not the minimum); focus stays on the separator and `aria-valuenow` updates.
+  Arrow keys, Home and End resize as before (AC-P1-T06-10). _Auto_; _Manual_
+- AC-P2-T10-7: Large-schema frame costs, measured with `node scripts/headless/large-schema-perf.mjs`
+  on `neighbourhood-2000` (development machine budgets, 1 hop, worst of 3): worst centring frame
+  ≤ 100 ms **(met: 81 ms)**; panning at the fitted zoom with `hub` selected ≥ 45 fps **(met: 58)**;
+  hub select / deselect first frame ≤ 40 ms **(not met: 68 / 64 ms; Off baseline 54 / 49 ms;
+  ADR-022)**. Other machines compare 1 hop against their own Off baseline. For large schemas
+  below zoom 0.3, column rows show bars instead of text (`data-zoomed-out` on `schema-canvas`);
+  at zoom ≥ 0.3 and for normal-sized schemas they show text as before. _Manual_
+- AC-P2-T10-8: README describes the current features, formats and limits (5 MB, parsed never
+  executed, stays in the browser). _Manual_
+
+**Revisions to verified behaviour (intentional, P2-T10):**
+
+- AC-P2-T08-7 (phone inspector sheet): Escape inside the sheet now closes it (ADR-021); it used to
+  clear the selection and leave the sheet open.
+- Canvas and list names: tables outside the default schema now read `billing.invoices` (was
+  `invoices`) on the canvas and in the table list, with matching test IDs (ADR-019).
+- MySQL: `/*!NNNNN … */` executable comments are now read as code, as MySQL does; statements made
+  entirely of them are skipped silently, so `sql/shop.mysql.sql` still has no issues (ADR-019).

@@ -77,17 +77,17 @@ flowchart LR
 
 ## Module boundaries
 
-| Path                  | Responsibility                                             | May import                   |
-| --------------------- | ---------------------------------------------------------- | ---------------------------- |
-| `src/domain/schema`   | Types, IDs, normalize, validate, fingerprint, selectors    | nothing app-specific         |
-| `src/domain/search`   | Search index and ranking (P2-T07)                          | domain                       |
-| `src/samples`         | E-commerce sample, synthetic generator, `?sample=` parsing | domain                       |
-| `src/graph`           | `schemaToFlow`, Dagre layout, node metrics, handle IDs     | domain, `@xyflow` types only |
-| `src/stores`          | Zustand slices                                             | domain, graph                |
-| `src/components`      | React UI (`workspace/`, `canvas/`, `ui/` = shadcn)         | everything above             |
-| `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                               | domain                       |
-| `src/analysis` (P4)   | Health checks                                              | domain                       |
-| `src/generators` (P3) | Schema → SQL/Prisma/Mermaid                                | domain                       |
+| Path                  | Responsibility                                                | May import                   |
+| --------------------- | ------------------------------------------------------------- | ---------------------------- |
+| `src/domain/schema`   | Types, IDs, normalize, validate, fingerprint, selectors       | nothing app-specific         |
+| `src/domain/search`   | Search index and ranking (P2-T07)                             | domain                       |
+| `src/samples`         | E-commerce sample, synthetic generator, `?sample=` parsing    | domain                       |
+| `src/graph`           | `schemaToFlow`, Dagre layout, node metrics, handle IDs        | domain, `@xyflow` types only |
+| `src/stores`          | Zustand slices                                                | domain, graph                |
+| `src/components`      | React UI (`workspace/`, `canvas/`, `errors/`, `ui/` = shadcn) | everything above             |
+| `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                                  | domain                       |
+| `src/analysis` (P4)   | Health checks                                                 | domain                       |
+| `src/generators` (P3) | Schema → SQL/Prisma/Mermaid                                   | domain                       |
 
 Rules: pure modules have zero React/Next/DOM imports and are unit-tested; parsers never import
 React Flow; canvas components never import parsers. `src/graph` imports only _types_ from
@@ -611,6 +611,80 @@ PARTITION` lines.
   and can't be closed; the layout runs after that state has painted. A Web Worker remains out of
   scope.
 
+### ADR-020 — Error boundaries per region, app-level error pages, build-time QA hooks (2026-11-16, P2-T10)
+
+- **One boundary per region** (`src/components/errors/error-boundary.tsx`): canvas ("diagram"),
+  table list, inspector (panel and phone sheet), issues panel (docked and sheet), search dialog
+  and import form. A render error shows a compact `role="alert"` fallback in that region only
+  (`canvas-error`, `table-list-error`, `inspector-error`, `issues-error`, `search-error`,
+  `import-error`) with the message and **Try again**; the rest of the workspace keeps working.
+  Regions keyed on the schema fingerprint retry by themselves after a new import. Try again on a
+  child that still throws simply shows the fallback again (one render attempt per click; tested).
+  In sheets and dialogs the fallback adds **Close**, and Escape closes too. If the failed region
+  held focus, focus moves to Try again.
+- **Console:** each caught error logs exactly two expected lines: React's own `Error: …` report
+  and `SchemaFlow: the <region> could not be displayed.` Nothing else is expected.
+- **App level:** `src/app/error.tsx` catches anything outside the regions (e.g. the toolbar) inside
+  the root layout, with Try again (`retry()`) and Reload; `src/app/global-error.tsx` replaces the
+  root layout if it fails, with its own `<html>`/`<body>` and inline styles (no app stylesheet,
+  follows the OS colour scheme). Both work under static export (checked in headless Chrome with
+  the QA hooks).
+- **QA hooks:** `NEXT_PUBLIC_QA_HOOKS=1 npm run build` produces a build whose console has
+  `schemaflowQa.crash("<region>")` / `schemaflowQa.heal()` (regions: `root`, `app`, `canvas`,
+  `table-list`, `inspector`, `issues`, `search`, `import`). `next.config.ts` always defines the
+  variable (`"0"` or `"1"`), so it is a build-time constant: the normal build contains neither the
+  variable nor the hook code (checked by searching `out/`).
+
+### ADR-021 — Phone table-list sheet; Enter on resize separators (2026-11-16, P2-T10)
+
+- **Phones (below md, 768 px):** like the inspector (ADR-017), the table list opens as an overlay
+  sheet (`table-list-sheet`, up to 20 rem) instead of a 0 px panel (a 200 px list beside the
+  320 px minimum canvas can't fit in 390 px). Both sheets share `SideSheet`: focus moves to the
+  sheet container when it opens (not the filter field, so the phone keyboard doesn't pop up),
+  Escape and the close button close it, and focus returns to the panel's toolbar toggle.
+  **One sheet at a time:** opening one closes the other. **Picking a table** closes the list
+  sheet and centres the table; selection never opens the inspector, so the table is not covered
+  (QA-014). Widening past md with the sheet open docks the list (state, filter text and focus on
+  the toggle kept). The toggles now also expose `aria-expanded` (`aria-pressed` stays for the
+  verified AC-P1-T06-5).
+- **Visible change:** Escape inside the phone inspector sheet now closes the sheet (before, it
+  cleared the selection and left the sheet open on its empty state).
+- **Enter on a separator** toggles the side panel it belongs to (table list, inspector, issues
+  panel) through `ui-store`. The library's Enter acts on the panel _before_ the separator (the
+  canvas, for the inspector), so a capture-phase listener on the separator handles Enter first and
+  prevents the library's handler; arrow keys, Home and End are untouched. Collapsing and
+  restoring go through the existing panel sync, so Enter restores the previous width, not the
+  minimum, and focus stays on the separator.
+
+### ADR-022 — Large-schema frame costs (2026-11-16, P2-T10)
+
+Measured with `scripts/headless/large-schema-perf.mjs` (2,000 tables, a 499-reference `hub`) and
+source-mapped CPU profiles and traces of the production build.
+
+- **Panning when zoomed out** ran at 27–34 fps, with or without a selection. Profiles showed the
+  time in painting and rasterising the text of ~150 tables' column rows at zoom 0.05 (sub-pixel,
+  unreadable). **Level of detail:** for large schemas (over 80 tables, the existing
+  `onlyRenderVisibleElements` threshold) below zoom **0.3** (`ROW_DETAIL_MIN_ZOOM`; 12 px row text
+  is under 4 px there), the canvas root gets `data-zoomed-out` and CSS hides row text and icons
+  with `visibility: hidden` (sizes, handles and PK tints stay; a light bar marks each row). The
+  table name, edges and selection styling are unchanged. Panning now runs at 57–59 fps at 1 hop (51–59 fps with Off).
+  Normal-sized schemas are never affected (the sample fits a phone at zoom 0.23 and keeps its
+  rows).
+- **Centring jump:** picking a table in a large schema centred from zoom 0.05 to 1 with a 300 ms
+  animation; each animation frame mounted a different set of tables (230–350 ms frames). For
+  large schemas, a centring that changes the zoom by more than **4×** (`JUMP_ZOOM_RATIO`) now
+  jumps without animation (worst frame 52–81 ms at 1 hop). Normal-sized schemas, and smaller zoom changes,
+  keep the animation; reduced motion still disables it everywhere.
+- **Selection changes:** column rows are memoized apart from the node frame (selecting or dimming
+  re-renders only header and frame), and an edge memoizes its path and builds its label text only
+  while the label shows. The hub select / deselect first frame stays at 52–68 ms at 1 hop (Off: 37–54 ms):
+  the profile puts ~3 ms in edge re-renders, ~5 ms in Radix Tabs' `Presence` style read (a style
+  recalculation the frame would do anyway), and the rest in style, paint and layerizing hundreds of
+  re-coloured edges and dimmed tables. Moving edge highlight state into CSS (amendment 13) was
+  therefore not done: it would save a few milliseconds of JS and none of the rendering.
+  `data-edge-state` and `data-dimmed` stay as verified. Reaching ≤ 40 ms would need a different
+  rendering approach for edges (e.g. one canvas layer), which is out of scope.
+
 ## Known limitations (Phase 1)
 
 - Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).
@@ -627,3 +701,15 @@ PARTITION` lines.
   (full relationship list in P2-T05).
 - In TB direction, edges still attach to the left/right column handles.
 - React Flow's attribution link is kept (MIT licence; hiding it is reserved for Pro subscribers).
+
+## Known limitations (Phase 2)
+
+- Import, parsing and Dagre layout run on the main thread (ADR-014): GitLab's 992-table dump takes
+  ≈ 0.4 s to parse and ≈ 2.5 s to lay out on an M1, behind the "Laying out N tables…" state. A
+  2,000-table linear FK chain took over 90 s in Cowork's test (ROADMAP, possible P3 guard).
+- On a 2,000-table schema, selecting or deselecting a 499-reference hub takes 52–68 ms to the next
+  frame on an M1 (budget 40 ms not met; ADR-022).
+- Views, functions, triggers, expression indexes and EXCLUDE constraints are skipped (reported);
+  partition bounds are not shown, only the list of partitions.
+- The CREATE TABLE … PARTITION OF column list is not parsed (it repeats the parent's).
+- Separator Enter handling relies on react-resizable-panels checking `defaultPrevented` (v4).

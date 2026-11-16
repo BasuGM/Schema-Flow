@@ -551,3 +551,49 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   edge-state (default/highlighted) re-renders of the hub's edges. Panning with `hub` selected ran
   at about 32 fps. To be profiled in P2-T10 together with the long centring frame.
 - **New defects:** none.
+
+---
+
+## 2026-11-16 — P2-T10 (Phase 2 hardening) + Phase 2 final handoff
+
+- **Plan:** approved with amendments 1–17 (source-derived fixture counts, partition/schema ADR,
+  byte-for-byte generators, busy state, fuzz time limits, boundary behaviour, QA hooks, phone
+  sheet interactions, edge-state selector, centring ADR, raw harness output, Enter details,
+  per-commit handoff). Fixture source chosen by the user: vendor + generate.
+- **Commits:** `2be3530` (fixtures, parser, names, busy state), `70bdf99` (error boundaries, QA
+  hooks), `9a53579` (phone list sheet, Enter on separators), `418c542` (frame costs), `5a92986`
+  (busy label, test warm-up). `npm run check` passes 3× in a row: 58 files / 399 tests, build ✔.
+- **Found by Claude Code with the real fixtures (not Cowork defects), fixed with regression
+  tests:**
+  - GitLab `structure.sql`: 434 partitions drawn as tables and 2,536 warnings (1,871 `ALTER INDEX
+    … ATTACH PARTITION`). Partitions are now folded into their parent (ADR-019): 992 tables,
+    1,720 relationships, 140 warnings.
+  - Sakila: MySQL `DELIMITER` blocks were not supported, so procedure bodies split into stray
+    statements and a `CREATE TEMPORARY TABLE` inside a procedure became a 17th table.
+    `DELIMITER` now switches the terminator. `/*!50705 … */` executable comments were dropped, so
+    `address.location` was missing; they are now read as code (statements entirely inside them,
+    mysqldump's session plumbing, are skipped silently, so `sql/shop.mysql.sql` keeps "No
+    issues"). `CREATE DEFINER=… PROCEDURE|VIEW` was reported as "CREATE DEFINER"; now classified
+    by object kind.
+  - Same-named tables in two schemas looked identical on the canvas and in the list and shared a
+    test ID; non-default schemas now show `schema.table` (ADR-019).
+  - The 2.5 s GitLab layout ran inside the Import click with no feedback; a busy state now paints
+    first from 150 tables.
+  - A test flake: the first parse in the import-dialog tests could exceed `waitFor`'s 1 s while the
+    lazy parser chunk was transformed under load; the tests now load the parsers up front.
+- **Error boundaries:** six regions plus `app/error.tsx` and `global-error.tsx` (ADR-020), checked
+  in jsdom and in a QA-hook production build in headless Chrome; the normal build has no hook
+  code.
+- **Phone table list (ROADMAP note from P2-T09):** fixed — opens as a sheet instead of a 0 px
+  panel (ADR-021). Enter on separators now toggles their own panel.
+- **Frame costs (Cowork's P2-T09 observation):** measured with the committed harness on the M1.
+  Panning at the fitted zoom 27–34 → 57–59 fps; worst centring frame 230–351 → 52–81 ms; hub
+  select / deselect first frame unchanged at 52–68 ms (Off 37–54 ms), **over the 40 ms budget**;
+  reason and evidence in ADR-022. Cowork's hypothesis (edge-state re-renders) was checked: about
+  3 ms of the frame.
+- **Claude Code headless Chrome (production build; not independent verification):** see
+  [handoffs/P2-final.md](handoffs/P2-final.md) — region errors, app/root errors, Enter widths,
+  phone sheet in light and dark, widening past md, `toolbar-width.mjs` PASS, perf before/after.
+- **Bundle:** +12,494 B raw / +4,897 B gzip initial JS (1,147,345 / 362,838).
+- **Cowork result:** Pending — not independently verified. See
+  [handoffs/P2-final.md](handoffs/P2-final.md).
