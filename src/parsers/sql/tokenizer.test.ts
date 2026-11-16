@@ -66,6 +66,17 @@ describe("tokenize", () => {
     ]);
   });
 
+  it("treats U+FEFF anywhere as whitespace (QA-009)", () => {
+    const { tokens, issues } = tokenize("a;\n\uFEFFb\uFEFF c", "postgresql");
+    expect(issues).toEqual([]);
+    expect(tokens.map((t) => [t.text, t.offset, t.line])).toEqual([
+      ["a", 0, 1],
+      [";", 1, 1],
+      ["b", 4, 2],
+      ["c", 7, 2],
+    ]);
+  });
+
   it("tracks line numbers", () => {
     const { tokens } = tokenize("a\n'multi\nline'\n  b", "postgresql");
     expect(tokens.map((t) => t.line)).toEqual([1, 2, 4]);

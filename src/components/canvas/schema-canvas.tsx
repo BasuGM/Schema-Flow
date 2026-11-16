@@ -81,14 +81,16 @@ function SchemaCanvasInner() {
     setEdges(base.edges);
   }
 
-  // Selecting a table (canvas, list or keyboard) clears a clicked edge and its pinned label.
+  // Selecting a table (canvas, list or keyboard) or pressing Escape clears a clicked edge and its
+  // pinned label.
   const clearEdgeSelection = useCallback(() => setEdges(deselectEdges), []);
   useEffect(
     () =>
       useUiStore.subscribe((s, prev) => {
         const changed =
           s.selectedTableId !== prev.selectedTableId || s.focusRequest !== prev.focusRequest;
-        if (changed && s.selectedTableId !== null) clearEdgeSelection();
+        if ((changed && s.selectedTableId !== null) || s.clearRequest !== prev.clearRequest)
+          clearEdgeSelection();
       }),
     [clearEdgeSelection],
   );

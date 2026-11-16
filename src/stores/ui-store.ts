@@ -14,7 +14,11 @@ interface UiState {
   leftPanelOpen: boolean;
   rightPanelOpen: boolean;
   focusRequest: FocusRequest | null;
+  /** Bumped by `clearSelection`; the canvas unpins a clicked edge when it changes. */
+  clearRequest: number;
   selectTable: (id: TableId | null) => void;
+  /** Escape: clear the table selection and any clicked (pinned) edge. */
+  clearSelection: () => void;
   /** Select a table and center the canvas on it (e.g. from the sidebar list). */
   focusTable: (id: TableId) => void;
   setTableFilter: (filter: string) => void;
@@ -30,11 +34,13 @@ const initial = {
   leftPanelOpen: true,
   rightPanelOpen: true,
   focusRequest: null,
+  clearRequest: 0,
 } satisfies Partial<UiState>;
 
 export const useUiStore = create<UiState>()((set) => ({
   ...initial,
   selectTable: (id) => set((s) => (s.selectedTableId === id ? s : { selectedTableId: id })),
+  clearSelection: () => set((s) => ({ selectedTableId: null, clearRequest: s.clearRequest + 1 })),
   focusTable: (id) =>
     set((s) => ({
       selectedTableId: id,

@@ -196,6 +196,15 @@ These criteria add to or replace the originals; the original wording is kept abo
   type, and each one gets a line-numbered warning. Fixture `typeless.sqlite.sql`: ok, 2 tables,
   6 columns, 1 relationship, 4 warnings (lines 2, 2, 5, 6). _Auto_
 
+## Fixes for Cowork round 5 (QA-009 and the Escape decision, 2026-11-16)
+
+- AC-P2-T01-5 (QA-009): U+FEFF anywhere in the input is whitespace: it neither joins a word nor
+  breaks a statement. `CREATE TABLE a (id int);\n\uFEFFCREATE TABLE b (id int);` imports both
+  tables with no issues. _Auto_
+- AC-P1-T08-13: Escape (outside text inputs and menus) also unpins a clicked edge label and clears
+  its selected style, whether or not a table is selected. Clicking empty canvas already did.
+  _Auto (2 cases)_; _Manual_
+
 ### How to check the production build
 
 1. Stop the dev server (only one server on port 3000).

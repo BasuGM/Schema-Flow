@@ -206,6 +206,15 @@ describe("typeless.sqlite.sql — columns without a type (QA-008)", () => {
   });
 });
 
+describe("BOM in the middle of the input (QA-009)", () => {
+  it("imports the statement after a mid-file U+FEFF with no warning", () => {
+    const r = parseSql("CREATE TABLE a (id int);\n\uFEFFCREATE TABLE b (id int);");
+    expect(r.ok).toBe(true);
+    expect(r.schema?.tableOrder).toEqual(["public.a", "public.b"]);
+    expect(r.issues).toEqual([]);
+  });
+});
+
 describe("BOM repro from the report (QA-007)", () => {
   it("imports a one-table file that starts with U+FEFF", () => {
     const r = parseSql("\uFEFFCREATE TABLE users (id int primary key);");

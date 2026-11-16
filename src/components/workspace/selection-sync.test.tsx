@@ -160,6 +160,22 @@ describe("selection sync between list, canvas and inspector", () => {
     expect(screen.queryByTestId(`edge-label-${id}`)).toBeNull();
   });
 
+  it.each([
+    ["with no table selected", null],
+    ["with a table selected", "public.orders"],
+  ] as const)("Escape unpins a clicked edge label %s", (_name, tableId) => {
+    const { container } = renderWorkspace();
+    if (tableId) act(() => useUiStore.getState().selectTable(tableId));
+    const id = "fk:public.payments(order_id)->public.orders";
+    const edge = container.querySelector(`[data-id="${id}"]`)!;
+    fireEvent.click(edge);
+    expect(screen.getByTestId(`edge-label-${id}`)).toBeInTheDocument();
+    fireEvent.keyDown(edge, { key: "Escape" });
+    expect(screen.queryByTestId(`edge-label-${id}`)).toBeNull();
+    expect(screen.getByTestId(`edge-${id}`)).toHaveAttribute("data-edge-state", "default");
+    expect(useUiStore.getState().selectedTableId).toBeNull();
+  });
+
   it("gives edges a descriptive accessible name", () => {
     const { container } = renderWorkspace();
     expect(

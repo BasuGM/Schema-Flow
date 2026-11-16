@@ -28,9 +28,7 @@ const OP_CHARS = "+-*/<>=~!@#%^&|`?:";
 export function tokenize(sql: string, dialect: SqlDialect): TokenizeResult {
   const tokens: Token[] = [];
   const issues: ImportIssue[] = [];
-  // A leading byte-order mark (QA-007) is skipped, not stripped, so offsets still index `sql` and
-  // line numbers are unchanged (U+FEFF is not a newline).
-  let i = sql.charCodeAt(0) === 0xfeff ? 1 : 0;
+  let i = 0;
   let line = 1;
   const n = sql.length;
 
@@ -54,7 +52,10 @@ export function tokenize(sql: string, dialect: SqlDialect): TokenizeResult {
     const c = sql[i]!;
     const next = sql[i + 1];
 
-    if (c === " " || c === "\t" || c === "\r" || c === "\n" || c === "\f") {
+    // U+FEFF (byte-order mark / zero-width no-break space) is whitespace anywhere: a leading BOM
+    // (QA-007) or one left in the middle by concatenated files (QA-009). Skipping it keeps offsets
+    // indexing `sql` and line numbers unchanged.
+    if (c === " " || c === "\t" || c === "\r" || c === "\n" || c === "\f" || c === "\uFEFF") {
       advanceTo(i + 1);
       continue;
     }
@@ -200,10 +201,11 @@ function isDigit(c: string): boolean {
   return c >= "0" && c <= "9";
 }
 
+// Non-ASCII letters are identifier characters, except U+FEFF, which is whitespace (QA-009).
 function isWordStart(c: string): boolean {
-  return /[A-Za-z_\u0080-￿]/.test(c);
+  return c !== "﻿" && /[A-Za-z_\u0080-￿]/.test(c);
 }
 
 function isWordPart(c: string): boolean {
-  return /[A-Za-z0-9_$\u0080-￿]/.test(c);
+  return c !== "﻿" && /[A-Za-z0-9_$\u0080-￿]/.test(c);
 }

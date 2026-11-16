@@ -4,12 +4,12 @@ import { useCallback, type KeyboardEvent } from "react";
 import { useUiStore } from "@/stores/ui-store";
 
 /**
- * Escape clears the table selection wherever focus is in the workspace (canvas, list, inspector,
+ * Escape clears the table selection and unpins a clicked edge label wherever focus is in the workspace (canvas, list, inspector,
  * toolbar) — except in text inputs (Escape belongs to the field) and open menus (Escape closes the
  * menu first). Attached to the workspace root so it catches events bubbling from every panel.
  */
 export function useEscapeToClear() {
-  const selectTable = useUiStore((s) => s.selectTable);
+  const clearSelection = useUiStore((s) => s.clearSelection);
   return useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
@@ -20,8 +20,8 @@ export function useEscapeToClear() {
         )
       )
         return;
-      selectTable(null);
+      clearSelection();
     },
-    [selectTable],
+    [clearSelection],
   );
 }

@@ -173,3 +173,26 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Fix commit:** `12697ac`. `npm run check` passes: 27 files / 195 tests (parser: 8 files / 67),
   build ✔. Pushed to `origin/main`.
 - **Re-verification:** pending, see [handoffs/P2-fix-QA-006-008.md](handoffs/P2-fix-QA-006-008.md).
+
+---
+
+## 2026-11-16 — Cowork re-verification round 5 at 3806424: QA-006…008 fixed; QA-009
+
+- **Handoff verified:** [handoffs/P2-fix-QA-006-008.md](handoffs/P2-fix-QA-006-008.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16.
+- **Result:**
+  - **QA-006: Verified fixed.**
+  - **QA-007: Verified fixed.**
+  - **QA-008: Verified fixed.**
+  - Per the user's instruction, P2-T01, P2-T02, P2-T03 and P1-T07 are now **Verified**.
+- **New defect:**
+  - **QA-009** · minor · _A U+FEFF in the middle of the input drops the next statement._
+    `CREATE TABLE a (id int);\n\uFEFFCREATE TABLE b (id int);` imported only `a`, with
+    "Skipped unsupported statement: CREATE TABLE b (id int)." Root cause: the QA-007 fix skipped
+    only a leading U+FEFF, and the tokenizer counts non-ASCII characters as identifier characters,
+    so `\uFEFFCREATE` became one word. Fix: U+FEFF is whitespace anywhere and never part of a word.
+    Status: **Fixed — awaiting re-verification.**
+- **UX decision (user):** Escape cleared a selected table but left a clicked edge label pinned.
+  Escape now also unpins it, through a `clearSelection` action in `ui-store` (AC-P1-T08-13).
+  Status: **Implemented — awaiting verification.**
