@@ -533,3 +533,21 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Bundle:** +2.4 KB raw / +1.6 KB gzip initial JS.
 - **Cowork result:** Pending — not independently verified. See
   [handoffs/P2-T09.md](handoffs/P2-T09.md).
+
+---
+
+## 2026-11-16 — Cowork re-verification round 11 at c82ba77: P2-T09 all pass; QA-017 fixed
+
+- **Handoff verified:** [handoffs/P2-T09.md](handoffs/P2-T09.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16.
+- **Verified:** P2-T09 steps 1–14 all PASS (AC-P2-T09-1…6); P2-T09 → **Verified**. QA-017
+  **Fixed** (AC-P1-T06-10), checked via the toolbar toggle, drag to 0 px, arrow keys, Home and
+  End, keyboard re-expand, and the narrow-viewport focus move.
+- **Observation (not a defect; pre-existing, not caused by dimming):** on
+  `tests/fixtures/large/neighbourhood-2000.postgres.sql`, switching the selection away from `hub`
+  (499 edges) or deselecting takes 210–350 ms on Cowork's machine (about 2–3× slower than the
+  M1), the same with highlighting Off; selecting `hub` takes 45–90 ms. Cowork's hypothesis: the
+  edge-state (default/highlighted) re-renders of the hub's edges. Panning with `hub` selected ran
+  at about 32 fps. To be profiled in P2-T10 together with the long centring frame.
+- **New defects:** none.
