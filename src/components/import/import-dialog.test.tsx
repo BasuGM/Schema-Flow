@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { SchemaCanvas } from "@/components/canvas/schema-canvas";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toolbar } from "@/components/workspace/toolbar";
@@ -13,6 +13,7 @@ import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
 import { BUSY_IMPORT_TABLES } from "./import-dialog";
+import { loadParsers } from "./use-import-parse";
 
 // jsdom: `import.meta.url` is not a file URL here, so resolve fixtures from the project root.
 const fixture = (path: string) => readFileSync(join(process.cwd(), "tests/fixtures", path), "utf8");
@@ -46,6 +47,9 @@ const status = () => screen.getByTestId("import-status");
 const confirm = () => screen.getByTestId("import-confirm");
 const nodeCount = () => document.querySelectorAll(".react-flow__node").length;
 
+// The parsers are a lazily loaded chunk. Load them once up front, so a cold module transform under
+// a loaded test run can't eat the 1 s `waitFor` of whichever test parses first.
+beforeAll(() => loadParsers());
 beforeEach(() => resetStores());
 
 describe("Import dialog", () => {

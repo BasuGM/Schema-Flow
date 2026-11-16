@@ -213,7 +213,7 @@ export function ImportDialog() {
               {applying !== null ? (
                 <>
                   <Loader2 aria-hidden className="animate-spin" />
-                  Laying out {applying.toLocaleString("en-US")} tables…
+                  Laying out {applying} tables…
                 </>
               ) : (
                 (label ?? "Import")
