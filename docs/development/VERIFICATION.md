@@ -183,6 +183,19 @@ These criteria add to or replace the originals; the original wording is kept abo
   re-selecting the already-selected table, clears any clicked edge and its pinned label.
   _Auto (4 cases)_; _Manual_
 
+## Fixes for Cowork round 4 (QA-006…008, 2026-11-16)
+
+- AC-P1-T07-16 (QA-006): A hovered or clicked edge label is never clipped under a side panel or
+  past the right edge of the canvas. When it would overflow, it is shifted horizontally so it sits
+  at least 8 px inside the visible pane (repro: `categories` self-loop label after Fit view).
+  _Auto (`labelOverflowShift` unit tests; jsdom cannot measure label width)_; _Manual_
+- AC-P2-T01-4 (QA-007): A file starting with a UTF-8 byte-order mark imports normally; offsets and
+  line numbers are unchanged. Fixture `bom.postgres.sql`: ok, 2 tables, 1 relationship, 1 warning
+  (CREATE VIEW, **line 4**). _Auto_
+- AC-P2-T03-4 (QA-008): A column with no type (bare name before `,` or `)`) is kept with an empty
+  type, and each one gets a line-numbered warning. Fixture `typeless.sqlite.sql`: ok, 2 tables,
+  6 columns, 1 relationship, 4 warnings (lines 2, 2, 5, 6). _Auto_
+
 ### How to check the production build
 
 1. Stop the dev server (only one server on port 3000).
@@ -193,7 +206,7 @@ These criteria add to or replace the originals; the original wording is kept abo
 
 ## P2-T01…T03 — SQL import core (pure logic, no UI)
 
-Run `npx vitest run src/parsers` (61 tests). Fixtures are in `tests/fixtures/sql/`.
+Run `npx vitest run src/parsers` (67 tests since `12697ac`; 61 at `ca08df3`). Fixtures are in `tests/fixtures/sql/`.
 
 | Fixture                   | Dialect    | ok        | Tables | Columns | Relationships     | Issues                                                                                                                                                                            |
 | ------------------------- | ---------- | --------- | ------ | ------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

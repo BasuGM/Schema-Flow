@@ -145,3 +145,31 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Commit:** `2efa17c`. `npm run check` passes: 27 files / 185 tests (parser: 8 files / 61 tests).
 - **Cowork result:** Pending — not independently verified.
 - **Defects:** none recorded.
+
+---
+
+## 2026-11-16 — Cowork QA at ca08df3: QA-006, QA-007, QA-008
+
+- **Source:** the user pasted a summary of Cowork's findings at `ca08df3` into the Claude Code
+  session on 2026-11-16. The summary lists these three defects only; it does not report results
+  for the steps of [handoffs/P1-QA-005.md](handoffs/P1-QA-005.md) or
+  [handoffs/P2-T01-T03.md](handoffs/P2-T01-T03.md), so those ACs stay awaiting verification.
+- **New defects:**
+  - **QA-006** · minor · _Edge labels near the canvas edge are clipped under the side panel._
+    Repro: e-commerce, auto layout, Fit view; the `categories` self-loop label spans x≈184–589
+    while the canvas starts at x=260. Root cause: labels have a constant on-screen size (QA-005),
+    so a long label beside a table near the pane edge extends past it; no fitView padding can
+    contain a ~400 px label at every zoom. Fix: the label is measured and shifted horizontally to
+    stay at least 8 px inside the pane (`labelOverflowShift`, `relationship-edge.tsx`).
+    Status: **Fixed — awaiting re-verification.**
+  - **QA-007** · major · _A leading byte-order mark breaks parsing._ The tokenizer treated U+FEFF
+    as part of the first statement, so a one-table file failed. Fix: the tokenizer skips a leading
+    U+FEFF (offsets still index the original text; line numbers unchanged). Fixture
+    `bom.postgres.sql`. Status: **Fixed — awaiting re-verification.**
+  - **QA-008** · major · _A column with no type fails the whole table._ `readType` required a
+    type token. Fix: a bare name before `,` / `)` / end is a typeless column (empty type), with one
+    line-numbered warning per column (CREATE TABLE and ALTER TABLE ADD COLUMN). Fixture
+    `typeless.sqlite.sql`. Status: **Fixed — awaiting re-verification.**
+- **Fix commit:** `12697ac`. `npm run check` passes: 27 files / 195 tests (parser: 8 files / 67),
+  build ✔. Pushed to `origin/main`.
+- **Re-verification:** pending, see [handoffs/P2-fix-QA-006-008.md](handoffs/P2-fix-QA-006-008.md).
