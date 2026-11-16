@@ -295,3 +295,29 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     - Status: **Fixed — awaiting re-verification.**
 - **Observation (no fix now):** Dagre takes over 90 s on a 2,000-table linear FK chain; realistic
   2,000-table schemas take about 3 s. Added to ROADMAP Phase 3 as a possible guard.
+
+---
+
+## 2026-11-16 — P2-T06 (Import issues panel)
+
+- **Plan:** approved with amendments 0–9. On amendment 0, QA-013 was already fixed and pushed
+  (`22dd5e5`, handoff `dbdabb5`).
+- **Commits:** `627624e` (panel, issue links, stores, tests), `62ba31d` (fit after import,
+  toolbar width). `npm run check` passes 3× in a row: 39 files / 272 tests, build ✔.
+- **Found by Claude Code while verifying (not Cowork defects):**
+  - **Fit after import.** An error import opens the panel in the same update, and the fit-view
+    used the old canvas height, so tables were cut off under the panel (seen in the headless
+    screenshot). Fixed with a 600 ms fit window after a new layout (ADR-015). User resizes after
+    that keep the viewport; confirmed in headless Chrome with an identical transform after close
+    and reopen.
+  - **QA-012 regression.** The new Issues button widened the toolbar to 402 px at 390 px. The
+    disabled Export placeholder is now hidden below `sm`, and the width is 390 px again (headless
+    check).
+  - **Panel layout fallback.** With pixel minimums the panel library fell back to 50/50 when it
+    couldn't measure (jsdom), which would have opened the panel by itself. Fixed with percentage
+    minimums and a sync hook that only accepts resizes from the user's separator interaction.
+  - The jsdom `ResizeObserver` mock now returns full entries (`borderBoxSize`, realistic sizes),
+    which `react-resizable-panels` needs.
+- **Plan deviation:** the `issuesPanelDismissed` flag was not added; the rule "errors open,
+  anything else leaves it as it is" gives the requested behaviour (ADR-015).
+- **Cowork result:** Pending — not independently verified. See [handoffs/P2-T06.md](handoffs/P2-T06.md).

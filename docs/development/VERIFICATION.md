@@ -337,3 +337,69 @@ choosing SQLite gives the same counts.
   leading table) in under 1 s each: measured 17–135 ms. The reported repro
   (`CREATE TABLE a (id int);` + 80,000 `\n`) is detected in 0 ms (16.5 s before). _Auto
   (`src/parsers/whitespace-performance.test.ts`; the repro and cast tests fail on the old code)_
+
+## P2-T06 — Import issues panel
+
+Expected rows after importing each fixture. The order is errors first, then by line, then issues
+without a line. The excerpt is ±2 lines around the issue line, clamped to the file.
+
+#### sql/edge-cases.postgres.sql
+
+| #   | Severity | Line badge | Message starts with                                           | Show table                   | Excerpt lines |
+| --- | -------- | ---------- | ------------------------------------------------------------- | ---------------------------- | ------------- |
+| 1   | Error    | line 27    | Duplicate table "public.USERS" (names are matched case-insen… | enabled → `public.users`     | 25–29         |
+| 2   | Warning  | line 14    | Foreign key on "invoices" references unknown table "ghosts".  | enabled → `billing.invoices` | 12–16         |
+| 3   | Warning  | line 23    | Skipped unsupported statement: CREATE VIEW.                   | —                            | 21–25         |
+| 4   | Warning  | line 29    | Could not parse CREATE TABLE: Expected referenced table near… | —                            | 27–31         |
+| 5   | Warning  | line 31    | Skipped an index on expressions for "users".                  | enabled → `public.users`     | 29–32         |
+| 6   | Warning  | —          | Skipped 3 statements not needed for the diagram: schemas ×1,… | —                            | — (no line)   |
+
+#### sql/pgdump.postgres.sql
+
+| #   | Severity | Line badge | Message starts with                                           | Show table                  | Excerpt lines |
+| --- | -------- | ---------- | ------------------------------------------------------------- | --------------------------- | ------------- |
+| 1   | Warning  | line 130   | Skipped an index on expressions for "projects".               | enabled → `public.projects` | 128–132       |
+| 2   | Warning  | —          | Skipped 31 statements not needed for the diagram: SET ×11, S… | —                           | — (no line)   |
+
+#### prisma/edge-cases.prisma
+
+| #   | Severity | Line badge | Message starts with                                           | Show table                 | Excerpt lines |
+| --- | -------- | ---------- | ------------------------------------------------------------- | -------------------------- | ------------- |
+| 1   | Error    | line 33    | Duplicate table "public.Account" (names are matched case-ins… | enabled → `public.Account` | 31–35         |
+| 2   | Warning  | line 11    | Could not parse a line in model "Account": Expected a value.… | enabled → `public.Account` | 9–13          |
+| 3   | Warning  | line 13    | Relation "Account.wallet" references unknown field(s) Wallet… | enabled → `public.Account` | 11–15         |
+| 4   | Warning  | line 15    | Unknown type "Ghost" on "Account.ghost"; kept as written.     | enabled → `public.Account` | 13–17         |
+| 5   | Warning  | line 29    | Unknown block "modle Typo" was skipped.                       | —                          | 27–31         |
+| 6   | Warning  | line 39    | Skipped view "Summary": views are not part of the diagram.    | —                          | 37–41         |
+| 7   | Warning  | line 43    | Block "Wallet" is missing a closing "}".                      | enabled → `public.Wallet`  | 41–45         |
+| 8   | Warning  | line 45    | Unterminated string.                                          | —                          | 43–46         |
+| 9   | Warning  | line 45    | Could not parse a line in model "Wallet": Expected the end o… | enabled → `public.Wallet`  | 43–46         |
+
+- AC-P2-T06-1: The toolbar **Issues** button shows the error and warning counts, with
+  `aria-label` "Issues: 1 error, 5 warnings". It is disabled ("No import issues") when there are
+  none, e.g. for the sample. _Auto_; _Manual_
+- AC-P2-T06-2: An import with errors opens the panel. A warnings-only import leaves it as it is (a
+  closed panel stays closed). A clean import doesn't close an open panel; it shows "No issues for
+  this schema.". Escape doesn't close it. _Auto_; _Manual_
+- AC-P2-T06-3: Rows are ordered as in the tables above, and the All / Errors / Warnings chips
+  filter them (`aria-pressed`). _Auto_
+- AC-P2-T06-4: Rows with a line toggle a source excerpt by click, Enter or Space (`aria-expanded`,
+  `aria-controls`): ±2 lines with numbers, the issue line highlighted. Lines over 400 characters
+  are cut with "… (N more characters)". _Auto_; _Manual_
+- AC-P2-T06-5: **Show table** selects and centers the linked table, and clears a table-list
+  filter that hides it. It is disabled ("Table not in the diagram") when the table isn't in the
+  schema. _Auto_; _Manual_
+- AC-P2-T06-6: **Copy** puts the sorted list on the clipboard as text. Without the Clipboard API
+  it falls back to `execCommand`. If both fail, it shows "Copy failed — select the text manually."
+  with a selectable text box. _Auto_
+- AC-P2-T06-7: More than 500 issues render 500 at a time ("Show 500 more"). _Auto_
+- AC-P2-T06-8: Opening, closing or resizing the panel doesn't change the canvas viewport. An
+  import that opens the panel fits the diagram to the remaining canvas height. _Auto (jsdom can't
+  resize, so partial)_; _Manual (Claude Code: identical transform after close and reopen in
+  headless Chrome; not independent verification)_
+- AC-P2-T06-9: Below 768 px the panel is a bottom sheet (about 60% height) over the canvas, with
+  its own close button. The page has no horizontal overflow at 390 px. _Auto_; _Manual_
+- AC-P2-T06-10: Severity is conveyed by icon and text (screen-reader "Error" / "Warning"), not
+  colour alone. _Auto_
+- AC-P2-T06-11: Setting the source text re-renders neither the toolbar nor the canvas
+  (`Profiler`). _Auto_

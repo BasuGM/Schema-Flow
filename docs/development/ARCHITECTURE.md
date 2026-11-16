@@ -45,7 +45,12 @@ flowchart LR
    and previews `parseSchemaText()` results. Confirming calls `applyImportedSchema()`:
    `loadSchema` → `ensureLayout` (reused for a known fingerprint) → `clearSelection()` and an empty
    table filter.
-5. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
+5. **Issues** (P2-T06): `ImportIssue` carries an optional `table` (the raw name a parser saw)
+   and `tableId`. `normalizeSchema` sets `tableId` for its own issues and resolves `table` →
+   `tableId` (case-insensitive, like all name lookups), so issues can link to the canvas. The
+   imported text is kept in `schema-store.sourceText` (≤ 5 MB, not part of the schema or its
+   fingerprint) for source excerpts; only the expanded excerpt component reads it.
+6. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
    with a boolean selector (`s.selectedTableId === id`), so a selection change re-renders only the
    affected node(s)/edges — the nodes array is not rebuilt.
 
@@ -173,11 +178,11 @@ continue the line, but a line that starts like a member always starts a new one)
 
 ## State slices (`src/stores`)
 
-| Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                            |
-| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                                                                                                                                                                    |
-| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
+| Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                                                                                                                                                                                                                                                                           |
+| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge), `issuesPanelOpen` (ADR-015). `schema-store` also holds `sourceText` (the imported text, for excerpts). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
 
 Components use narrow selectors; `useShallow` where a selector returns an object/array.
 
@@ -422,6 +427,37 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
   - Import replaces the diagram (no undo until Phase 3), which the dialog states inline.
 - **Revisit:** move parsing to a worker if real files approach the cap and the parse becomes
   noticeable.
+
+### ADR-015 — Issues panel docked under the canvas; errors open it (2026-11-16)
+
+- **Decision:**
+  - The issues panel is a collapsible bottom panel in a vertical split around the canvas. Below
+    `md` (768 px) it is a bottom sheet over the canvas: same component, same test ids.
+  - An import **with errors** opens it. Any other import leaves it as it is, so a panel the user
+    closed stays closed after a warnings-only import, and an open panel isn't auto-closed by a
+    clean import (it shows its empty state).
+  - Escape keeps its meaning (clear the selection).
+- **Why not a dismissed flag:** the plan had an `issuesPanelDismissed` flag. The rule above
+  already gives the requested behaviour, so the flag would be dead state.
+- **Layout details found while building it:**
+  - **Percentage minimums** (diagram ≥ 30%, issues ≥ 15%). With pixel minimums, a group too
+    short for them made the library fall back to a 50/50 split.
+  - **Panel state changes only from the user's separator interaction** (pointer or keyboard on
+    the handle). Any other resize the library makes is corrected once back to the stored state,
+    so the panel never opens or closes by itself.
+  - **Fit after import uses the final canvas size.** An error import opens the panel in the same
+    update, and React Flow learns the smaller size a few frames later. So canvas size changes
+    within 600 ms of a new layout re-fit (via a store subscription, with no re-render). Later
+    resizes, such as the user opening, closing or dragging the panel, keep the viewport.
+- **Limits:**
+  - 500 rows are rendered at a time ("Show 500 more").
+  - Excerpt lines are cut at 400 characters, so a minified single-line dump stays cheap.
+  - The line index is built once per source.
+  - Copy uses the Clipboard API (secure context), else `execCommand("copy")`, else it shows the
+    text for manual selection.
+- **Bundle:** +11.8 KB raw / +3.0 KB gzip initial JS (initial chunks 1,099,225 B raw / 346,959 B
+  gzip at `62ba31d`). The parsers stay lazy (chunk `2s-fxisvw7v--.js`, not referenced by
+  `index.html`).
 
 ## Known limitations (Phase 1)
 
