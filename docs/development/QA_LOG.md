@@ -492,3 +492,44 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
       table list (P1-T06) has the same defect. Not yet checked in a browser.
     - Folded into P2-T09, with a jsdom test for `inert` on collapse. Status: **Open — scheduled
       in P2-T09.**
+
+---
+
+## 2026-11-16 — P2-T09 (Neighbourhood highlighting) + QA-017
+
+- **Plan:** approved with amendments 1–6: depth as a setting, per-theme dim tokens, hover/focus
+  brightening, a regression list of verified ACs, hub timing, and extra QA-017 checks.
+- **Commit:** `9cb3155`. `npm run check` passes 3× in a row: 50 files / 350 tests, build ✔.
+- **QA-017:** fixed. Side panel content is wrapped in `InertPanel` (`inert` while the panel is
+  collapsed). Focus inside a collapsing panel moves to its toolbar toggle. Tests: both panels get
+  `inert` on collapse and lose it on expand; `table-filter` / `inspector-close` have an `[inert]`
+  ancestor while collapsed; focus moves to the toggle on collapse and on the ≤ 900 px
+  auto-collapse. They fail on the old code (no wrapper). Status: **Fixed — awaiting
+  re-verification.**
+- **Found by Claude Code while building it (not Cowork defects):**
+  - **Separator keyboard:** Enter on a resize separator toggles the panel *before* it (the
+    library's primary panel), so Enter on "Resize inspector" acts on the canvas and does nothing
+    useful. Arrow keys (← on the inspector separator, → on the table-list separator) and Home/End
+    do expand and collapse the side panels. Pre-existing library behaviour, unchanged; the
+    handoff uses the arrow keys.
+  - **Large-schema fades:** on the 2,000-table hub fixture, 150 ms opacity fades on ~820
+    simultaneously flipping elements cut the frame rate while the canvas centred. Per amendment
+    5, fades are dropped above 300 tables + relationships (`data-instant-dim`).
+  - **Centring jank (pre-existing):** selecting from the list on that fixture centres from zoom
+    0.05 to 1. One long frame of 160–600 ms happens with neighbourhood Off as well (baseline). With
+    1 hop it measured 383–718 ms in 3 runs: dimmed (semi-transparent) tables cost more to paint
+    while the view moves. Not addressed here; noted for P2-T10.
+- **Claude Code headless Chrome (production build; not independent verification):**
+  - 1280×720, light and dark: `orders` at 1 and 2 hops dims exactly the expected sets. Computed
+    opacity: dimmed 0.3 / 0.4, edges 0.15 / 0.25, hovered dimmed table 0.7 / 0.75. Console empty.
+  - QA-017: both panels collapsed → 60 Tab stops never entered a panel. ← on "Resize inspector"
+    re-expanded it and Tab landed on `inspector-close`. → on "Resize table list" re-expanded it and
+    Shift+Tab landed in the list. With focus on `inspector-close`, narrowing to 800 px moved
+    focus to `toolbar-toggle-right`.
+  - Hub timing (`tests/fixtures/large/neighbourhood-2000.postgres.sql`, 149 nodes / 674 edges
+    rendered): clicking `hub` on the canvas paints in 67–74 ms at 1 hop and 50 ms at 2 hops, vs
+    52 ms with Off, then ~60 fps.
+  - `toolbar-width.mjs` PASS (light and dark).
+- **Bundle:** +2.4 KB raw / +1.6 KB gzip initial JS.
+- **Cowork result:** Pending — not independently verified. See
+  [handoffs/P2-T09.md](handoffs/P2-T09.md).

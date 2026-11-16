@@ -512,3 +512,54 @@ referenced by; a self-reference counts in both).
 - AC-P2-T07-10 (QA-016): Search has one polite live region (`search-live`), mounted while the
   dialog is open, whose text alone changes; the visible status and no-match message are separate
   and not live. _Auto (same DOM node asserted)_; _Manual_
+
+## P2-T09 — Neighbourhood highlighting
+
+Expected sets on the sample (12 tables). "In focus" = full opacity; every other table is dimmed.
+An edge is dimmed when either end is dimmed.
+
+| Selected     | Depth | In focus (besides the selected table)                       | Dimmed                                                                                            |
+| ------------ | ----- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `orders`     | 1     | users, addresses, coupons, order_items, payments, shipments | categories, products, product_categories, reviews, audit_log                                      |
+| `orders`     | 2     | + products, reviews                                         | categories, product_categories, audit_log                                                         |
+| `users`      | 1     | addresses, orders, reviews                                  | categories, products, product_categories, coupons, order_items, payments, shipments, audit_log    |
+| `users`      | 2     | + products, coupons, order_items, payments, shipments       | categories, product_categories, audit_log                                                         |
+| `categories` | 1     | product_categories (the self-reference adds nothing)        | users, addresses, products, coupons, orders, order_items, payments, shipments, reviews, audit_log |
+| `categories` | 2     | + products                                                  | users, addresses, coupons, orders, order_items, payments, shipments, reviews, audit_log           |
+| `audit_log`  | 1 / 2 | none                                                        | all 11 other tables                                                                               |
+| `payments`   | 1     | orders                                                      | the other 10                                                                                      |
+
+- AC-P2-T09-1: With nothing selected, nothing is dimmed. Selecting a table (canvas, list, search,
+  issues "Show table", inspector links, Relations, Back) dims exactly the tables outside the sets
+  above, and the edges with a dimmed end. The selected table and a search or Relations target are
+  never dimmed. _Auto_; _Manual_
+- AC-P2-T09-2: Settings → "Highlight neighbours" (Off / 1 hop / 2 hops; default 1 hop;
+  `settings-neighbourhood-0|1|2`) and the same group in the phone More menu
+  (`more-neighbourhood-0|1|2`). Off dims nothing. **The depth is a setting:** it survives
+  selections and new imports. Only the dimming (`focusSet`) is cleared, by Escape / pane click /
+  "Clear selection" and by a new import or sample. Not persisted across reloads (P3-T01). _Auto_;
+  _Manual_
+- AC-P2-T09-3: Dimmed tables use per-theme opacity tokens: `--dim-node` 0.3 light / 0.4 dark,
+  `--dim-edge` 0.15 / 0.25. Hovering or keyboard-focusing a dimmed table raises it to
+  `--dim-node-hover` 0.7 / 0.75 without layout change; it stays clickable, draggable and
+  selectable with Enter/Space. Dimmed tables stay recognisable in both themes. _Manual_
+- AC-P2-T09-4: Hovering or clicking a dimmed edge shows its label and draws it at full opacity
+  while the label shows. _Auto_; _Manual_
+- AC-P2-T09-5: The fade is 150 ms; it is dropped with `prefers-reduced-motion` and above 300
+  tables + relationships (`data-instant-dim` on `schema-canvas`). _Manual_
+- AC-P2-T09-6: Performance: a 2-hop set on a 2,000-table schema with a 500-reference hub in
+  under 5 ms (performance test). On `tests/fixtures/large/neighbourhood-2000.postgres.sql`,
+  clicking `hub` on the canvas paints in under 100 ms. _Auto_; _Manual (Claude Code headless
+  Chrome: 67–74 ms vs 52 ms with Off; not independent verification)_
+- AC-P1-T06-10 (QA-017): A collapsed side panel (toolbar toggle, drag to 0 px, or the separator
+  keyboard) has `inert` content: Tab never lands in it and its content is hidden from assistive
+  technology. Re-expanding it restores focusability. If focus was inside when it collapsed
+  (including the ≤ 900 px auto-collapse), focus moves to that panel's toolbar toggle, not
+  `<body>`. Filter text and inspector state survive collapsing. _Auto_; _Manual_
+
+### Verified ACs that dimming could affect (re-run)
+
+Dimming at the default 1 hop changes how every selection looks. These verified ACs were re-run
+(all tests pass) and are listed in the handoff for a visual re-check: AC-P1-T07-8 / AC-P1-T08-*
+(selection ring and brand-coloured edges of the selected table), AC-P2-T06 "Show table",
+AC-P2-T07 search reveal and centring, AC-P2-T08-3 / -5 (FK links, Relations navigation and Back).

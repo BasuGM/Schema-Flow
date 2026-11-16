@@ -69,6 +69,11 @@ flowchart LR
 8. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
    with a boolean selector (`s.selectedTableId === id`), so a selection change re-renders only the
    affected node(s)/edges — the nodes array is not rebuilt.
+9. **Neighbourhood highlighting** (P2-T09, ADR-018): `useFocusSetSync` (mounted by the canvas)
+   subscribes to the schema, `selectedTableId` and the `neighbourhoodDepth` setting and writes
+   `ui-store.focusSet = getFocusSet(schema, selected, depth)` (pure, `selectors.ts`; adjacency
+   cached per schema). Nodes and edges read one boolean each (`dimmed`), so only elements whose
+   state flips re-render.
 
 ## Module boundaries
 
@@ -195,11 +200,11 @@ continue the line, but a line that starts like a member always starts a new one)
 
 ## State slices (`src/stores`)
 
-| Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                                                                                                                                                                                                                                                                           |
-| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge), `issuesPanelOpen` (ADR-015). `schema-store` also holds `sourceText` (the imported text, for excerpts). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
+| Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge), `issuesPanelOpen` (ADR-015), `searchOpen`/`highlightedColumn` (ADR-016), `inspectorTab`/`inspectorBack` (ADR-017), `neighbourhoodDepth` (a setting) and the derived `focusSet` (ADR-018). `schema-store` also holds `sourceText` (the imported text, for excerpts). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
 
 Components use narrow selectors; `useShallow` where a selector returns an object/array.
 
@@ -543,6 +548,30 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
   renders its first tab in about 43 ms in jsdom and 50–59 ms (click → paint) in headless Chrome.
 - **Bundle:** +17.1 KB raw / +4.8 KB gzip initial JS (1,132,438 B raw / 356,342 B gzip at
   `7bec7a6`). Parsers are still lazy (`2s-fxisvw7v--.js`).
+
+### ADR-018 — Neighbourhood highlighting and inert panels (2026-11-16)
+
+- **Focus set, derived outside the reducers:** `ui-store` stays free of schema knowledge.
+  `useFocusSetSync` recomputes `focusSet` (selected table + neighbours within 1 or 2 hops, both
+  directions) from a store subscription, which runs synchronously inside the `set` that changed
+  the selection, so selection and dimming render in one commit. `getFocusSet` reuses
+  `getNeighbors` with an adjacency cached per schema object (`WeakMap`): a 2-hop set around a
+  500-reference hub in a 2,000-table schema takes under 5 ms (performance test).
+- **Edges:** in focus only when both ends are; the selected table's own edges stay brand-coloured.
+  A hovered or clicked edge is drawn at full opacity while its label shows.
+- **Depth is a setting** (Off / 1 / 2, default 1; Settings and phone More menus): it survives
+  selections and new imports; `focusSet` is cleared by `clearSelection` and `resetForNewSchema`.
+  Not persisted until P3-T01.
+- **Look:** per-theme tokens `--dim-node` (0.3 light / 0.4 dark), `--dim-edge` (0.15 / 0.25) and
+  `--dim-node-hover` (0.7 / 0.75; hover or keyboard focus brightens a dimmed table). A 150 ms fade,
+  dropped (`data-instant-dim`) above 300 tables + relationships: hundreds of simultaneous opacity
+  transitions cost frames on a zoomed-out large schema. Reduced motion removes it everywhere.
+- **Inert collapsed panels (QA-017):** side panel content stays mounted (filter text, inspector
+  scroll and "Show more" state survive) inside `InertPanel`, which sets `inert` while the store
+  says the panel is closed. If focus was inside when it collapsed, it moves to that panel's
+  toolbar toggle. The resize separators stay focusable (arrow keys re-expand a panel).
+- **Bundle:** +2.4 KB raw / +1.6 KB gzip initial JS (1,134,851 B raw / 357,941 B gzip at
+  `9cb3155`).
 
 ## Known limitations (Phase 1)
 
