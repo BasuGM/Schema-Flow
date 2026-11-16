@@ -270,3 +270,9 @@ Run `npx vitest run src/parsers/prisma` (4 files, 20 tests). Fixtures are in
   400 random inputs, under 2 s. A 500-model schema (0.63 MiB) parses in 57–118 ms in Node on the M1
   (4 runs; the test asserts < 1.5 s). _Auto_
 - AC-P2-T04-6: No new dependency; `src/parsers` imports no React, `@xyflow` or DOM APIs. _Auto (grep)_
+
+### Fix for Cowork round 6 (QA-010, 2026-11-16)
+
+- AC-P2-T04-7 (QA-010): An enum field's `@default(VALUE)` uses the value's stored `@map` name
+  (`AUTHOR @map("author")` → default `author`), also inside list defaults; unmapped values are
+  unchanged. _Auto_

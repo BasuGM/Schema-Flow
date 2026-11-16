@@ -97,10 +97,17 @@ function printArg(a: PrismaArg): string {
   return a.key ? `${a.key}: ${printValue(a.value)}` : printValue(a.value);
 }
 
-/** `@default(...)` → `ColumnDefault`. */
-export function columnDefault(field: PrismaField): ColumnDefault | undefined {
-  const value = arg(attribute(field.attributes, "default"), "value", 0);
-  if (!value) return undefined;
+/**
+ * `@default(...)` → `ColumnDefault`. For enum fields, `storedEnumValues` maps value names to their
+ * stored `@map` values, so `@default(AUTHOR)` with `AUTHOR @map("author")` gives `author` (QA-010).
+ */
+export function columnDefault(
+  field: PrismaField,
+  storedEnumValues?: ReadonlyMap<string, string>,
+): ColumnDefault | undefined {
+  const raw = arg(attribute(field.attributes, "default"), "value", 0);
+  if (!raw) return undefined;
+  const value = storedEnumValues ? toStoredEnumValue(raw, storedEnumValues) : raw;
   if (value.kind === "call") {
     if (value.name === "autoincrement" || value.name === "sequence")
       return { kind: "autoincrement", value: printValue(value) };
@@ -114,6 +121,15 @@ export function columnDefault(field: PrismaField): ColumnDefault | undefined {
     return { kind: "function", value: printValue(value) };
   }
   return { kind: "literal", value: printValue(value) };
+}
+
+/** Replaces enum value names (also inside a list default) with their stored values. */
+function toStoredEnumValue(value: PrismaValue, stored: ReadonlyMap<string, string>): PrismaValue {
+  if (value.kind === "ident")
+    return { kind: "ident", value: stored.get(value.value) ?? value.value };
+  if (value.kind === "array")
+    return { kind: "array", items: value.items.map((v) => toStoredEnumValue(v, stored)) };
+  return value;
 }
 
 const ACTIONS: Record<string, ReferentialAction> = {

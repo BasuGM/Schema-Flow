@@ -186,3 +186,30 @@ describe("empty and model-less input", () => {
     expect(issueList(noModels)).toEqual(["error@-: No models were found."]);
   });
 });
+
+describe("enum defaults use the stored @map value (QA-010)", () => {
+  it("maps @default(AUTHOR) to 'author', leaves unmapped values, and maps list defaults", () => {
+    const result = parsePrisma(
+      `model User {
+  id    Int    @id
+  role  Role   @default(AUTHOR)
+  other Role   @default(ADMIN)
+  roles Role[] @default([AUTHOR, ADMIN])
+}
+
+enum Role {
+  ADMIN
+  AUTHOR @map("author")
+}`,
+      { now: NOW },
+    );
+    expect(result.issues).toEqual([]);
+    const user = result.schema?.tables["User"];
+    expect(user?.columns.map((c) => c.default)).toEqual([
+      undefined,
+      { kind: "literal", value: "author" },
+      { kind: "literal", value: "ADMIN" },
+      { kind: "literal", value: "[author, ADMIN]" },
+    ]);
+  });
+});

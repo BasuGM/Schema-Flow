@@ -214,3 +214,21 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   `57ce4f9` test fired Escape on the edge element and missed this. Fix: the Escape listener is
   now on `document`, and the test fires from `<body>`.
 - **Cowork result:** Pending — not independently verified.
+
+---
+
+## 2026-11-16 — Cowork re-verification round 6 at c9c49a3: all pass; QA-010
+
+- **Handoff verified:** [handoffs/P2-T04.md](handoffs/P2-T04.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16: everything passes.
+- **Verified:** QA-009 (fixed), AC-P1-T08-12, AC-P1-T08-13, AC-P2-T01-5, AC-P2-T04-1…6.
+  P1-T08 → **Verified**; **Phase 1 → Verified with known issues** (list in ROADMAP);
+  P2-T04 → **Verified**.
+- **New defect:**
+  - **QA-010** · minor · _A Prisma enum default ignores the value's `@map`._ `@default(AUTHOR)`
+    with `AUTHOR @map("author")` gave the default `AUTHOR` instead of the stored `author`, unlike
+    the enum's mapped values. Root cause: `columnDefault` printed the value name as written. Fix:
+    for enum-typed fields, value names (also inside list defaults) are replaced by their stored
+    `@map` values. Regression test in `src/parsers/prisma/fixtures.test.ts`.
+    Status: **Fixed — awaiting re-verification.**

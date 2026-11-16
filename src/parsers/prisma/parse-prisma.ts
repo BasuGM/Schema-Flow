@@ -83,21 +83,24 @@ function buildDraft(
 ): DraftSchema {
   const of = (keyword: string) => blocks.filter((b) => b.keyword === keyword);
   const enumNames = new Map<string, string>();
+  const enumValues = new Map<string, Map<string, string>>();
   const enums = of("enum").map((b) => {
     const name = stringArg(attribute(blockAttributes(b), "map"), "name", 0) ?? b.name;
     enumNames.set(b.name, name);
-    const values = b.members.flatMap((m) =>
-      m.kind === "enumValue"
-        ? [stringArg(attribute(m.attributes, "map"), "name", 0) ?? m.name]
-        : [],
-    );
-    return { name, values };
+    const stored = new Map<string, string>();
+    for (const m of b.members) {
+      if (m.kind === "enumValue")
+        stored.set(m.name, stringArg(attribute(m.attributes, "map"), "name", 0) ?? m.name);
+    }
+    enumValues.set(b.name, stored);
+    return { name, values: [...stored.values()] };
   });
   for (const view of of("view"))
     warn(`Skipped view "${view.name}": views are not part of the diagram.`, view.line);
 
   const context: Context = {
     enumNames,
+    enumValues,
     modelNames: new Set(of("model").map((b) => b.name)),
     viewNames: new Set(of("view").map((b) => b.name)),
     typeNames: new Set(of("type").map((b) => b.name)),
@@ -129,6 +132,8 @@ function buildDraft(
 
 interface Context {
   enumNames: Map<string, string>;
+  /** Enum name → Prisma value name → stored value (`@map`). */
+  enumValues: Map<string, Map<string, string>>;
   modelNames: Set<string>;
   viewNames: Set<string>;
   typeNames: Set<string>;
@@ -174,7 +179,7 @@ function buildModel(block: PrismaBlock, ctx: Context): Model {
       nullable: field.optional,
       ...(field.doc ? { comment: field.doc } : {}),
     };
-    const def = columnDefault(field);
+    const def = columnDefault(field, ctx.enumValues.get(field.type));
     table.columns.push({
       ...column,
       ...(def ? { default: def } : {}),
