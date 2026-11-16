@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, PanelLeft, PanelRight, Upload, Workflow } from "lucide-react";
+import { Download, PanelLeft, PanelRight, Workflow } from "lucide-react";
+import { ImportDialog } from "@/components/import/import-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLayoutStore } from "@/stores/layout-store";
@@ -44,7 +45,8 @@ export function Toolbar() {
         >
           <Workflow className="size-3.5" />
         </span>
-        <span className="text-sm font-semibold tracking-tight">SchemaFlow</span>
+        {/* Wordmark hidden on phones so the toolbar fits 390 px (the logo stays). */}
+        <span className="hidden text-sm font-semibold tracking-tight sm:inline">SchemaFlow</span>
       </div>
       <Separator orientation="vertical" className="mx-1 h-5!" />
       <div className="flex min-w-0 items-center gap-2" data-testid="toolbar-schema-name">
@@ -59,14 +61,7 @@ export function Toolbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-0.5">
-        <ToolbarButton
-          tooltip="Import is coming in Phase 2"
-          unavailable
-          data-testid="toolbar-import"
-        >
-          <Upload aria-hidden />
-          <span className="hidden md:inline">Import</span>
-        </ToolbarButton>
+        <ImportDialog />
         <ToolbarButton
           tooltip="Export is coming in Phase 3"
           unavailable

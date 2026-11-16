@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { validateSchema } from "@/domain/schema/validate";
 import { createEcommerceSchema } from "@/samples/ecommerce";
 import { useLayoutStore } from "./layout-store";
 import { useSchemaStore } from "./schema-store";
@@ -19,6 +20,31 @@ describe("schema-store", () => {
     expect(s.status).toBe("ready");
     expect(s.fingerprint).toMatch(/^sf1-/);
     expect(s.issues).toEqual([]);
+  });
+});
+
+describe("schema-store issues", () => {
+  it("does not duplicate validation issues an importer already added", () => {
+    const broken = createEcommerceSchema();
+    broken.tableOrder.push(broken.tableOrder[0]!);
+    broken.issues = validateSchema(broken);
+    expect(broken.issues).toEqual([
+      { severity: "error", message: "tableOrder contains duplicate table IDs." },
+    ]);
+    useSchemaStore.getState().loadSchema(broken);
+    expect(useSchemaStore.getState().issues).toEqual(broken.issues);
+  });
+
+  it("re-importing the same schema reuses its layout (no re-layout)", () => {
+    const load = () => {
+      useSchemaStore.getState().loadSchema(createEcommerceSchema());
+      const { schema: s, fingerprint } = useSchemaStore.getState();
+      useLayoutStore.getState().ensureLayout(s!, fingerprint!);
+    };
+    load();
+    const version = useLayoutStore.getState().version;
+    load();
+    expect(useLayoutStore.getState().version).toBe(version);
   });
 });
 

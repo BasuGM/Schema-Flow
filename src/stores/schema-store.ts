@@ -25,7 +25,18 @@ export const useSchemaStore = create<SchemaState>()((set) => ({
       status: "ready",
       schema,
       fingerprint: fingerprintSchema(schema),
-      issues: [...schema.issues, ...validateSchema(schema)],
+      issues: withValidation(schema),
     }),
   clear: () => set({ status: "empty", schema: null, fingerprint: null, issues: [] }),
 }));
+
+const issueKey = (i: ImportIssue) => `${i.severity}|${i.line ?? ""}|${i.message}`;
+
+/**
+ * Import issues plus validation issues. Importers already append `validateSchema()` results, so
+ * only issues not already present are added (no duplicates).
+ */
+function withValidation(schema: Schema): ImportIssue[] {
+  const seen = new Set(schema.issues.map(issueKey));
+  return [...schema.issues, ...validateSchema(schema).filter((i) => !seen.has(issueKey(i)))];
+}

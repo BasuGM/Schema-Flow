@@ -26,6 +26,18 @@ describe("detectFormat", () => {
     expect(detectFormat("")).toEqual({ format: "unknown" });
   });
 
+  it("finds DDL after a long header (QA-011: the first 200,000 characters were sampled)", () => {
+    const header = "-- generated header line\n".repeat(20_000);
+    expect(header.length).toBeGreaterThan(200_000);
+    expect(detectFormat(`${header}CREATE TABLE \`a\` (id int);`)).toEqual({
+      format: "sql",
+      dialect: "mysql",
+    });
+    expect(detectFormat(`${"// note\n".repeat(30_000)}model A {\n  id Int @id\n}`).format).toBe(
+      "prisma",
+    );
+  });
+
   it("prefers PostgreSQL when there are no dialect markers", () => {
     expect(detectSqlDialect("CREATE TABLE t (id serial)")).toBe("postgresql");
   });

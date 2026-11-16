@@ -9,14 +9,16 @@ export interface DetectedFormat {
 const PRISMA = /^\s*(model|enum|datasource|generator)\s+\w+\s*\{/m;
 const SQL = /\b(create|alter)\s+(table|index|unique|type|sequence)\b/i;
 
-/** Cheap heuristics on raw text; no parsing. */
+/**
+ * Cheap heuristics on raw text; no parsing. The whole text is checked (about 1 ms per MB; imports
+ * are capped at 5 MB): sampling only the start missed DDL that follows a long header (QA-011).
+ */
 export function detectFormat(text: string): DetectedFormat {
-  const sample = text.length > 200_000 ? text.slice(0, 200_000) : text;
-  const looksPrisma = PRISMA.test(sample) || /@@(id|unique|index|map)\b/.test(sample);
-  const looksSql = SQL.test(sample);
+  const looksPrisma = PRISMA.test(text) || /@@(id|unique|index|map)\b/.test(text);
+  const looksSql = SQL.test(text);
   if (looksPrisma && !looksSql) return { format: "prisma" };
-  if (!looksSql && !/;\s*$/m.test(sample)) return { format: "unknown" };
-  return { format: "sql", dialect: detectSqlDialect(sample) };
+  if (!looksSql && !/;\s*$/m.test(text)) return { format: "unknown" };
+  return { format: "sql", dialect: detectSqlDialect(text) };
 }
 
 export function detectSqlDialect(text: string): SqlDialect {

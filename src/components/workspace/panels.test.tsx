@@ -83,12 +83,12 @@ describe("Toolbar", () => {
         <Toolbar />
       </TooltipProvider>,
     );
-    expect(screen.getByTestId("toolbar-import")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByTestId("toolbar-import")).not.toHaveAttribute("aria-disabled");
     expect(screen.getByTestId("toolbar-export")).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByTestId("toolbar-layout")).not.toHaveAttribute("aria-disabled");
     expect(screen.getByTestId("toolbar-schema-name")).toHaveTextContent("E-commerce sample");
-    await userEvent.hover(screen.getByTestId("toolbar-import"));
-    expect(await screen.findByRole("tooltip")).toHaveTextContent("Import is coming in Phase 2");
+    await userEvent.hover(screen.getByTestId("toolbar-export"));
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Export is coming in Phase 3");
   });
 
   it("re-runs layout from the Layout button", async () => {

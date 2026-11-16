@@ -1,0 +1,179 @@
+"use client";
+
+import { Upload } from "lucide-react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ToolbarButton } from "@/components/workspace/toolbar-button";
+import { cn } from "@/lib/utils";
+import type { ImportFormatChoice } from "@/parsers";
+import { applyImportedSchema } from "./apply-import";
+import {
+  EMPTY_DRAFT,
+  fileDraft,
+  formatForFileName,
+  PASTE_SOFT_LIMIT_BYTES,
+  type ImportDraft,
+} from "./import-draft";
+import { formatLabel, ImportPreview, importLabel } from "./import-preview";
+import { ImportSource } from "./import-source";
+import { loadParsers, useImportParse } from "./use-import-parse";
+
+const PASTE_DEBOUNCE_MS = 300;
+
+/**
+ * Toolbar "Import" button + dialog. The draft lives here, above the dialog content, so Cancel or
+ * Escape keeps it for the session; a successful import resets it.
+ */
+export function ImportDialog() {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<ImportDraft>(EMPTY_DRAFT);
+  const [format, setFormat] = useState<ImportFormatChoice>("auto");
+  const [dragging, setDragging] = useState(false);
+  const state = useImportParse(draft, format);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const removeRef = useRef<HTMLButtonElement>(null);
+  const pending = useRef<{ text: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+
+  const commitText = (text: string) => {
+    if (pending.current) clearTimeout(pending.current.timer);
+    pending.current = null;
+    const size = new Blob([text]).size;
+    if (size > PASTE_SOFT_LIMIT_BYTES) {
+      // Large pastes become a card: keeping megabytes in the textarea makes typing slow.
+      if (textareaRef.current) textareaRef.current.value = "";
+      setDraft({ kind: "file", name: "Pasted text", size, source: text });
+    } else setDraft(text.trim() ? { kind: "paste", text } : EMPTY_DRAFT);
+  };
+
+  const onTextInput = (text: string) => {
+    if (pending.current) clearTimeout(pending.current.timer);
+    pending.current = { text, timer: setTimeout(() => commitText(text), PASTE_DEBOUNCE_MS) };
+  };
+
+  const onFile = (file: File) => {
+    if (pending.current) clearTimeout(pending.current.timer);
+    pending.current = null;
+    setDraft(fileDraft(file));
+    setFormat(formatForFileName(file.name));
+  };
+
+  const onOpenChange = (next: boolean) => {
+    // Keep typed-but-not-yet-committed text when the dialog closes.
+    if (!next && pending.current) commitText(pending.current.text);
+    if (next) void loadParsers();
+    setDragging(false);
+    setOpen(next);
+  };
+
+  const onImport = () => {
+    if (state.status !== "done" || !state.parsed.result.schema) return;
+    applyImportedSchema(state.parsed.result.schema);
+    setDraft(EMPTY_DRAFT);
+    setFormat("auto");
+    setOpen(false);
+  };
+
+  // While open, a file dropped outside the drop zone must not make the browser navigate to it.
+  useEffect(() => {
+    if (!open) return;
+    const block = (e: globalThis.DragEvent) => e.preventDefault();
+    window.addEventListener("dragover", block);
+    window.addEventListener("drop", block);
+    return () => {
+      window.removeEventListener("dragover", block);
+      window.removeEventListener("drop", block);
+    };
+  }, [open]);
+
+  const onDragOver = (e: DragEvent) => {
+    if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+    e.preventDefault();
+    setDragging(true);
+  };
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) onFile(file);
+  };
+
+  const label = importLabel(state);
+  const detected =
+    state.status === "done" && format === "auto" ? formatLabel(state.parsed) : undefined;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <ToolbarButton tooltip="Import SQL or Prisma schema" data-testid="toolbar-import">
+          <Upload aria-hidden />
+          <span className="hidden md:inline">Import</span>
+        </ToolbarButton>
+      </DialogTrigger>
+      <DialogContent
+        className="flex max-h-[min(90dvh,720px)] flex-col gap-0 p-0 sm:max-w-2xl"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          (draft.kind === "file" ? removeRef.current : textareaRef.current)?.focus();
+        }}
+        onDragOver={onDragOver}
+        onDragLeave={(e) => {
+          if (e.currentTarget === e.target) setDragging(false);
+        }}
+        onDrop={onDrop}
+        data-testid="import-dialog"
+      >
+        <DialogHeader className="border-b px-4 pt-4 pb-3">
+          <DialogTitle>Import schema</DialogTitle>
+          <DialogDescription>
+            Parsed in your browser. Nothing is uploaded or executed.
+          </DialogDescription>
+        </DialogHeader>
+        <div
+          className={cn(
+            "relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-3",
+            dragging && "outline-2 -outline-offset-4 outline-brand outline-dashed",
+          )}
+          data-testid="import-dropzone"
+        >
+          <ImportSource
+            draft={draft}
+            format={format}
+            detectedLabel={detected}
+            textareaRef={textareaRef}
+            removeRef={removeRef}
+            onTextInput={onTextInput}
+            onFile={onFile}
+            onRemoveFile={() => setDraft(EMPTY_DRAFT)}
+            onFormatChange={setFormat}
+          />
+          <ImportPreview state={state} />
+        </div>
+        <DialogFooter className="mx-0 mb-0 items-center px-4 py-3 sm:justify-between">
+          <p className="text-xs text-muted-foreground" data-testid="import-replace-note">
+            This replaces the current diagram.
+          </p>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <DialogClose asChild>
+              <Button variant="outline" data-testid="import-cancel">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button disabled={!label} onClick={onImport} data-testid="import-confirm">
+              {label ?? "Import"}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
