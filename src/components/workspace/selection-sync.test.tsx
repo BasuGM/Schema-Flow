@@ -12,9 +12,9 @@ import { TableList } from "./table-list";
 import { useEscapeToClear } from "./use-escape-to-clear";
 
 function Harness() {
-  const onKeyDown = useEscapeToClear();
+  useEscapeToClear();
   return (
-    <div onKeyDown={onKeyDown}>
+    <div>
       <TableList />
       <div style={{ width: 1000, height: 700 }}>
         <SchemaCanvas />
@@ -170,7 +170,8 @@ describe("selection sync between list, canvas and inspector", () => {
     const edge = container.querySelector(`[data-id="${id}"]`)!;
     fireEvent.click(edge);
     expect(screen.getByTestId(`edge-label-${id}`)).toBeInTheDocument();
-    fireEvent.keyDown(edge, { key: "Escape" });
+    // Edges aren't focusable, so in a browser the key comes from <body> (not from the edge).
+    fireEvent.keyDown(document.body, { key: "Escape" });
     expect(screen.queryByTestId(`edge-label-${id}`)).toBeNull();
     expect(screen.getByTestId(`edge-${id}`)).toHaveAttribute("data-edge-state", "default");
     expect(useUiStore.getState().selectedTableId).toBeNull();

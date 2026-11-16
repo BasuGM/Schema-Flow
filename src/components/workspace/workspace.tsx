@@ -14,10 +14,10 @@ export function Workspace() {
   useSampleLoader();
   const left = usePanelSync("left");
   const right = usePanelSync("right");
-  const onKeyDown = useEscapeToClear();
+  useEscapeToClear();
 
   return (
-    <div className="flex h-full flex-col" data-testid="workspace" onKeyDown={onKeyDown}>
+    <div className="flex h-full flex-col" data-testid="workspace">
       <Toolbar />
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel

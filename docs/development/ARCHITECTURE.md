@@ -139,21 +139,40 @@ only in case (e.g. quoted `"UserID"` and unquoted `userid`, which PostgreSQL tre
 collide: the second is reported as `Duplicate table … (names are matched case-insensitively)` and
 skipped. This is a deliberate trade-off for predictable lookups; revisit if real schemas need it.
 
-**Prisma** (`@mrleebo/prisma-ast`): `model` → table (name from `@@map`, columns from `@map`);
-scalar fields → columns, `?` → nullable, `[]` scalar lists → `isArray`; relation fields are not
-columns — `@relation(fields: [...], references: [...], onDelete, onUpdate)` on the FK side becomes a
-`DraftForeignKey`; `@id`/`@@id` → PK; `@unique`/`@@unique` → unique constraints; `@@index` → indexes;
-`@default(autoincrement()|now()|uuid()|literal)` → defaults; `enum` → enums. Implicit m:n relations
-(list fields on both sides without `@relation(fields)`) produce a synthetic `_AToB` table
-(`origin: "implicit"`, columns `A`/`B`) with two `prisma-implicit` relationships.
+**Prisma** (own parser, ADR-013; `src/parsers/prisma`): lexer (line breaks are tokens; `///`
+doc comments kept) → block parser (one logical line per member; line breaks inside `(…)`/`[…]`
+continue the line, but a line that starts like a member always starts a new one) → mapping.
+
+- `model` → table (name from `@@map`, schema from `@@schema`); scalar and enum fields → columns
+  (name from `@map`); `?` → nullable, otherwise NOT NULL; `[]` scalar lists → array types.
+- **Types:** a native `@db.*` type wins (`@db.VarChar(255)` → `varchar(255)`,
+  `@db.UnsignedInt` → `int unsigned`, `@db.DoublePrecision` → `double precision`); enum fields use
+  the enum's database name (`@@map`); other scalars stay **as written in Prisma** (`String`,
+  `DateTime`). We don't guess provider default types, which differ by provider and Prisma version.
+  `Unsupported("x")` → `x`.
+- `@id`/`@@id` → PK; `@unique`/`@@unique` → unique; `@@index`/`@@fulltext` → indexes (`map` or
+  `name` as the key name).
+- `@default`: `autoincrement()`/`sequence()` → autoincrement; `dbgenerated("expr")` → expression;
+  other calls (`now()`, `uuid()`, `cuid()`) → function; values → literal, as written.
+- Relation fields are not columns. `@relation(fields, references, onDelete, onUpdate, map)` → a
+  foreign key on that model, with field names resolved to `@map` column names.
+- Implicit many-to-many (list relation fields on both sides, neither with `fields`) → join table
+  `_AToB` (models sorted by name; `_Name` for a named relation) with `origin: "implicit"`, columns
+  `A`/`B` typed like the referenced ids, a unique (A, B) index, an index on B and two
+  `prisma-implicit` foreign keys with cascade actions. Needs a single-field `@id` on both models.
+- `datasource.provider` sets `source.dialect` (`postgresql`/`postgres`/`cockroachdb`, `mysql`,
+  `sqlite`; others → none); PostgreSQL uses `public` as the default schema, like SQL import.
+- **Warnings (line-numbered):** unparseable lines, unknown blocks, missing `}`, unterminated
+  strings, views (skipped), unknown field types (kept as written), relations with unknown fields.
+  Duplicate tables are errors, as for SQL.
 
 ## State slices (`src/stores`)
 
-| Store          | Holds                                                                                                                                                                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                 |
-| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                         |
-| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
+| Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                            |
+| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                                                                                                                                                                    |
+| `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
 
 Components use narrow selectors; `useShallow` where a selector returns an object/array.
 
@@ -197,8 +216,8 @@ re-render no `TableNode`.
 | eslint / eslint-config-next                          | 9.x / 16.4.6             | flat config; `next lint` no longer exists                         |
 | prettier / prettier-plugin-tailwindcss               | 3.10.1 / 0.8.1           |                                                                   |
 
-No SQL parser dependency (ADR-012). Not installed until needed: `@mrleebo/prisma-ast` (P2-T04),
-`html-to-image` (Phase 3).
+No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until needed: `html-to-image`
+(Phase 3).
 
 ## Decision records
 
@@ -349,6 +368,29 @@ No SQL parser dependency (ADR-012). Not installed until needed: `@mrleebo/prisma
     a line-numbered warning.
   - We own correctness. This is covered by 5 fixtures, unit tests, seeded robustness tests and a
     1 MB performance test (~0.1 s).
+
+### ADR-013 — Hand-written Prisma schema parser instead of @mrleebo/prisma-ast (2026-11-16)
+
+- **Decision:** Parse Prisma schemas with a small, dependency-free parser in `src/parsers/prisma`
+  (926 lines, ≈820 code lines). This was the **user's decision** after the escalation below.
+- **Context (probe, read-only, in scratch):** `@mrleebo/prisma-ast@0.16.0` (latest; MIT;
+  dependencies `chevrotain@^12`, `lilconfig@^2`).
+  - At **import time** it runs `lilconfigSync("prisma-ast").search()` (a filesystem search for a
+    config file) and imports Node's `os`. A browser bundle (esbuild, `--platform=browser`) fails on
+    `fs`, `path` and `os`; using it would need bundler aliases that stub `lilconfig` and `os`.
+  - With those stubbed: about 119 KB minified / 33 KB gzip (mostly chevrotain).
+  - Every version since 0.7 depends on `lilconfig`; only the old 0.5.2 doesn't.
+  - All-or-nothing: the first syntax error throws, so one bad line fails the whole import.
+  - Source locations are off by default (`nodeLocationTracking: "none"`), configurable only via the
+    config file or a custom parser instance.
+- **Consequences:**
+  - No dependency, no bundler shims.
+  - Tolerant like the SQL parser: a bad line or block is skipped with a line-numbered warning.
+  - We own correctness: 3 fixtures, unit tests, seeded robustness tests (360 truncations and
+    corruptions plus 400 random inputs) and a 500-model performance test (57–118 ms in Node, M1).
+  - **Size:** larger than the 350–450 lines estimated when the option was offered (926 lines,
+    Prettier-formatted). The block parser and the mapping (relations, implicit many-to-many) are
+    each about 350 lines.
 
 ## Known limitations (Phase 1)
 

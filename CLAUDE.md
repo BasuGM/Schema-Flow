@@ -31,8 +31,8 @@ never leaves the browser. No backend, no Docker, no AI integrations, 2D only.
   receive only IDs + minimal display data. Selection/highlight state is read per node from
   `ui-store`, so selecting a table does not rebuild the nodes array.
 - Every new dependency is justified in `docs/development/ARCHITECTURE.md` before it is added.
-  SQL is parsed by our own tolerant parser (ADR-012, no dependency); `@mrleebo/prisma-ast` is
-  installed only when P2-T04 starts.
+  SQL and Prisma are parsed by our own tolerant parsers (ADR-012, ADR-013; no dependency).
+  Fixtures live in `tests/fixtures/sql/` and `tests/fixtures/prisma/`.
 
 ## Conventions
 

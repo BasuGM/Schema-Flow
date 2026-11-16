@@ -196,3 +196,21 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **UX decision (user):** Escape cleared a selected table but left a clicked edge label pinned.
   Escape now also unpins it, through a `clearSelection` action in `ui-store` (AC-P1-T08-13).
   Status: **Implemented — awaiting verification.**
+
+---
+
+## 2026-11-16 — QA-009 fix, Escape decision, P2-T04 (Prisma import)
+
+- **QA-009 fix and Escape:** commit `57ce4f9` (pushed). `npm run check` passed: 27 files / 199 tests.
+  Re-verification pending, see [handoffs/P2-T04.md](handoffs/P2-T04.md).
+- **Escalation (P2-T04):** the planned `@mrleebo/prisma-ast@0.16.0` runs a filesystem config search
+  (`lilconfig`) and imports Node's `os` at import time, so it doesn't bundle for the browser without
+  shims; it's also all-or-nothing on syntax errors. The user chose a hand-written parser (ADR-013).
+- **P2-T04:** own Prisma parser in `src/parsers/prisma`, fixtures in `tests/fixtures/prisma/`.
+  `npm run check` passes: 31 files / 219 tests (parser: 12 files / 89). Size: 926 lines excluding
+  tests, above the 350–450 estimated.
+- **Self-check finding (Escape):** edges are created with `edgesFocusable={false}`, so after an
+  edge click, keys come from `<body>` and never reached the workspace-root handler. The
+  `57ce4f9` test fired Escape on the edge element and missed this. Fix: the Escape listener is
+  now on `document`, and the test fires from `<body>`.
+- **Cowork result:** Pending — not independently verified.

@@ -244,3 +244,29 @@ Run `npx vitest run src/parsers` (67 tests since `12697ac`; 61 at `ca08df3`). Fi
   400 random inputs, under 2 s. _Auto_
 - AC-P2-T03-3: About 1 MB of DDL (500 tables, 0.96 MiB) parses in under 1.5 s. Measured 99–144 ms
   in Node on the M1, 3 warm runs. _Auto_
+
+## P2-T04 — Prisma import (pure logic, no UI)
+
+Run `npx vitest run src/parsers/prisma` (4 files, 20 tests). Fixtures are in
+`tests/fixtures/prisma/`.
+
+| Fixture             | Provider   | ok        | Tables                        | Columns | Relationships                        | Issues                                                           |
+| ------------------- | ---------- | --------- | ----------------------------- | ------- | ------------------------------------ | ---------------------------------------------------------------- |
+| `blog.prisma`       | postgresql | true      | 9 (incl. 2 implicit m:n join) | 31      | 11 (1 one-to-one, 4 prisma-implicit) | 1 warning: view `PostStats` skipped (line 98)                    |
+| `shop.mysql.prisma` | mysql      | true      | 4                             | 14      | 3 (1 composite one-to-one)           | 0                                                                |
+| `edge-cases.prisma` | postgresql | **false** | 3                             | 8       | 1                                    | 8 warnings + 1 error (duplicate table `public.Account`, line 33) |
+
+- AC-P2-T04-1: `@map`/`@@map` give column and table names; relations resolve `fields`/`references`
+  to the mapped column names, with `onDelete`/`onUpdate` and `map` as the key name. _Auto_
+- AC-P2-T04-2: Implicit many-to-many relations (also self-relations) produce `_AToB`/`_Name` join
+  tables with `origin: "implicit"`, columns `A`/`B` and two `prisma-implicit` relationships. _Auto_
+- AC-P2-T04-3: `@id`/`@@id`, `@unique`/`@@unique`, `@@index`/`@@fulltext`, `@default` kinds,
+  `?` nullability, scalar lists, enums (with `@map`/`@@map`), native `@db.*` types and `///` doc
+  comments are mapped. _Auto_
+- AC-P2-T04-4: A bad line, unknown block, unterminated string or missing `}` is skipped with a
+  line-numbered warning; the rest imports (an unclosed `(` doesn't swallow the following fields).
+  _Auto_
+- AC-P2-T04-5: `parsePrisma` never throws: 360 seeded truncations/corruptions of the fixtures plus
+  400 random inputs, under 2 s. A 500-model schema (0.63 MiB) parses in 57–118 ms in Node on the M1
+  (4 runs; the test asserts < 1.5 s). _Auto_
+- AC-P2-T04-6: No new dependency; `src/parsers` imports no React, `@xyflow` or DOM APIs. _Auto (grep)_
