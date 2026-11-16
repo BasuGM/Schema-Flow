@@ -58,7 +58,15 @@ flowchart LR
    selects it, sets `ui-store.highlightedColumn`, and issues a focus request that the canvas
    centers on the table, or on the column's row (`rowCenterOffset`). A new import or sample calls
    `resetForNewSchema()`, which clears the selection, filter and highlight and closes search.
-7. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
+7. **Inspector** (P2-T08): `getTableDetails(schema, tableId)` (`src/domain/schema/table-details.ts`,
+   pure) turns a table into display-ready columns (default labels, enum values, FK targets),
+   keys, checks and resolved relationships, using a relationship index built once per schema
+   (`WeakMap`). The inspector shows it in three tabs (`ui-store.inspectorTab`). Every jump goes
+   through `revealTable(tableId, columnId?, { mode, tab })`: links and search center the canvas
+   (`mode` "center"), a click on an inspector column row only pans when the row is off-screen
+   ("ensure-visible"), and Relations navigation keeps the Relations tab and records
+   `inspectorBack` (table + tab). Below `md` the inspector is an overlay sheet.
+8. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
    with a boolean selector (`s.selectedTableId === id`), so a selection change re-renders only the
    affected node(s)/edges — the nodes array is not rebuilt.
 
@@ -516,6 +524,25 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
   `scripts/headless/toolbar-width.mjs` checks this against a running server.
 - **Bundle:** +16.1 KB raw / +4.5 KB gzip initial JS (1,115,374 B raw / 351,499 B gzip), under
   the 5 KB threshold for lazy-loading the dialog. Parsers are still lazy (`2s-fxisvw7v--.js`).
+
+### ADR-017 — Inspector: three tabs, explicit vs. reading navigation (2026-11-16)
+
+- **Three tabs** (Columns · Keys · Relations), not four: at the 240 px minimum width four
+  labelled tabs truncate; checks live in Keys. Radix Tabs from the existing `radix-ui` package
+  (`src/components/ui/tabs.tsx`); no new dependency.
+- **Two kinds of navigation:** explicit "go to" actions (table list, search, FK and key links,
+  Relations) center the canvas; reading through columns in the inspector only pans when the row
+  is off-screen, so the diagram doesn't jump on every click (`FocusRequest.mode`).
+- **Tabs follow the user:** plain selection never changes the tab; a column highlight from search
+  or a link shows Columns; Relations navigation stays on Relations and "Back" restores the table
+  and the tab it was on (a one-step history, `inspectorBack`).
+- **Phones:** 240 px of inspector beside a 320 px canvas can't fit at 390 px (the toggle used to
+  open a 0 px panel), so below `md` the inspector is an overlay sheet; the resizable panel stays
+  collapsed and its resizes are ignored there.
+- **Caps:** 100 rows per list ("Show 100 more"), as in the issues panel; a 1,000-column table
+  renders its first tab in about 43 ms in jsdom and 50–59 ms (click → paint) in headless Chrome.
+- **Bundle:** +17.1 KB raw / +4.8 KB gzip initial JS (1,132,438 B raw / 356,342 B gzip at
+  `7bec7a6`). Parsers are still lazy (`2s-fxisvw7v--.js`).
 
 ## Known limitations (Phase 1)
 

@@ -425,3 +425,47 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
       changes ("4 results" / "No tables or columns match …"), with the visible status and empty
       message kept separate.
     - Folded into P2-T08. Status: **Open — scheduled in P2-T08.**
+
+---
+
+## 2026-11-16 — P2-T08 (Full inspector) + QA-016
+
+- **Plan:** approved with amendments 1–7: the AC-P1-T08-5 revision, pan-only-if-off-screen,
+  100-row caps with a perf budget, tab rules, default labels per source, phone check, and handoff
+  coverage.
+- **Commit:** `7bec7a6`. `npm run check` passes 3× in a row: 48 files / 333 tests, build ✔.
+- **Intentional AC revision (not a defect):** AC-P1-T08-5. The inspector hides the schema line
+  when it is the source default (`public` on PostgreSQL, as in search), so the sample no longer
+  shows "schema public". The column list moved into the Columns tab.
+- **QA-016:** fixed. Search has one polite live region (`search-live`) whose text alone changes.
+  The visible status and no-match message are separate, non-live elements. The test asserts the
+  same DOM node across result → no-match → result; it fails on the old code (no such element).
+  Status: **Fixed — awaiting re-verification.**
+- **Found by Claude Code while building it (not Cowork defects):**
+  - **Phones:** the inspector toggle at 390 px opened a 0 px panel. 240 px of inspector beside
+    the 320 px minimum canvas can't fit. Below `md` the inspector is now an overlay sheet
+    (ADR-017). Measured at 390×844: the sheet is 352 px, tabs aren't truncated, there's no
+    horizontal scroll, and `toolbar-width.mjs` passes.
+  - **jsdom and Radix Tabs:** inside the full workspace, the resizable-panels pointer
+    hit-testing (all rects 0×0 in jsdom) cancels pointerdown, so Radix Tabs (which activate on
+    mousedown) never saw clicks. The inspector tests render the inspector next to a real canvas
+    instead. In the browser the tabs work (headless Chrome, real mouse events).
+  - **Duplicate test id (pre-existing, not changed):** `react-resizable-panels` puts the panel
+    id on its element as `data-testid`. In the full app, `[data-testid=inspector]` therefore
+    matches the panel wrapper (first) and the inspector `aside`. Use
+    `aside[aria-label=Inspector]` for the inspector itself.
+- **Plan detail made explicit:** Relations navigation highlights the column at the other end but
+  stays on the Relations tab (walking the schema), and Back restores the table and the tab you
+  were on. FK-target links, key-section links and search switch to Columns (amendment 4).
+- **Claude Code headless Chrome (production build; not independent verification):**
+  - 1280×720, light and dark, at default (300 px) and minimum (240 px) width: tab labels not
+    truncated.
+  - orders → users via Relations (users selected, `users.id` highlighted, Relations kept), then
+    Back (orders, Relations).
+  - Clicking a visible column row keeps the viewport transform. In a 1,000-column table,
+    clicking `c_90` (off-screen) pans, and then `c_91` (now visible) doesn't.
+  - Selecting the 1,000-column table: 50–59 ms click → painted, with "Show 100 more".
+  - Console empty.
+- **Bundle:** +17.1 KB raw / +4.8 KB gzip initial JS. Parsers still lazy.
+- **Cowork result:** Pending — not independently verified. See
+  [handoffs/P2-T08.md](handoffs/P2-T08.md).

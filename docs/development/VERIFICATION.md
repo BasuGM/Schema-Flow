@@ -109,6 +109,7 @@ Covered by `src/domain/schema/*.test.ts`.
 - AC-P1-T08-3: Clicking empty canvas clears the selection; inspector returns to the empty state. Escape also clears. _Auto_
 - AC-P1-T08-4: With a node focused, Enter (or Space) selects it. _Auto_
 - AC-P1-T08-5: Inspector shows table name, schema (`schema public`), comment if any, counts (columns / outgoing / incoming — must match the reference table) and the column list with PK / FK / UQ / NULL badges. _Auto (orders)_; _Manual (others)_
+  **Revised 2026-11-16 (P2-T08, intentional):** the schema line is hidden when it is the source default (`public` on PostgreSQL; none on MySQL / SQLite / Prisma without `@@schema`), so the sample shows no schema line; `billing.invoices` shows "schema billing". The column list moved into the Columns tab.
 - AC-P1-T08-6: Controls (bottom-left) zoom in/out and fit the view; "Reset view" (`canvas-reset-view`, top-right) fits the whole diagram (max zoom 100%). _Manual_
 - AC-P1-T08-7: Toolbar "Layout" (`toolbar-layout`) re-runs Dagre, discarding manual positions, then fits the view. _Auto (store)_; _Manual_
 - AC-P1-T08-8: Settings → "Show minimap" toggles a minimap (bottom-right); it is off by default. _Manual_
@@ -459,3 +460,55 @@ the order within each group is the ranking.
 - AC-P2-T07-9: Below `sm`, Layout, Theme and Settings are in the **More** menu
   (`toolbar-more`), and the page is 390 px wide at 390×844 with the Issues counts showing
   (`node scripts/headless/toolbar-width.mjs`). _Auto (menu)_; _Manual_
+
+## P2-T08 — Full inspector
+
+Tab counts are Columns · Keys (primary key + unique + indexes + checks) · Relations (references +
+referenced by; a self-reference counts in both).
+
+| Fixture                       | Table              | Counts (C · K · R) | Notes                                                                                      |
+| ----------------------------- | ------------------ | ------------------ | ------------------------------------------------------------------------------------------ |
+| sample                        | `orders`           | 7 · 2 · 6          | index `orders_user_status_idx (user_id, status)`; `status` enum values; restrict/set null  |
+| sample                        | `users`            | 7 · 2 · 3          | Referenced by: addresses (cascade), orders (restrict, `orders_user_fk`), reviews (cascade) |
+| sample                        | `order_items`      | 5 · 2 · 2          | composite PK `order_items_pkey`: 1 `order_id`, 2 `line_no`; check `quantity > 0`           |
+| sample                        | `products`         | 9 · 5 · 3          | PK, unique `sku`, index `products_name_idx`, checks price/stock                            |
+| sample                        | `payments`         | 6 · 2 · 1          | References orders **1:1** (`payments_order_fk`)                                            |
+| sample                        | `categories`       | 4 · 2 · 3          | self-reference `parent_id → categories.id` in both lists, marked "self"                    |
+| sample                        | `audit_log`        | 5 · 0 · 0          | every Keys / Relations section shows its empty state                                       |
+| `sql/edge-cases.postgres.sql` | `billing.invoices` | 4 · 1 · 1          | header "schema billing"                                                                    |
+| `sql/edge-cases.postgres.sql` | `Order Lines`      | 4 · 1 · 1          | `LineID` auto-increment; `note` = `'it''s; fine'`; `weird "quoted" col`                    |
+| `prisma/blog.prisma`          | `_CategoryToPost`  | 2 · 2 · 2          | "Implicit join table"; unique index `_CategoryToPost_AB_unique`; "Prisma implicit"         |
+| `prisma/shop.mysql.prisma`    | `shipments`        | 3 · 2 · 1          | composite FK `(order_id, line_no) → order_lines.(order_id, line_no)`, 1:1                  |
+
+- AC-P2-T08-1: The inspector has Columns · Keys · Relations tabs with the counts above; ←/→,
+  Home/End move between tabs. The chosen tab stays when another table is selected; a new import
+  resets it to Columns. Labels don't truncate at the minimum inspector width (240 px). _Auto_;
+  _Manual_
+- AC-P2-T08-2: Columns show type, default (identity/serial/AUTO_INCREMENT/`autoincrement()` →
+  "auto-increment"; functions as written; string literals with their quotes; Prisma
+  `dbgenerated("x")` → `x` with a "db" hint), FK target link, comment, and enum values (8, then
+  "+N more"). _Auto_; _Manual_
+- AC-P2-T08-3: Clicking a column row highlights it on the canvas and in the inspector
+  (`aria-current`) and pans only when the row is off-screen. FK-target and key-section links
+  select the target table, center on the row and show Columns. A search hit also switches to
+  Columns. _Auto_; _Manual_
+- AC-P2-T08-4: Keys lists the primary key (ordinals for composite keys), unique constraints,
+  indexes (`unique` badge) and checks (long expressions: "Show more"), each with an empty state.
+  _Auto_; _Manual_
+- AC-P2-T08-5: Relations lists References and Referenced by with cardinality (N:1 / 1:1),
+  ON DELETE / ON UPDATE when set, constraint names, "self" and "Prisma implicit" badges, and
+  composite column pairs. The table name navigates there (highlighting the other end's column,
+  staying on Relations); "Back to …" restores the previous table and the tab it was on. _Auto_;
+  _Manual_
+- AC-P2-T08-6: Columns, References and Referenced by render 100 rows at a time ("Show 100
+  more"); a highlighted column beyond that is still shown. Selecting a 1,000-column table renders
+  its first tab in under 50 ms (jsdom test). _Auto_; _Manual (Claude Code headless Chrome: 50–59
+  ms click → painted; not independent verification)_
+- AC-P2-T08-7: Below 768 px the inspector opens (toolbar toggle) as an overlay sheet over the
+  canvas, with "Close inspector"; tabs don't truncate; lists scroll inside it; no horizontal page
+  scroll; `toolbar-width.mjs` passes. _Auto_; _Manual_
+- AC-P2-T08-8: Switching tabs and toggling details don't re-render the canvas (`Profiler`).
+  _Auto_
+- AC-P2-T07-10 (QA-016): Search has one polite live region (`search-live`), mounted while the
+  dialog is open, whose text alone changes; the visible status and no-match message are separate
+  and not live. _Auto (same DOM node asserted)_; _Manual_
