@@ -320,7 +320,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     which `react-resizable-panels` needs.
 - **Plan deviation:** the `issuesPanelDismissed` flag was not added; the rule "errors open,
   anything else leaves it as it is" gives the requested behaviour (ADR-015).
-- **Cowork result:** Verified by Cowork in round 8 (below). Handoff [handoffs/P2-T06.md](handoffs/P2-T06.md).
+- **Cowork result:** Pending — not independently verified. See [handoffs/P2-T06.md](handoffs/P2-T06.md).
 
 ---
 
