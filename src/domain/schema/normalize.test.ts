@@ -372,3 +372,48 @@ describe("normalizeSchema", () => {
     expect(toImportResult(err).ok).toBe(false);
   });
 });
+
+describe("issue links (P2-T06)", () => {
+  const tables = [
+    users,
+    { name: "invoices", schemaName: "billing", columns: [{ name: "id", type: "int" }] },
+    {
+      name: "orders",
+      columns: [
+        { name: "id", type: "int", primaryKey: true },
+        { name: "ghost_id", type: "int", references: { table: "ghosts" } },
+        { name: "user_ref", type: "int", references: { table: "users", columns: ["nope"] } },
+      ],
+    },
+  ];
+
+  it("links its own issues to the table they concern", () => {
+    const s = normalizeSchema(
+      draft([...tables, { name: "USERS", columns: [] }], { defaultSchemaName: "public" }),
+    );
+    const linked = s.issues.map((i) => [i.message.split(" ").slice(0, 2).join(" "), i.tableId]);
+    expect(linked).toEqual([
+      ["Duplicate table", "public.users"],
+      ["Foreign key", "public.orders"], // to the unknown table "ghosts"
+      ["Foreign key", "public.orders"], // to the unknown column users.nope
+    ]);
+  });
+
+  it("resolves a parser's raw table name: case-insensitive, schema-qualified, default schema", () => {
+    const issues = [
+      { severity: "warning" as const, message: "a", table: "USERS" },
+      { severity: "warning" as const, message: "b", table: "billing.Invoices" },
+      { severity: "warning" as const, message: "c", table: "public.orders" },
+      { severity: "warning" as const, message: "d", table: "missing" },
+      { severity: "warning" as const, message: "e", table: "users", tableId: "kept" },
+    ];
+    const s = normalizeSchema(draft(tables, { defaultSchemaName: "public", issues }));
+    expect(s.issues.slice(0, 5).map((i) => i.tableId)).toEqual([
+      "public.users",
+      "billing.invoices",
+      "public.orders",
+      undefined,
+      "kept",
+    ]);
+  });
+});

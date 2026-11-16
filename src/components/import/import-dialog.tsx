@@ -77,7 +77,7 @@ export function ImportDialog() {
 
   const onImport = () => {
     if (state.status !== "done" || !state.parsed.result.schema) return;
-    applyImportedSchema(state.parsed.result.schema);
+    applyImportedSchema(state.parsed.result.schema, state.text);
     setDraft(EMPTY_DRAFT);
     setFormat("auto");
     setOpen(false);

@@ -7,9 +7,11 @@ import {
   parseTableConstraint,
   type TableConstraint,
 } from "./parse-table-constraint";
+import { tableLabel } from "../table-label";
 import type { QualifiedName, TokenStream } from "./token-stream";
 
-export type Warn = (message: string, line?: number) => void;
+/** `table` is the raw (optionally schema-qualified) name the issue concerns, for linking. */
+export type Warn = (message: string, line?: number, table?: string) => void;
 
 /** After `CREATE [modifiers] TABLE [IF NOT EXISTS]`. */
 export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable {
@@ -30,7 +32,7 @@ export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable {
     else {
       const columnLine = ts.line;
       const { column, checks } = parseColumn(ts);
-      if (column.type === "") warnNoType(warn, table.name, column.name, columnLine);
+      if (column.type === "") warnNoType(warn, table, column.name, columnLine);
       table.columns.push(column);
       if (checks.length > 0) (table.checkConstraints ??= []).push(...checks);
     }
@@ -42,8 +44,12 @@ export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable {
 }
 
 /** Typeless columns are kept (SQLite allows them) but reported, one warning per column (QA-008). */
-export function warnNoType(warn: Warn, table: string, column: string, line?: number): void {
-  warn(`Column "${table}.${column}" has no type; its type is shown as empty.`, line);
+export function warnNoType(warn: Warn, table: DraftTable, column: string, line?: number): void {
+  warn(
+    `Column "${table.name}.${column}" has no type; its type is shown as empty.`,
+    line,
+    tableLabel(table),
+  );
 }
 
 export function applyConstraint(
@@ -69,7 +75,7 @@ export function applyConstraint(
       (table.checkConstraints ??= []).push(c.check);
       break;
     case "skipped":
-      warn(`Skipped ${c.reason} on "${table.name}".`, line);
+      warn(`Skipped ${c.reason} on "${table.name}".`, line, tableLabel(table));
       break;
   }
 }

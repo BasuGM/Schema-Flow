@@ -46,7 +46,8 @@ export interface PrismaBlock {
   doc?: string;
 }
 
-export type Warn = (message: string, line?: number) => void;
+/** `table` is the raw (optionally schema-qualified) table name the issue concerns, for linking. */
+export type Warn = (message: string, line?: number, table?: string) => void;
 
 class PrismaSyntaxError extends Error {
   constructor(
@@ -94,7 +95,9 @@ export function parsePrismaBlocks(tokens: PrismaToken[], warn: Warn): PrismaBloc
       continue;
     }
     const close = matchingBrace(tokens, i + 2);
-    if (close === -1) warn(`Block "${name.text}" is missing a closing "}".`, t.line);
+    // Model names equal table names unless @@map'ed; normalize links only names that exist.
+    const subject = t.text === "model" ? name.text : undefined;
+    if (close === -1) warn(`Block "${name.text}" is missing a closing "}".`, t.line, subject);
     const body = tokens.slice(i + 3, close === -1 ? tokens.length : close);
     i = close === -1 ? tokens.length : close + 1;
     if (!KNOWN_BLOCKS.has(t.text)) {
@@ -202,6 +205,7 @@ function parseMemberSafely(
     warn(
       `Could not parse a line in ${block.keyword} "${block.name}": ${detail}. The line was skipped.`,
       line,
+      block.keyword === "model" ? block.name : undefined,
     );
     return undefined;
   }

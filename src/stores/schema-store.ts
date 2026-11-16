@@ -11,7 +11,12 @@ interface SchemaState {
   fingerprint: string | null;
   /** Import issues plus any validation issues found on load. */
   issues: ImportIssue[];
-  loadSchema: (schema: Schema) => void;
+  /**
+   * The imported text (≤ 5 MB), kept for the session so issues can show source excerpts. Not part
+   * of the schema or its fingerprint; null for samples. Read it only with a narrow selector.
+   */
+  sourceText: string | null;
+  loadSchema: (schema: Schema, sourceText?: string) => void;
   clear: () => void;
 }
 
@@ -20,14 +25,17 @@ export const useSchemaStore = create<SchemaState>()((set) => ({
   schema: null,
   fingerprint: null,
   issues: [],
-  loadSchema: (schema) =>
+  sourceText: null,
+  loadSchema: (schema, sourceText) =>
     set({
       status: "ready",
       schema,
       fingerprint: fingerprintSchema(schema),
       issues: withValidation(schema),
+      sourceText: sourceText ?? null,
     }),
-  clear: () => set({ status: "empty", schema: null, fingerprint: null, issues: [] }),
+  clear: () =>
+    set({ status: "empty", schema: null, fingerprint: null, issues: [], sourceText: null }),
 }));
 
 const issueKey = (i: ImportIssue) => `${i.severity}|${i.line ?? ""}|${i.message}`;

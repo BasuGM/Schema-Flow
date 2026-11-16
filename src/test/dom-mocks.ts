@@ -6,7 +6,17 @@ export function installDomMocks(): void {
   class ResizeObserverMock {
     constructor(private readonly callback: ResizeObserverCallback) {}
     observe(target: Element) {
-      this.callback([{ target } as ResizeObserverEntry], this as unknown as ResizeObserver);
+      // Full entry shape: react-resizable-panels reads `borderBoxSize`, React Flow the target.
+      // A realistic size, so panel groups can honour their pixel minimums.
+      const size = [{ inlineSize: 1000, blockSize: 800 }];
+      const entry = {
+        target,
+        contentRect: { width: 1000, height: 800 },
+        borderBoxSize: size,
+        contentBoxSize: size,
+        devicePixelContentBoxSize: size,
+      };
+      this.callback([entry as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
     }
     unobserve() {}
     disconnect() {}

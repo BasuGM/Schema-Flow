@@ -1,5 +1,6 @@
 "use client";
 
+import { countIssues, sortIssues } from "@/domain/schema/issues";
 import type { ImportIssue, Schema } from "@/domain/schema/types";
 import type { ParsedSchemaText } from "@/parsers";
 import { Badge } from "@/components/ui/badge";
@@ -37,8 +38,7 @@ export function countsText(schema: Schema): string {
 }
 
 export function issuesText(issues: ImportIssue[]): string {
-  const errors = issues.filter((i) => i.severity === "error").length;
-  const warnings = issues.length - errors;
+  const { errors, warnings } = countIssues(issues);
   if (issues.length === 0) return "No issues";
   return [errors && plural(errors, "error"), warnings && plural(warnings, "warning")]
     .filter(Boolean)
@@ -51,7 +51,7 @@ export function importLabel(state: ImportParseState): string | null {
   const { schema, issues } = state.parsed.result;
   const tables = schema?.tableOrder.length ?? 0;
   if (tables === 0) return null;
-  const errors = issues.filter((i) => i.severity === "error").length;
+  const { errors } = countIssues(issues);
   return `Import ${plural(tables, "table")}${errors ? ` (${plural(errors, "error")})` : ""}`;
 }
 
@@ -73,11 +73,8 @@ function statusText(state: ImportParseState): string {
 export function ImportPreview({ state }: { state: ImportParseState }) {
   const problem = state.status === "too-large" || state.status === "binary";
   const result = state.status === "done" ? state.parsed.result : undefined;
-  const issues = result
-    ? [...result.issues].sort(
-        (a, b) => Number(b.severity === "error") - Number(a.severity === "error"),
-      )
-    : [];
+  // Same order as the issues panel: errors first, then by line.
+  const issues = result ? sortIssues(result.issues) : [];
   return (
     <section className="flex flex-col gap-2" aria-live="polite" data-testid="import-preview">
       <p

@@ -12,6 +12,7 @@ import {
   referentialAction,
   stringArg,
 } from "./field-mapping";
+import { tableLabel } from "../table-label";
 import { lexPrisma } from "./lexer";
 import {
   parsePrismaBlocks,
@@ -51,12 +52,13 @@ interface RelationField {
  */
 export function parsePrisma(text: string, options: ParsePrismaOptions = {}): ImportResult {
   const issues: ImportIssue[] = [];
-  const warn: Warn = (message, line) =>
-    issues.push(
-      line === undefined
-        ? { severity: "warning", message }
-        : { severity: "warning", message, line },
-    );
+  const warn: Warn = (message, line, table) =>
+    issues.push({
+      severity: "warning",
+      message,
+      ...(line !== undefined ? { line } : {}),
+      ...(table ? { table } : {}),
+    });
   try {
     const { tokens, issues: lexIssues } = lexPrisma(text);
     issues.push(...lexIssues);
@@ -172,6 +174,7 @@ function buildModel(block: PrismaBlock, ctx: Context): Model {
       ctx.warn(
         `Unknown type "${field.type}" on "${block.name}.${field.name}"; kept as written.`,
         field.line,
+        tableLabel(table),
       );
     const column = {
       name: stringArg(attribute(field.attributes, "map"), "name", 0) ?? field.name,
@@ -195,7 +198,11 @@ function buildModel(block: PrismaBlock, ctx: Context): Model {
     if (!["id", "unique", "index", "fulltext"].includes(attr.name)) continue;
     const fields = fieldList(arg(attr, "fields", 0));
     if (!fields) {
-      ctx.warn(`Could not read the fields of @@${attr.name} in model "${block.name}".`, block.line);
+      ctx.warn(
+        `Could not read the fields of @@${attr.name} in model "${block.name}".`,
+        block.line,
+        tableLabel(table),
+      );
       continue;
     }
     const key: DraftKey = { columns: fields.map((f) => model.columns.get(f) ?? f) };
@@ -222,7 +229,11 @@ function linkRelations(models: Map<string, Model>, ctx: Context): DraftTable[] {
     const label = `${model.block.name}.${field.name}`;
     const target = models.get(field.type);
     if (!target) {
-      ctx.warn(`Relation "${label}" points to view "${field.type}" and was skipped.`, field.line);
+      ctx.warn(
+        `Relation "${label}" points to view "${field.type}" and was skipped.`,
+        field.line,
+        tableLabel(model.table),
+      );
       continue;
     }
     const rel = attribute(field.attributes, "relation");
@@ -244,6 +255,7 @@ function linkRelations(models: Map<string, Model>, ctx: Context): DraftTable[] {
       ctx.warn(
         `Relation "${label}" has no opposite field in "${field.type}" and was skipped.`,
         field.line,
+        tableLabel(model.table),
       );
       continue;
     }
@@ -270,7 +282,11 @@ function foreignKey(
 ): DraftForeignKey | undefined {
   const label = `${model.block.name}.${field.name}`;
   if (!references || references.length !== fields.length) {
-    ctx.warn(`Relation "${label}" needs matching "fields" and "references"; skipped.`, field.line);
+    ctx.warn(
+      `Relation "${label}" needs matching "fields" and "references"; skipped.`,
+      field.line,
+      tableLabel(model.table),
+    );
     return undefined;
   }
   const missing = [
@@ -281,6 +297,7 @@ function foreignKey(
     ctx.warn(
       `Relation "${label}" references unknown field(s) ${missing.join(", ")}; skipped.`,
       field.line,
+      tableLabel(model.table),
     );
     return undefined;
   }
@@ -316,6 +333,7 @@ function implicitJoinTable(
     ctx.warn(
       `Implicit many-to-many relation "${name}" needs a single-field @id on "${a.block.name}" and "${b.block.name}"; skipped.`,
       rf.field.line,
+      tableLabel(rf.model.table),
     );
     return undefined;
   }

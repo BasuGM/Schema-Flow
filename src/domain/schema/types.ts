@@ -109,6 +109,10 @@ export interface ImportIssue {
   message: string;
   line?: number;
   statement?: string;
+  /** Raw name of the table the issue concerns, as a parser saw it (resolved by normalize). */
+  table?: string;
+  /** The table the issue concerns, when it exists in the schema; used to link issues to the canvas. */
+  tableId?: TableId;
 }
 
 export interface Schema {

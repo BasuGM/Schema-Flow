@@ -16,7 +16,9 @@ import {
   parseCreateType,
   warnNoType,
   type AlterTable,
+  type Warn,
 } from "./parse-statements";
+import { tableLabel } from "../table-label";
 import { splitStatements, type SqlStatement } from "./split";
 import { SqlSyntaxError, TokenStream } from "./token-stream";
 
@@ -102,8 +104,8 @@ class DraftBuilder {
 
   add(statement: SqlStatement): void {
     const ts = new TokenStream(statement.tokens, this.source);
-    const warn = (message: string, line?: number) =>
-      this.warn(message, line ?? statement.startLine, statement);
+    const warn: Warn = (message, line, table) =>
+      this.warn(message, line ?? statement.startLine, statement, table);
     try {
       this.dispatch(ts, statement, warn);
     } catch (error) {
@@ -113,11 +115,7 @@ class DraftBuilder {
     }
   }
 
-  private dispatch(
-    ts: TokenStream,
-    statement: SqlStatement,
-    warn: (m: string, line?: number) => void,
-  ): void {
+  private dispatch(ts: TokenStream, statement: SqlStatement, warn: Warn): void {
     const ignore = classifyIgnored(statement);
     if (ignore) {
       this.ignored.set(ignore, (this.ignored.get(ignore) ?? 0) + 1);
@@ -135,7 +133,11 @@ class DraftBuilder {
       if (ts.acceptKeywords("INDEX")) {
         const index = parseCreateIndex(ts, unique);
         if ("expressionOn" in index)
-          warn(`Skipped an index on expressions for "${index.expressionOn.name}".`);
+          warn(
+            `Skipped an index on expressions for "${index.expressionOn.name}".`,
+            undefined,
+            tableLabel(index.expressionOn),
+          );
         else this.indexes.push(index);
         return;
       }
@@ -151,7 +153,7 @@ class DraftBuilder {
     warn(`Skipped unsupported statement: ${describe(statement)}.`);
   }
 
-  private addTable(table: DraftTable, warn: (m: string, line?: number) => void): void {
+  private addTable(table: DraftTable, warn: Warn): void {
     const key = this.key(table.name, table.schemaName);
     if (this.byKey.has(key)) {
       // Let normalize report the duplicate (error); keep the first for ALTER lookups.
@@ -160,14 +162,13 @@ class DraftBuilder {
     }
     this.byKey.set(key, table);
     this.tables.push(table);
-    if (table.columns.length === 0) warn(`Table "${table.name}" has no columns.`, table.line);
+    if (table.columns.length === 0)
+      warn(`Table "${table.name}" has no columns.`, table.line, tableLabel(table));
   }
 
-  private applyAlter(alter: AlterTable, warn: (m: string, line?: number) => void): void {
+  private applyAlter(alter: AlterTable, warn: Warn): void {
     const table = this.byKey.get(this.key(alter.table.name, alter.table.schemaName));
-    const label = alter.table.schemaName
-      ? `${alter.table.schemaName}.${alter.table.name}`
-      : alter.table.name;
+    const label = tableLabel(alter.table);
     for (const action of alter.actions) {
       switch (action.kind) {
         case "ownerTo":
@@ -177,6 +178,7 @@ class DraftBuilder {
           warn(
             `Skipped unsupported ALTER TABLE action on "${label}": ${truncate(action.description, 60)}.`,
             action.line,
+            label,
           );
           break;
         case "constraint":
@@ -193,8 +195,7 @@ class DraftBuilder {
         case "addColumn":
           if (table) {
             table.columns.push(action.column);
-            if (action.column.type === "")
-              warnNoType(warn, table.name, action.column.name, action.line);
+            if (action.column.type === "") warnNoType(warn, table, action.column.name, action.line);
           } else warn(`ALTER TABLE references unknown table "${label}".`, action.line);
           break;
         case "columnDefault":
@@ -206,6 +207,7 @@ class DraftBuilder {
             warn(
               `ALTER TABLE references unknown column "${action.column}" in "${label}".`,
               action.line,
+              label,
             );
           } else if (action.kind === "columnNullable") {
             column.nullable = action.nullable;
@@ -250,12 +252,13 @@ class DraftBuilder {
     return draft;
   }
 
-  private warn(message: string, line: number, statement: SqlStatement): void {
+  private warn(message: string, line: number, statement: SqlStatement, table?: string): void {
     this.issues.push({
       severity: "warning",
       message,
       line,
       statement: truncate(statement.text, SNIPPET),
+      ...(table ? { table } : {}),
     });
   }
 

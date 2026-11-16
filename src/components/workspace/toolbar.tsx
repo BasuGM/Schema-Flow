@@ -2,6 +2,7 @@
 
 import { Download, PanelLeft, PanelRight, Workflow } from "lucide-react";
 import { ImportDialog } from "@/components/import/import-dialog";
+import { IssuesButton } from "@/components/issues/issues-button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLayoutStore } from "@/stores/layout-store";
@@ -62,6 +63,7 @@ export function Toolbar() {
 
       <div className="ml-auto flex items-center gap-0.5">
         <ImportDialog />
+        <IssuesButton />
         <ToolbarButton
           tooltip="Export is coming in Phase 3"
           unavailable

@@ -85,6 +85,7 @@ export function normalizeSchema(draft: DraftSchema): Schema {
   }
 
   applyColumnFlags(ctx.tables, relationships);
+  linkIssuesToTables(ctx);
 
   return {
     name: draft.name,
@@ -126,6 +127,7 @@ function addTable(
       severity: "error",
       message: `Duplicate table "${id}" (names are matched case-insensitively) was skipped.`,
       line: draft.line,
+      tableId: ctx.tables[id] ? id : (ctx.tableLookup.get(id) ?? id),
     });
     return undefined;
   }
@@ -149,6 +151,7 @@ function addTable(
         severity: "warning",
         message: `Duplicate column "${c.name}" in "${id}" was skipped.`,
         line: draft.line,
+        tableId: id,
       });
       continue;
     }
@@ -188,6 +191,7 @@ function addTableKeys(ctx: Context, draft: DraftTable, id: TableId): void {
       severity: "warning",
       message: `Table "${id}" declares both inline and table-level primary keys; using the table-level key.`,
       line: draft.line,
+      tableId: id,
     });
   }
   if (pk) {
@@ -219,7 +223,14 @@ function buildRelationship(
   const label = fk.name ? `foreign key "${fk.name}"` : `foreign key on "${owner}"`;
   const fromId = resolveTable(ctx, owner, ownerSchema, label, fk.line);
   if (!fromId) return undefined;
-  const toId = resolveTable(ctx, fk.references.table, fk.references.schemaName, label, fk.line);
+  const toId = resolveTable(
+    ctx,
+    fk.references.table,
+    fk.references.schemaName,
+    label,
+    fk.line,
+    fromId,
+  );
   if (!toId) return undefined;
   const target = ctx.tables[toId];
   if (!target) return undefined;
@@ -229,7 +240,7 @@ function buildRelationship(
 
   let toColumns: ColumnId[] | undefined;
   if (fk.references.columns && fk.references.columns.length > 0) {
-    toColumns = resolveColumns(ctx, toId, fk.references.columns, label, fk.line);
+    toColumns = resolveColumns(ctx, toId, fk.references.columns, label, fk.line, fromId);
   } else if (target.primaryKey) {
     toColumns = target.primaryKey.columnIds;
   } else {
@@ -237,6 +248,7 @@ function buildRelationship(
       ctx,
       `${capitalize(label)} references "${toId}" without columns, and "${toId}" has no primary key.`,
       fk.line,
+      fromId,
     );
   }
   if (!toColumns) return undefined;
@@ -245,6 +257,7 @@ function buildRelationship(
       ctx,
       `${capitalize(label)} has ${fromColumns.length} column(s) but references ${toColumns.length}.`,
       fk.line,
+      fromId,
     );
     return undefined;
   }
@@ -268,23 +281,52 @@ function resolveTable(
   schemaName: string | undefined,
   label: string,
   line?: number,
+  /** Table the issue is about (e.g. the FK's source table), for linking. */
+  subject?: TableId,
 ): TableId | undefined {
-  // An explicit schema must match exactly; otherwise try the default schema, then the bare name.
-  const candidates = schemaName
-    ? [tableId(name, schemaName)]
-    : ctx.defaultSchemaName
-      ? [tableId(name, ctx.defaultSchemaName), name]
-      : [name];
-  for (const candidate of candidates) {
+  for (const candidate of tableCandidates(ctx, name, schemaName)) {
     if (ctx.tableLookup.isAmbiguous(candidate)) {
-      issue(ctx, `${capitalize(label)}: table name "${candidate}" is ambiguous.`, line);
+      issue(ctx, `${capitalize(label)}: table name "${candidate}" is ambiguous.`, line, subject);
       return undefined;
     }
     const id = ctx.tableLookup.get(candidate);
     if (id) return id;
   }
-  issue(ctx, `${capitalize(label)} references unknown table "${tableId(name, schemaName)}".`, line);
+  issue(
+    ctx,
+    `${capitalize(label)} references unknown table "${tableId(name, schemaName)}".`,
+    line,
+    subject,
+  );
   return undefined;
+}
+
+/** An explicit schema must match exactly; otherwise try the default schema, then the bare name. */
+function tableCandidates(ctx: Context, name: string, schemaName: string | undefined): string[] {
+  if (schemaName) return [tableId(name, schemaName)];
+  return ctx.defaultSchemaName ? [tableId(name, ctx.defaultSchemaName), name] : [name];
+}
+
+/**
+ * Links parser issues to tables: an issue tagged with a raw `table` name gets the `tableId` of the
+ * table it names, when that table exists (names match case-insensitively, like everywhere else).
+ */
+function linkIssuesToTables(ctx: Context): void {
+  for (const i of ctx.issues) {
+    if (i.tableId || !i.table) continue;
+    const dot = i.table.lastIndexOf(".");
+    const [schemaName, name] =
+      dot > 0 ? [i.table.slice(0, dot), i.table.slice(dot + 1)] : [undefined, i.table];
+    for (const candidate of tableCandidates(ctx, name, schemaName)) {
+      const id = ctx.tableLookup.isAmbiguous(candidate)
+        ? undefined
+        : ctx.tableLookup.get(candidate);
+      if (id) {
+        i.tableId = id;
+        break;
+      }
+    }
+  }
 }
 
 function resolveColumns(
@@ -293,17 +335,23 @@ function resolveColumns(
   names: readonly string[],
   label: string,
   line?: number,
+  subject: TableId = table,
 ): ColumnId[] | undefined {
   const lookup = ctx.columnLookups.get(table);
   if (!lookup || names.length === 0) {
-    issue(ctx, `${capitalize(label)} has no columns.`, line);
+    issue(ctx, `${capitalize(label)} has no columns.`, line, subject);
     return undefined;
   }
   const ids: ColumnId[] = [];
   for (const n of names) {
     const id = lookup.get(n);
     if (!id) {
-      issue(ctx, `${capitalize(label)} references unknown column "${n}" in "${table}".`, line);
+      issue(
+        ctx,
+        `${capitalize(label)} references unknown column "${n}" in "${table}".`,
+        line,
+        subject,
+      );
       return undefined;
     }
     ids.push(id);
@@ -357,10 +405,13 @@ function withName<T extends object>(value: T, name: string | undefined): T & { n
   return name ? { name, ...value } : value;
 }
 
-function issue(ctx: Context, message: string, line?: number): void {
-  ctx.issues.push(
-    line === undefined ? { severity: "warning", message } : { severity: "warning", message, line },
-  );
+function issue(ctx: Context, message: string, line?: number, subject?: TableId): void {
+  ctx.issues.push({
+    severity: "warning",
+    message,
+    ...(line !== undefined ? { line } : {}),
+    ...(subject ? { tableId: subject } : {}),
+  });
 }
 
 function capitalize(s: string): string {

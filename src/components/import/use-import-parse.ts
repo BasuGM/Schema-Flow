@@ -20,7 +20,8 @@ export type ImportParseState =
   | { status: "parsing" }
   | { status: "too-large"; size: number }
   | { status: "binary" }
-  | { status: "done"; parsed: ParsedSchemaText };
+  /** `text` is the decoded source, kept so issues can show excerpts after import. */
+  | { status: "done"; parsed: ParsedSchemaText; text: string };
 
 interface Settled {
   draft: ImportDraft;
@@ -77,5 +78,5 @@ async function parseDraft(
   // Yield a frame so "Parsing…" paints before a large parse blocks the main thread.
   await new Promise((resolve) => setTimeout(resolve, 0));
   const parsed = parsers.parseSchemaText(text, { format, ...(name ? { name } : {}) });
-  return { status: "done", parsed };
+  return { status: "done", parsed, text };
 }

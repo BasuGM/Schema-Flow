@@ -16,6 +16,8 @@ interface UiState {
   focusRequest: FocusRequest | null;
   /** Bumped by `clearSelection`; the canvas unpins a clicked edge when it changes. */
   clearRequest: number;
+  /** Bottom issues panel (P2-T06). */
+  issuesPanelOpen: boolean;
   selectTable: (id: TableId | null) => void;
   /** Escape: clear the table selection and any clicked (pinned) edge. */
   clearSelection: () => void;
@@ -24,6 +26,7 @@ interface UiState {
   setTableFilter: (filter: string) => void;
   setShowMiniMap: (show: boolean) => void;
   setPanelOpen: (panel: "left" | "right", open: boolean) => void;
+  setIssuesPanelOpen: (open: boolean) => void;
   reset: () => void;
 }
 
@@ -35,6 +38,7 @@ const initial = {
   rightPanelOpen: true,
   focusRequest: null,
   clearRequest: 0,
+  issuesPanelOpen: false,
 } satisfies Partial<UiState>;
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -53,5 +57,7 @@ export const useUiStore = create<UiState>()((set) => ({
       const key = panel === "left" ? "leftPanelOpen" : "rightPanelOpen";
       return s[key] === open ? s : { [key]: open };
     }),
+  setIssuesPanelOpen: (issuesPanelOpen) =>
+    set((s) => (s.issuesPanelOpen === issuesPanelOpen ? s : { issuesPanelOpen })),
   reset: () => set(initial),
 }));

@@ -1,8 +1,7 @@
 "use client";
 
-import { CanvasErrorBoundary } from "@/components/canvas/canvas-error-boundary";
-import { SchemaCanvas } from "@/components/canvas/schema-canvas";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { CanvasArea } from "./canvas-area";
 import { Inspector } from "./inspector";
 import { TableList } from "./table-list";
 import { Toolbar } from "./toolbar";
@@ -34,11 +33,7 @@ export function Workspace() {
         </ResizablePanel>
         <ResizableHandle aria-label="Resize table list" />
         <ResizablePanel id="canvas" minSize={320}>
-          <main className="h-full" aria-label="Diagram">
-            <CanvasErrorBoundary>
-              <SchemaCanvas />
-            </CanvasErrorBoundary>
-          </main>
+          <CanvasArea />
         </ResizablePanel>
         <ResizableHandle aria-label="Resize inspector" />
         <ResizablePanel
