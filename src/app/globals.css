@@ -188,6 +188,19 @@
 [data-instant-dim] .relationship-edge {
   transition: none;
 }
+/* Large schemas, zoomed out (ADR-022): row text and icons are sub-pixel, so they are not painted;
+   rows keep their size, handles and tints, and show a light bar. */
+[data-zoomed-out] .table-node li > :not(.react-flow__handle) {
+  visibility: hidden;
+}
+[data-zoomed-out] .table-node li::before {
+  content: "";
+  position: absolute;
+  inset: 35% 40% 35% 12px;
+  border-radius: 2px;
+  background: var(--muted-foreground);
+  opacity: 0.25;
+}
 
 /* Column handles are invisible attachment points, not drag targets. */
 .react-flow__handle.column-handle {

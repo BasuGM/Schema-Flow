@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useUiStore } from "@/stores/ui-store";
-import { fitPadding, issuesSheetOpen, motionDuration } from "./use-canvas-commands";
+import { centerDuration, fitPadding, issuesSheetOpen, motionDuration } from "./use-canvas-commands";
 
 const original = window.matchMedia;
 afterEach(() => {
@@ -51,5 +51,15 @@ describe("fit padding with the issues sheet (QA-014)", () => {
     expect(issuesSheetOpen()).toBe(true);
     mockNarrow(false);
     expect(issuesSheetOpen()).toBe(false); // docked panel resizes the canvas instead
+  });
+});
+
+describe("centring animation on large schemas (ADR-022)", () => {
+  it("jumps without animation only for a large schema and a zoom change of more than 4×", () => {
+    mockReducedMotion(false);
+    expect(centerDuration(0.05, 1, true)).toBe(0);
+    expect(centerDuration(1, 0.2, true)).toBe(0);
+    expect(centerDuration(0.3, 1, true)).toBe(300);
+    expect(centerDuration(0.05, 1, false)).toBe(300);
   });
 });

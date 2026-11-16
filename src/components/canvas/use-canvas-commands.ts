@@ -37,11 +37,25 @@ export function motionDuration(ms: number): number {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
 }
 
+/** A zoom change of more than this factor counts as a "jump" (ADR-022). */
+export const JUMP_ZOOM_RATIO = 4;
+
+/**
+ * Centring animation. Large schemas (`onlyRenderVisibleElements`) skip it when the zoom changes by
+ * more than `JUMP_ZOOM_RATIO` (e.g. 0.05 → 1 after picking a table in a 2,000-table list): every
+ * animation frame would mount and unmount a different set of tables, which cost frames of 230–350
+ * ms. Normal-sized schemas, and small zoom changes, keep the 300 ms animation.
+ */
+export function centerDuration(fromZoom: number, toZoom: number, large: boolean): number {
+  const ratio = Math.max(toZoom / fromZoom, fromZoom / toZoom);
+  return large && ratio > JUMP_ZOOM_RATIO ? 0 : motionDuration(300);
+}
+
 /**
  * Bridges UI-store focus requests (center on table) and layout changes to the React Flow
  * viewport. Only imperative viewport calls happen here; no React state is set.
  */
-export function useCanvasCommands(base: FlowElements) {
+export function useCanvasCommands(base: FlowElements, large = false) {
   const { fitView, setCenter, getZoom, getInternalNode } = useReactFlow<TableFlowNode>();
   const focusRequest = useUiStore((s) => s.focusRequest);
 
@@ -87,11 +101,12 @@ export function useCanvasCommands(base: FlowElements) {
       void setCenter(target.x, target.y, { zoom, duration: motionDuration(300) });
       return;
     }
+    const zoom = Math.max(getZoom(), 0.9);
     void setCenter(target.x, target.y, {
-      zoom: Math.max(getZoom(), 0.9),
-      duration: motionDuration(300),
+      zoom,
+      duration: centerDuration(getZoom(), zoom, large),
     });
-  }, [focusRequest, getInternalNode, setCenter, getZoom, flowStore]);
+  }, [focusRequest, getInternalNode, setCenter, getZoom, flowStore, large]);
 
   // Re-fit whenever the node set is rebuilt from a new layout (initial load, re-layout, new schema).
   const firstBase = useRef(true);

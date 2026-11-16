@@ -4,7 +4,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { KeyRound, Link2, Table2 } from "lucide-react";
 import { memo } from "react";
 import { displayTableName } from "@/domain/schema/selectors";
-import type { Column } from "@/domain/schema/types";
+import type { Column, ColumnId, Table } from "@/domain/schema/types";
 import { columnHandleId, headerHandleId } from "@/graph/handles";
 import {
   NODE_HEADER_HEIGHT,
@@ -33,11 +33,7 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
     s.highlightedColumn?.tableId === id ? s.highlightedColumn.columnId : null,
   );
   if (!table) return null;
-  const columns = renderedColumns(table, data.mode, highlighted);
-  const revealedId =
-    highlighted && !visibleColumns(table, data.mode).some((c) => c.id === highlighted)
-      ? highlighted
-      : null;
+  const hasRows = renderedColumns(table, data.mode, highlighted).length > 0;
 
   return (
     <div
@@ -54,7 +50,7 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
         style={{ height: NODE_HEADER_HEIGHT }}
         className={cn(
           "relative flex items-center gap-2 rounded-t-lg px-3",
-          columns.length > 0 && "border-b",
+          hasRows && "border-b",
           selected ? "bg-brand-muted" : "bg-muted/60",
         )}
       >
@@ -80,21 +76,43 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
           isConnectable={false}
         />
       </div>
-      {columns.length > 0 && (
-        <ul className="py-1.5">
-          {columns.map((column) => (
-            <ColumnRow
-              key={column.id}
-              column={column}
-              highlighted={column.id === highlighted}
-              revealed={column.id === revealedId}
-            />
-          ))}
-        </ul>
-      )}
+      {hasRows && <ColumnRows table={table} mode={data.mode} highlighted={highlighted} />}
     </div>
   );
 }
+
+/**
+ * The column rows, memoized on their own inputs: selecting, dimming or un-dimming a table
+ * re-renders only its header and frame, not every row and icon (P2-T10; a hub selection flips
+ * ~150 nodes at once).
+ */
+const ColumnRows = memo(function ColumnRows({
+  table,
+  mode,
+  highlighted,
+}: {
+  table: Table;
+  mode: TableFlowNode["data"]["mode"];
+  highlighted: ColumnId | null;
+}) {
+  const columns = renderedColumns(table, mode, highlighted);
+  const revealedId =
+    highlighted && !visibleColumns(table, mode).some((c) => c.id === highlighted)
+      ? highlighted
+      : null;
+  return (
+    <ul className="py-1.5">
+      {columns.map((column) => (
+        <ColumnRow
+          key={column.id}
+          column={column}
+          highlighted={column.id === highlighted}
+          revealed={column.id === revealedId}
+        />
+      ))}
+    </ul>
+  );
+});
 
 interface ColumnRowProps {
   column: Column;

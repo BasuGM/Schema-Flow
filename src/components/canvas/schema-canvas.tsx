@@ -27,6 +27,7 @@ import { RelationshipEdge } from "./relationship-edge";
 import { TableNode } from "./table-node";
 import { useCanvasCommands } from "./use-canvas-commands";
 import { useFocusSetSync } from "./use-focus-set-sync";
+import { ZoomDetail } from "./zoom-detail";
 
 /** Above this many tables, React Flow only renders nodes/edges inside the viewport. */
 export const LARGE_SCHEMA_THRESHOLD = 80;
@@ -156,8 +157,8 @@ function SchemaCanvasInner() {
     [fingerprint, setViewport],
   );
 
-  const { resetView } = useCanvasCommands(base);
   const large = base.nodes.length > LARGE_SCHEMA_THRESHOLD;
+  const { resetView } = useCanvasCommands(base, large);
 
   if (!schema) {
     return (
@@ -198,6 +199,7 @@ function SchemaCanvasInner() {
         fitViewOptions={FIT_VIEW_OPTIONS}
         aria-label="Schema diagram"
       >
+        <ZoomDetail enabled={large} />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--canvas-dot)" />
         <Controls
           showInteractive={false}

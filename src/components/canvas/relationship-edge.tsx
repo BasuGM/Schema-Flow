@@ -8,7 +8,7 @@ import {
   useStore,
   type EdgeProps,
 } from "@xyflow/react";
-import { memo, useLayoutEffect, useRef, useState } from "react";
+import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { describeRelationship } from "@/graph/describe";
 import {
   labelOverflowShift,
@@ -67,31 +67,17 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
     samePosition(sourceNode?.internals.positionAbsolute, route.sourceAt) &&
     samePosition(targetNode?.internals.positionAbsolute, route.targetAt);
 
-  let path: string;
-  let endX = targetX;
-  let endPosition = targetPosition;
-  if (data?.selfReference) {
-    // Loop out of the left side and back into the referenced row on the same side.
-    const loop = 56;
-    endX = sourceX;
-    endPosition = Position.Left;
-    path = `M ${sourceX} ${sourceY} C ${sourceX - loop} ${sourceY}, ${sourceX - loop} ${targetY}, ${sourceX} ${targetY}`;
-  } else if (route && routeValid) {
-    // Auto-layout route around intermediate tables (QA-001); dropped once either end is moved.
-    path = segmentsToPath(
-      routeSegments([{ x: sourceX, y: sourceY }, ...route.waypoints, { x: targetX, y: targetY }]),
-    );
-  } else {
-    // Same curve style as routed edges, so all edges look consistent.
-    path = segmentsToPath(
-      routeSegments([
-        { x: sourceX, y: sourceY },
-        { x: targetX, y: targetY },
-      ]),
-    );
-  }
+  const selfReference = Boolean(data?.selfReference);
+  const endX = selfReference ? sourceX : targetX;
+  const endPosition = selfReference ? Position.Left : targetPosition;
+  // Memoized on geometry: a state flip (select, dim, hover) re-renders the edge without
+  // recomputing its route (P2-T10).
+  const validRoute = route && routeValid ? route : null;
+  const path = useMemo(
+    () => edgePath(selfReference, sourceX, sourceY, targetX, targetY, validRoute),
+    [selfReference, sourceX, sourceY, targetX, targetY, validRoute],
+  );
 
-  const description = rel && schema ? describeRelationship(rel, schema) : id;
   const many = rel?.cardinality !== "one-to-one";
 
   return (
@@ -140,7 +126,7 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
       {showLabel && (
         <EdgeLabel
           id={id}
-          text={description}
+          text={rel && schema ? describeRelationship(rel, schema) : id}
           x={sourceX}
           y={sourceY}
           side={sourcePosition === Position.Right ? "right" : "left"}
@@ -148,6 +134,30 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
         />
       )}
     </g>
+  );
+}
+
+function edgePath(
+  selfReference: boolean,
+  sourceX: number,
+  sourceY: number,
+  targetX: number,
+  targetY: number,
+  route: { waypoints: { x: number; y: number }[] } | null,
+): string {
+  if (selfReference) {
+    // Loop out of the left side and back into the referenced row on the same side.
+    const loop = 56;
+    return `M ${sourceX} ${sourceY} C ${sourceX - loop} ${sourceY}, ${sourceX - loop} ${targetY}, ${sourceX} ${targetY}`;
+  }
+  // Auto-layout route around intermediate tables (QA-001), dropped once either end is moved;
+  // otherwise the same curve style, so all edges look consistent.
+  return segmentsToPath(
+    routeSegments([
+      { x: sourceX, y: sourceY },
+      ...(route?.waypoints ?? []),
+      { x: targetX, y: targetY },
+    ]),
   );
 }
 
@@ -211,7 +221,7 @@ function EdgeLabel({
   );
 }
 
-function CardinalityMarker({
+const CardinalityMarker = memo(function CardinalityMarker({
   x,
   y,
   position,
@@ -242,6 +252,6 @@ function CardinalityMarker({
       {text}
     </text>
   );
-}
+});
 
 export const RelationshipEdge = memo(RelationshipEdgeComponent);
