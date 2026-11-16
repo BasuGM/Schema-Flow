@@ -10,6 +10,8 @@ export interface Token {
   value: string;
   offset: number;
   line: number;
+  /** Inside a MySQL executable comment (`/*!` … `*\/`). */
+  executable?: true;
 }
 
 export interface TokenizeResult {
@@ -31,6 +33,8 @@ export function tokenize(sql: string, dialect: SqlDialect): TokenizeResult {
   let i = 0;
   let line = 1;
   const n = sql.length;
+  // Inside a MySQL executable comment (`/*!` … `*/`), whose closing marker is skipped.
+  let executable = false;
 
   const advanceTo = (end: number) => {
     for (let k = i; k < end; k++) if (sql.charCodeAt(k) === 10) line++;
@@ -38,7 +42,9 @@ export function tokenize(sql: string, dialect: SqlDialect): TokenizeResult {
   };
   const push = (kind: TokenKind, end: number, value?: string) => {
     const text = sql.slice(i, end);
-    tokens.push({ kind, text, value: value ?? text, offset: i, line });
+    const token: Token = { kind, text, value: value ?? text, offset: i, line };
+    if (executable) token.executable = true;
+    tokens.push(token);
     advanceTo(end);
   };
   const unterminated = (what: string) =>
@@ -63,6 +69,21 @@ export function tokenize(sql: string, dialect: SqlDialect): TokenizeResult {
     if ((c === "-" && next === "-") || (c === "#" && dialect === "mysql")) {
       const end = sql.indexOf("\n", i);
       advanceTo(end === -1 ? n : end);
+      continue;
+    }
+    // MySQL executable comments `/*! … */` and `/*!50705 … */`: MySQL runs their content (mysqldump
+    // wraps SET, triggers and views in them; Sakila declares a column in one), so it is tokenized
+    // as code. The markers themselves are skipped.
+    if (dialect === "mysql" && c === "/" && next === "*" && sql[i + 2] === "!") {
+      let k = i + 3;
+      while (k < n && k < i + 9 && sql.charCodeAt(k) >= 48 && sql.charCodeAt(k) <= 57) k++;
+      advanceTo(k);
+      executable = true;
+      continue;
+    }
+    if (executable && c === "*" && next === "/") {
+      advanceTo(i + 2);
+      executable = false;
       continue;
     }
     // Block comments (nested in PostgreSQL).

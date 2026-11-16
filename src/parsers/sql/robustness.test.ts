@@ -24,9 +24,15 @@ const NASTY = [
   "::",
 ];
 
+/** Per parse; each fixture parses in well under 100 ms. */
+const PARSE_LIMIT_MS = 2000;
+
 function expectImportResult(text: string): void {
   let result: ReturnType<typeof parseSql> | undefined;
+  const start = performance.now();
   expect(() => (result = parseSql(text, { now: () => "t" })), text.slice(0, 80)).not.toThrow();
+  // A super-linear blow-up (like QA-013's regex) fails here instead of hanging the run.
+  expect(performance.now() - start, text.slice(0, 80)).toBeLessThan(PARSE_LIMIT_MS);
   expect(typeof result?.ok).toBe("boolean");
   expect(Array.isArray(result?.issues)).toBe(true);
 }

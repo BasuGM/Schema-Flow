@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { ToolbarButton } from "@/components/workspace/toolbar-button";
 import { useReturnFocusTooltip } from "@/components/workspace/use-return-focus-tooltip";
+import type { Schema } from "@/domain/schema/types";
+import { afterNextPaint } from "@/lib/after-next-paint";
 import { cn } from "@/lib/utils";
 import type { ImportFormatChoice } from "@/parsers";
 import { applyImportedSchema } from "./apply-import";
@@ -30,6 +32,12 @@ import { ImportSource } from "./import-source";
 import { loadParsers, useImportParse } from "./use-import-parse";
 
 const PASTE_DEBOUNCE_MS = 300;
+/**
+ * From this many tables the auto-layout takes long enough (~200 ms on the development machine) to
+ * need feedback: Import shows "Laying out N tables…" and lets it paint before the layout blocks the
+ * main thread. Smaller schemas import synchronously, as before.
+ */
+export const BUSY_IMPORT_TABLES = 150;
 
 /**
  * Toolbar "Import" button + dialog. The draft lives here, above the dialog content, so Cancel or
@@ -40,6 +48,7 @@ export function ImportDialog() {
   const [draft, setDraft] = useState<ImportDraft>(EMPTY_DRAFT);
   const [format, setFormat] = useState<ImportFormatChoice>("auto");
   const [dragging, setDragging] = useState(false);
+  const [applying, setApplying] = useState<number | null>(null);
   const state = useImportParse(draft, format);
   const { tooltipOpen, onTooltipOpenChange, onCloseAutoFocus } = useReturnFocusTooltip();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -70,6 +79,7 @@ export function ImportDialog() {
   };
 
   const onOpenChange = (next: boolean) => {
+    if (applying !== null) return;
     // Keep typed-but-not-yet-committed text when the dialog closes.
     if (!next && pending.current) commitText(pending.current.text);
     if (next) void loadParsers();
@@ -77,12 +87,21 @@ export function ImportDialog() {
     setOpen(next);
   };
 
-  const onImport = () => {
-    if (state.status !== "done" || !state.parsed.result.schema) return;
-    applyImportedSchema(state.parsed.result.schema, state.text);
+  const finishImport = (schema: Schema, text: string) => {
+    applyImportedSchema(schema, text);
     setDraft(EMPTY_DRAFT);
     setFormat("auto");
+    setApplying(null);
     setOpen(false);
+  };
+
+  const onImport = () => {
+    if (applying !== null || state.status !== "done" || !state.parsed.result.schema) return;
+    const { schema } = state.parsed.result;
+    const tables = schema.tableOrder.length;
+    if (tables < BUSY_IMPORT_TABLES) return finishImport(schema, state.text);
+    setApplying(tables);
+    void afterNextPaint().then(() => finishImport(schema, state.text));
   };
 
   // While open, a file dropped outside the drop zone must not make the browser navigate to it.
@@ -127,6 +146,7 @@ export function ImportDialog() {
         </ToolbarButton>
       </DialogTrigger>
       <DialogContent
+        aria-busy={applying !== null || undefined}
         className="flex max-h-[min(90dvh,720px)] flex-col gap-0 p-0 sm:max-w-2xl"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
@@ -172,12 +192,23 @@ export function ImportDialog() {
           </p>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <DialogClose asChild>
-              <Button variant="outline" data-testid="import-cancel">
+              <Button variant="outline" disabled={applying !== null} data-testid="import-cancel">
                 Cancel
               </Button>
             </DialogClose>
-            <Button disabled={!label} onClick={onImport} data-testid="import-confirm">
-              {label ?? "Import"}
+            <Button
+              disabled={!label || applying !== null}
+              onClick={onImport}
+              data-testid="import-confirm"
+            >
+              {applying !== null ? (
+                <>
+                  <Loader2 aria-hidden className="animate-spin" />
+                  Laying out {applying.toLocaleString("en-US")} tables…
+                </>
+              ) : (
+                (label ?? "Import")
+              )}
             </Button>
           </div>
         </DialogFooter>

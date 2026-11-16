@@ -20,9 +20,33 @@ describe("splitStatements", () => {
     expect(splitStatements(";;\n;  ; /* only a comment */;", "postgresql").statements).toEqual([]);
   });
 
-  it("reports MySQL DELIMITER blocks", () => {
-    const { issues } = splitStatements("DELIMITER //\nCREATE TABLE a (id int);", "mysql");
-    expect(issues[0]?.message).toContain("DELIMITER");
-    expect(issues[0]?.line).toBe(1);
+  it("honours MySQL DELIMITER lines around procedure bodies", () => {
+    const sql = [
+      "CREATE TABLE a (id int);",
+      "DELIMITER //",
+      "CREATE PROCEDURE p() BEGIN CREATE TEMPORARY TABLE t (x int); SELECT 1; END//",
+      "DELIMITER ;;",
+      "CREATE TRIGGER tr BEFORE INSERT ON a FOR EACH ROW BEGIN SET NEW.id = 1; END;;",
+      "DELIMITER $$",
+      "CREATE FUNCTION f() RETURNS int BEGIN RETURN 1; END $$",
+      "DELIMITER ;",
+      "CREATE TABLE b (id int);",
+    ].join("\n");
+    const { statements, issues } = splitStatements(sql, "mysql");
+    expect(issues).toEqual([]);
+    expect(statements.map((s) => s.text.split(/\s+/).slice(0, 2).join(" "))).toEqual([
+      "CREATE TABLE",
+      "CREATE PROCEDURE",
+      "CREATE TRIGGER",
+      "CREATE FUNCTION",
+      "CREATE TABLE",
+    ]);
+    expect(statements[1]?.text).toContain("SELECT 1; END");
+    expect(statements[4]?.startLine).toBe(9);
+  });
+
+  it("treats DELIMITER as an ordinary word outside MySQL", () => {
+    const { statements } = splitStatements("DELIMITER //\nCREATE TABLE a (id int);", "postgresql");
+    expect(statements).toHaveLength(1);
   });
 });

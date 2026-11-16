@@ -59,6 +59,8 @@ export interface DraftTable {
   checkConstraints?: CheckConstraint[];
   foreignKeys?: DraftForeignKey[];
   origin?: "declared" | "implicit";
+  /** Names of partitions folded into this (partitioned) table, as written in the source. */
+  partitions?: string[];
   line?: number;
 }
 

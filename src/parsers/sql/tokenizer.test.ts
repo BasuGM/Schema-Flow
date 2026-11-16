@@ -89,4 +89,20 @@ describe("tokenize", () => {
       expect(issues[0]?.message).toMatch(/^Unterminated/);
     }
   });
+
+  it("tokenizes MySQL executable comments as code and keeps other comments out", () => {
+    const { tokens } = tokenize(
+      "a /*!50705 location GEOMETRY */ /*!NOT NULL*/ /*+ hint */ b",
+      "mysql",
+    );
+    expect(tokens.map((t) => `${t.value}${t.executable ? "!" : ""}`)).toEqual([
+      "a",
+      "location!",
+      "GEOMETRY!",
+      "NOT!",
+      "NULL!",
+      "b",
+    ]);
+    expect(kinds("a /*!50705 x */ b", "postgresql")).toEqual(["word:a", "word:b"]);
+  });
 });

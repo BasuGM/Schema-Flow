@@ -2,7 +2,7 @@
 // neighbourhood highlighting in the browser (P2-T09). `hub` is referenced by every 4th table
 // (500 incoming foreign keys, the worst case for one selection); the others form a tree in which
 // t_N references t_floor(N/2), about 2,500 relationships in all. Deterministic.
-// Usage: node scripts/fixtures/neighbourhood-2000.mjs
+// Usage: node scripts/fixtures/neighbourhood-2000.mjs (`--stdout` prints instead of writing).
 import { writeFileSync } from "node:fs";
 
 const name = (t) => `t_${String(t).padStart(4, "0")}`;
@@ -15,7 +15,9 @@ for (let t = 1; t < 2000; t++) {
   if (t % 4 === 0) cols.push("  hub_id bigint REFERENCES hub (id)");
   sql += `CREATE TABLE ${name(t)} (\n${cols.join(",\n")}\n);\n`;
 }
-writeFileSync(
-  new URL("../../tests/fixtures/large/neighbourhood-2000.postgres.sql", import.meta.url),
-  sql,
-);
+if (process.argv.includes("--stdout")) process.stdout.write(sql);
+else
+  writeFileSync(
+    new URL("../../tests/fixtures/large/neighbourhood-2000.postgres.sql", import.meta.url),
+    sql,
+  );

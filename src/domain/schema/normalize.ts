@@ -144,6 +144,7 @@ function addTable(
   };
   if (schemaName) table.schemaName = schemaName;
   if (draft.comment) table.comment = draft.comment;
+  if (draft.partitions?.length) table.partitions = [...draft.partitions];
 
   for (const c of draft.columns) {
     if (columnLookup.has(c.name)) {

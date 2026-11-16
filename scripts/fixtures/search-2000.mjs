@@ -2,6 +2,7 @@
 // files every parser robustness test mutates): 2,000 tables × 20 columns (40,000
 // columns) for timing search in the browser (P2-T07). Deterministic; no foreign keys, so the
 // auto-layout stays quick. Usage: node scripts/fixtures/search-2000.mjs
+// (`--stdout` prints instead of writing)
 import { writeFileSync } from "node:fs";
 
 const NOUNS = [
@@ -46,5 +47,11 @@ for (let t = 0; t < 2000; t++) {
   }
   sql += `CREATE TABLE ${noun}_${other}_${String(t).padStart(4, "0")} (\n${cols.join(",\n")}\n);\n`;
 }
-writeFileSync(new URL("../../tests/fixtures/large/search-2000.postgres.sql", import.meta.url), sql);
-console.log(`${(sql.length / 1e6).toFixed(2)} MB`);
+if (process.argv.includes("--stdout")) process.stdout.write(sql);
+else {
+  writeFileSync(
+    new URL("../../tests/fixtures/large/search-2000.postgres.sql", import.meta.url),
+    sql,
+  );
+  console.log(`${(sql.length / 1e6).toFixed(2)} MB`);
+}

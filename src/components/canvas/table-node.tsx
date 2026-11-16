@@ -3,6 +3,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { KeyRound, Link2, Table2 } from "lucide-react";
 import { memo } from "react";
+import { displayTableName } from "@/domain/schema/selectors";
 import type { Column } from "@/domain/schema/types";
 import { columnHandleId, headerHandleId } from "@/graph/handles";
 import {
@@ -19,6 +20,11 @@ import { useUiStore } from "@/stores/ui-store";
 
 function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
   const table = useSchemaStore((s) => s.schema?.tables[data.tableId]);
+  // `billing.invoices` outside the source's default schema, so same-named tables stay distinct.
+  const title = useSchemaStore((s) => {
+    const t = s.schema?.tables[data.tableId];
+    return s.schema && t ? displayTableName(s.schema, t) : "";
+  });
   const selected = useUiStore((s) => s.selectedTableId === id);
   // Neighbourhood highlighting (P2-T09): a boolean, so only nodes whose state flips re-render.
   const dimmed = useUiStore((s) => s.focusSet !== null && !s.focusSet.has(id));
@@ -35,7 +41,7 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
 
   return (
     <div
-      data-testid={`table-node-${table.name}`}
+      data-testid={`table-node-${title}`}
       data-selected={selected}
       data-dimmed={dimmed || undefined}
       style={{ width: NODE_WIDTH }}
@@ -54,7 +60,7 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
       >
         <Table2 aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
         <span className="truncate text-sm font-semibold" title={table.id}>
-          {table.name}
+          {title}
         </span>
         <span className="ml-auto shrink-0 text-[11px] text-muted-foreground tabular-nums">
           {table.columns.length}

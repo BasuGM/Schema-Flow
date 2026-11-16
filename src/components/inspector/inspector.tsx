@@ -82,6 +82,17 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
               Implicit join table (Prisma many-to-many)
             </p>
           )}
+          {table.partitions && (
+            <details className="text-xs text-muted-foreground" data-testid="inspector-partitions">
+              <summary className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                Partitioned · {table.partitions.length} partition
+                {table.partitions.length === 1 ? "" : "s"} folded in
+              </summary>
+              <p className="mt-1 max-h-24 overflow-y-auto font-mono break-all">
+                {table.partitions.join(", ")}
+              </p>
+            </details>
+          )}
         </div>
         {close ?? (
           <Button

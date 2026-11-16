@@ -79,6 +79,8 @@ export interface Table {
   checkConstraints: CheckConstraint[];
   /** `implicit` for synthetic tables such as Prisma's implicit many-to-many join tables. */
   origin: "declared" | "implicit";
+  /** PostgreSQL partitions folded into this table (ADR-019), e.g. `gitlab_partitions_static.x_00`. */
+  partitions?: string[];
 }
 
 export interface RelationshipEnd {

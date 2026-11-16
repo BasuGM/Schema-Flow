@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { afterNextPaint } from "@/lib/after-next-paint";
 import type * as ParsersModule from "@/parsers";
 import type { ImportFormatChoice, ParsedSchemaText } from "@/parsers";
 import { MAX_IMPORT_BYTES, schemaNameForFile, type ImportDraft } from "./import-draft";
@@ -75,8 +76,8 @@ async function parseDraft(
       name = schemaNameForFile(draft.name);
     }
   }
-  // Yield a frame so "Parsing…" paints before a large parse blocks the main thread.
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  // Let "Parsing…" paint before a large parse blocks the main thread.
+  await afterNextPaint();
   const parsed = parsers.parseSchemaText(text, { format, ...(name ? { name } : {}) });
   return { status: "done", parsed, text };
 }

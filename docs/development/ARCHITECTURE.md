@@ -573,6 +573,44 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
 - **Bundle:** +2.4 KB raw / +1.6 KB gzip initial JS (1,134,851 B raw / 357,941 B gzip at
   `9cb3155`).
 
+### ADR-019 — Real-world dumps: partitions folded, schema-qualified names (2026-11-16, P2-T10)
+
+Prompted by GitLab's `db/structure.sql` (P2-T10 fixtures): 1,426 `CREATE TABLE`s, of which 434
+are partitions (400 in `gitlab_partitions_static`, 34 in `public`) attached to 19 partitioned
+tables with `ALTER TABLE ONLY parent ATTACH PARTITION child …`, plus 1,871 `ALTER INDEX … ATTACH
+PARTITION` lines.
+
+- **Partitions are folded into their parent, not drawn.** A partition repeats its parent's columns
+  (32 or 64 identical hash partitions per table here); drawing them would add 434 boxes that say
+  nothing about the data model. Both forms are recognised: `ATTACH PARTITION` and
+  `CREATE TABLE child PARTITION OF parent …` (whose column list and bounds are not parsed).
+  Sub-partitions fold into the root. The parent gets `Table.partitions` (names as written), shown
+  in the inspector header ("Partitioned · 64 partitions folded in", expandable list), and one
+  summary warning reports the folding. FKs and indexes declared on a partition go with it
+  (pg_dump declares the real ones on the parent); an FK that references a partition is redrawn to
+  its parent. A partition of an unknown parent is kept as a table (`ATTACH`) or reported and
+  skipped (`PARTITION OF`). `ALTER INDEX` statements join the "not needed for the diagram"
+  summary instead of one warning each.
+  - GitLab: 992 tables and 1,720 relationships shown; with partitions it would be 1,426 and
+    1,726. Issues drop from 2,536 to 140.
+- **Schema-qualified names:** table IDs already include the schema (`billing.invoices`), so tables
+  of the same name in different schemas never merge; the same name twice in one schema is still a
+  duplicate-table error. The canvas title, the table list and their test IDs now use
+  `displayTableName` (the schema prefix is shown unless it is the source's default: `public` on
+  PostgreSQL, none elsewhere), as search and the inspector already did. The list filter matches
+  the qualified name. Visible change: `edge-cases.postgres.sql`'s `invoices` is now
+  `billing.invoices` on the canvas and in the list (`table-node-billing.invoices`).
+- **MySQL dump syntax:** `DELIMITER x` lines switch the statement terminator (procedures,
+  triggers); `/*!NNNNN … */` executable comments are tokenized as code, as MySQL runs them (Sakila
+  declares `address.location` in one); statements written entirely inside them (mysqldump's
+  session `SET`s, `DISABLE KEYS`) are skipped silently; `CREATE DEFINER=… PROCEDURE|VIEW` is
+  classified by its object kind.
+- **Large imports on the main thread (ADR-014 stands):** GitLab parses in ≈ 0.4 s and lays out in
+  ≈ 2.5 s (Dagre) on the development machine. From 150 tables (`BUSY_IMPORT_TABLES`, where layout
+  reaches ~200 ms) the Import button shows "Laying out N tables…" and the dialog is `aria-busy`
+  and can't be closed; the layout runs after that state has painted. A Web Worker remains out of
+  scope.
+
 ## Known limitations (Phase 1)
 
 - Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).

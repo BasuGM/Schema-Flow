@@ -3,6 +3,7 @@
 import { Link2, Search } from "lucide-react";
 import { memo, useMemo } from "react";
 import { Input } from "@/components/ui/input";
+import { displayTableName } from "@/domain/schema/selectors";
 import type { TableId } from "@/domain/schema/types";
 import { cn } from "@/lib/utils";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -17,7 +18,10 @@ export function TableList() {
     if (!schema) return [];
     const q = filter.trim().toLowerCase();
     return q
-      ? schema.tableOrder.filter((id) => schema.tables[id]?.name.toLowerCase().includes(q))
+      ? schema.tableOrder.filter((id) => {
+          const table = schema.tables[id];
+          return table ? displayTableName(schema, table).toLowerCase().includes(q) : false;
+        })
       : schema.tableOrder;
   }, [schema, filter]);
 
@@ -73,6 +77,10 @@ export function TableList() {
 
 const TableListItem = memo(function TableListItem({ tableId }: { tableId: TableId }) {
   const table = useSchemaStore((s) => s.schema?.tables[tableId]);
+  const title = useSchemaStore((s) => {
+    const t = s.schema?.tables[tableId];
+    return s.schema && t ? displayTableName(s.schema, t) : "";
+  });
   const selected = useUiStore((s) => s.selectedTableId === tableId);
   const focusTable = useUiStore((s) => s.focusTable);
   if (!table) return null;
@@ -85,13 +93,13 @@ const TableListItem = memo(function TableListItem({ tableId }: { tableId: TableI
         onClick={() => focusTable(tableId)}
         aria-current={selected || undefined}
         title={table.id}
-        data-testid={`table-list-item-${table.name}`}
+        data-testid={`table-list-item-${title}`}
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
           selected ? "bg-brand-muted font-medium text-foreground" : "hover:bg-accent",
         )}
       >
-        <span className="min-w-0 flex-1 truncate">{table.name}</span>
+        <span className="min-w-0 flex-1 truncate">{title}</span>
         {hasForeignKeys && (
           <Link2 aria-label="has foreign keys" className="size-3 shrink-0 text-fk" />
         )}

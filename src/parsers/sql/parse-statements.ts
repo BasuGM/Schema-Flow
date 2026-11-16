@@ -13,10 +13,24 @@ import type { QualifiedName, TokenStream } from "./token-stream";
 /** `table` is the raw (optionally schema-qualified) name the issue concerns, for linking. */
 export type Warn = (message: string, line?: number, table?: string) => void;
 
+/** `CREATE TABLE child PARTITION OF parent …` or `ALTER TABLE parent ATTACH PARTITION child …`. */
+export interface PartitionLink {
+  child: QualifiedName;
+  parent: QualifiedName;
+  line?: number;
+}
+
 /** After `CREATE [modifiers] TABLE [IF NOT EXISTS]`. */
-export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable {
+export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable | PartitionLink {
   const line = ts.line;
   const name = ts.readQualifiedName("table name");
+  if (ts.acceptKeywords("PARTITION", "OF")) {
+    // PostgreSQL declarative partition: folded into its parent (ADR-019). Its own column list,
+    // bounds and options repeat or refine the parent's and are not needed for the diagram.
+    const parent = ts.readQualifiedName("parent table name");
+    while (!ts.done) ts.next();
+    return { child: name, parent, ...(line !== undefined ? { line } : {}) };
+  }
   if (!ts.isPunct("(")) {
     return ts.fail(
       ts.isKeyword("AS") ? "CREATE TABLE … AS is not supported" : "Expected a column list",
@@ -87,6 +101,7 @@ export type AlterAction =
   | { kind: "columnDefault"; column: string; value: ColumnDefault | null; line?: number }
   | { kind: "columnNullable"; column: string; nullable: boolean; line?: number }
   | { kind: "ownerTo" }
+  | { kind: "attachPartition"; child: QualifiedName; line?: number }
   | { kind: "unsupported"; description: string; line?: number };
 
 export interface AlterTable {
@@ -121,6 +136,11 @@ function parseAlterAction(ts: TokenStream): AlterAction {
   if (ts.acceptKeywords("OWNER", "TO")) {
     ts.next();
     return { kind: "ownerTo" };
+  }
+  if (ts.acceptKeywords("ATTACH", "PARTITION")) {
+    const child = ts.readQualifiedName("partition name");
+    ts.skipUntilListEnd();
+    return { kind: "attachPartition", child, line };
   }
   if (ts.acceptKeywords("ALTER")) {
     ts.acceptKeywords("COLUMN");

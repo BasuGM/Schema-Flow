@@ -12,6 +12,7 @@ import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
+import { BUSY_IMPORT_TABLES } from "./import-dialog";
 
 // jsdom: `import.meta.url` is not a file URL here, so resolve fixtures from the project root.
 const fixture = (path: string) => readFileSync(join(process.cwd(), "tests/fixtures", path), "utf8");
@@ -229,5 +230,25 @@ describe("Import dialog", () => {
     await user.tab();
     await user.tab({ shift: true });
     expect(await screen.findByRole("tooltip")).toHaveTextContent("Import SQL or Prisma schema");
+  });
+
+  it("shows a busy state that paints before laying out a large schema", async () => {
+    const user = await openDialog();
+    const sql = Array.from(
+      { length: BUSY_IMPORT_TABLES },
+      (_, i) => `CREATE TABLE t${i} (id int);`,
+    );
+    await upload(user, fileOf("many.sql", sql.join("\n")));
+    await waitFor(() => expect(confirm()).toHaveTextContent("Import 150 tables"));
+    const before = useSchemaStore.getState().fingerprint;
+    fireEvent.click(confirm());
+    // The click itself only switches to the busy state; the layout runs after the next paint.
+    expect(confirm()).toHaveTextContent("Laying out 150 tables…");
+    expect(confirm()).toBeDisabled();
+    expect(screen.getByTestId("import-cancel")).toBeDisabled();
+    expect(screen.getByTestId("import-dialog")).toHaveAttribute("aria-busy", "true");
+    expect(useSchemaStore.getState().fingerprint).toBe(before);
+    await waitFor(() => expect(screen.queryByTestId("import-dialog")).toBeNull());
+    expect(useSchemaStore.getState().schema?.tableOrder).toHaveLength(BUSY_IMPORT_TABLES);
   });
 });
