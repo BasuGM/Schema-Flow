@@ -320,4 +320,43 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     which `react-resizable-panels` needs.
 - **Plan deviation:** the `issuesPanelDismissed` flag was not added; the rule "errors open,
   anything else leaves it as it is" gives the requested behaviour (ADR-015).
-- **Cowork result:** Pending — not independently verified. See [handoffs/P2-T06.md](handoffs/P2-T06.md).
+- **Cowork result:** Verified by Cowork in round 8 (below). Handoff [handoffs/P2-T06.md](handoffs/P2-T06.md).
+
+---
+
+## 2026-11-16 — Cowork re-verification round 8 at 83558da: P2-T06 all pass; QA-014, QA-015
+
+- **Handoffs verified:** [handoffs/P2-T06.md](handoffs/P2-T06.md),
+  [handoffs/P2-fix-QA-013.md](handoffs/P2-fix-QA-013.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16.
+- **Verified:** QA-013 **Fixed** (AC-P2-T01-7). P2-T06 steps 1–14 all PASS (AC-P2-T06-1…11).
+  P2-T06 → **Verified**.
+- **Note from Cowork (kept as is):** with 0 issues and the panel open, the Issues button is
+  enabled, so the panel can still be closed from the toolbar. AC-P2-T06-1 and the P2-T06 handoff
+  said "disabled"; both are corrected, and the panel test now asserts it.
+- **New defects:**
+  - **QA-014** · minor · _On phones the sheet hides the freshly fitted diagram._ At 390×844,
+    importing `edge-cases.postgres.sql` opened the sheet over a diagram fitted to the full canvas:
+    every table was under the sheet and the visible top 40% was empty.
+    - Root cause: the desktop re-fit reacts to canvas size changes, but the sheet overlays the
+      canvas without resizing it, so nothing re-fitted.
+    - Fix: while the sheet is open, every fit (after an import, and Reset view) uses padding
+      `{ top: 5%, bottom: 65%, x: 6% }` of the canvas, so the diagram lands above the 60% sheet.
+      Opening the sheet later by hand still keeps the viewport (AC-P2-T06-8).
+    - Tests: `fitPadding` / `issuesSheetOpen` unit tests (jsdom can't lay out the canvas).
+      Browser check by Claude Code in headless Chrome on the production build, 390×844 light and
+      dark: table bottoms at 223–326 px, sheet top at 366 px; 1280×720 unchanged (tables above
+      the docked panel); console empty. Not independent verification.
+    - Status: **Fixed — awaiting re-verification.**
+  - **QA-015** · trivial · _The Import tooltip stays visible after the dialog closes._
+    - Root cause: Radix Dialog returns focus to its trigger on close, and Radix Tooltip opens on
+      focus.
+    - Fix: `useReturnFocusTooltip` (controlled tooltip) ignores the one focus that the dialog's
+      `onCloseAutoFocus` announces. Focus still returns to the button (a11y), and hover or
+      keyboard focus still opens the tooltip.
+    - Test: `import-dialog.test.tsx` "does not show the Import tooltip when focus returns…"
+      fails without the fix.
+    - Status: **Fixed — awaiting re-verification.**
+- **Checks:** `npm run check` green: 39 files / 276 tests, build ✔.
+- **Re-verification handoff:** [handoffs/P2-fix-QA-014-015.md](handoffs/P2-fix-QA-014-015.md) (code `2d52d95`). Pending — not independently verified.

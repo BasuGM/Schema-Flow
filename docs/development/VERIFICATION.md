@@ -377,7 +377,8 @@ without a line. The excerpt is ±2 lines around the issue line, clamped to the f
 
 - AC-P2-T06-1: The toolbar **Issues** button shows the error and warning counts, with
   `aria-label` "Issues: 1 error, 5 warnings". It is disabled ("No import issues") when there are
-  none, e.g. for the sample. _Auto_; _Manual_
+  none and the panel is closed, e.g. for the sample. With 0 issues and the panel open it stays
+  enabled, so the empty panel can be closed from the toolbar (Cowork round 8). _Auto_; _Manual_
 - AC-P2-T06-2: An import with errors opens the panel. A warnings-only import leaves it as it is (a
   closed panel stays closed). A clean import doesn't close an open panel; it shows "No issues for
   this schema.". Escape doesn't close it. _Auto_; _Manual_
@@ -403,3 +404,14 @@ without a line. The excerpt is ±2 lines around the issue line, clamped to the f
   colour alone. _Auto_
 - AC-P2-T06-11: Setting the source text re-renders neither the toolbar nor the canvas
   (`Profiler`). _Auto_
+
+### Fixes for Cowork round 8 (QA-014, QA-015, 2026-11-16)
+
+- AC-P2-T06-12 (QA-014): At 390×844, importing `edge-cases.postgres.sql` opens the sheet and all
+  tables are fitted into the canvas area **above** the sheet. **Reset view** with the sheet open
+  does the same. Opening the sheet later by hand doesn't move the viewport. _Auto (padding rule:
+  `use-canvas-commands.test.ts`)_; _Manual (Claude Code headless Chrome: table bottoms at 223–326
+  px, sheet top at 366 px; not independent verification)_
+- AC-P1-T06-9 (QA-015): After the Import dialog closes (Import, Cancel or Escape), focus is back
+  on the Import button and its tooltip is **not** shown. Hovering it or tabbing to it still shows
+  the tooltip. _Auto (`import-dialog.test.tsx`; fails without the fix)_; _Manual_

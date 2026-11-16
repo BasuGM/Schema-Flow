@@ -449,6 +449,15 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
     update, and React Flow learns the smaller size a few frames later. So canvas size changes
     within 600 ms of a new layout re-fit (via a store subscription, with no re-render). Later
     resizes, such as the user opening, closing or dragging the panel, keep the viewport.
+  - **The sheet doesn't resize the canvas** (it overlays it), so that re-fit can't help on
+    phones. Instead, every fit (the import fit and Reset view) uses a bottom padding of 65% of
+    the canvas height while the sheet is open, so the diagram lands in the area above the 60%
+    sheet (QA-014). Opening the sheet later by hand still keeps the viewport.
+  - **Toolbar tooltips and dialogs:** a dialog returns focus to its trigger on close, which
+    opened the trigger's tooltip and left it showing (QA-015). `useReturnFocusTooltip` ignores
+    that one returning focus; hover and keyboard focus still open it.
+  - The Issues button is disabled only when there are no issues **and** the panel is closed, so
+    an open empty panel can still be closed from the toolbar.
 - **Limits:**
   - 500 rows are rendered at a time ("Show 500 more").
   - Excerpt lines are cut at 400 characters, so a minified single-line dump stays cheap.
