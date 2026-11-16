@@ -216,4 +216,18 @@ describe("Import dialog", () => {
     await importShop();
     expect(useLayoutStore.getState().version).toBe(version);
   });
+
+  it("does not show the Import tooltip when focus returns from the closed dialog (QA-015)", async () => {
+    const user = await openDialog();
+    await user.click(screen.getByTestId("import-cancel"));
+    await waitFor(() => expect(screen.queryByTestId("import-dialog")).toBeNull());
+    expect(screen.getByTestId("toolbar-import")).toHaveFocus();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("tooltip")).toBeNull();
+
+    // Keyboard focus still shows it afterwards.
+    await user.tab();
+    await user.tab({ shift: true });
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Import SQL or Prisma schema");
+  });
 });

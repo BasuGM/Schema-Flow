@@ -5,14 +5,13 @@ import type { PanelImperativeHandle, PanelSize } from "react-resizable-panels";
 import { CanvasErrorBoundary } from "@/components/canvas/canvas-error-boundary";
 import { SchemaCanvas } from "@/components/canvas/schema-canvas";
 import { IssuesPanel } from "@/components/issues/issues-panel";
+import { SHEET_HEIGHT_PERCENT, SHEET_QUERY } from "@/components/issues/issues-sheet";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 
-/** Below `md` the issues open as a bottom sheet over the canvas instead of a resizable split. */
-export const SHEET_QUERY = "(max-width: 767px)";
 const DEFAULT_ISSUES_SIZE = "35%";
 
 /**
@@ -39,7 +38,8 @@ export function CanvasArea() {
           </main>
           {sheet && open && (
             <div
-              className="absolute inset-x-0 bottom-0 z-20 h-[60%] overflow-hidden rounded-t-xl border-t shadow-lg"
+              className="absolute inset-x-0 bottom-0 z-20 overflow-hidden rounded-t-xl border-t shadow-lg"
+              style={{ height: `${SHEET_HEIGHT_PERCENT}%` }}
               data-testid="issues-sheet"
             >
               <IssuesPanel key={fingerprint} />

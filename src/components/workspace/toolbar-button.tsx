@@ -9,6 +9,9 @@ interface ToolbarButtonProps extends Omit<ComponentProps<typeof Button>, "disabl
   tooltip: ReactNode;
   /** Unavailable controls stay focusable (aria-disabled) so their tooltip explains why. */
   unavailable?: boolean;
+  /** Controlled tooltip state, e.g. from `useReturnFocusTooltip`. */
+  tooltipOpen?: boolean;
+  onTooltipOpenChange?: (open: boolean) => void;
 }
 
 export function ToolbarButton({
@@ -16,10 +19,12 @@ export function ToolbarButton({
   unavailable,
   onClick,
   className,
+  tooltipOpen,
+  onTooltipOpenChange,
   ...props
 }: ToolbarButtonProps) {
   return (
-    <Tooltip>
+    <Tooltip open={tooltipOpen} onOpenChange={onTooltipOpenChange}>
       <TooltipTrigger asChild>
         <Button
           variant="ghost"

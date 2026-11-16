@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ToolbarButton } from "@/components/workspace/toolbar-button";
+import { useReturnFocusTooltip } from "@/components/workspace/use-return-focus-tooltip";
 import { cn } from "@/lib/utils";
 import type { ImportFormatChoice } from "@/parsers";
 import { applyImportedSchema } from "./apply-import";
@@ -40,6 +41,7 @@ export function ImportDialog() {
   const [format, setFormat] = useState<ImportFormatChoice>("auto");
   const [dragging, setDragging] = useState(false);
   const state = useImportParse(draft, format);
+  const { tooltipOpen, onTooltipOpenChange, onCloseAutoFocus } = useReturnFocusTooltip();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const removeRef = useRef<HTMLButtonElement>(null);
   const pending = useRef<{ text: string; timer: ReturnType<typeof setTimeout> } | null>(null);
@@ -114,7 +116,12 @@ export function ImportDialog() {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <ToolbarButton tooltip="Import SQL or Prisma schema" data-testid="toolbar-import">
+        <ToolbarButton
+          tooltip="Import SQL or Prisma schema"
+          tooltipOpen={tooltipOpen}
+          onTooltipOpenChange={onTooltipOpenChange}
+          data-testid="toolbar-import"
+        >
           <Upload aria-hidden />
           <span className="hidden md:inline">Import</span>
         </ToolbarButton>
@@ -125,6 +132,7 @@ export function ImportDialog() {
           e.preventDefault();
           (draft.kind === "file" ? removeRef.current : textareaRef.current)?.focus();
         }}
+        onCloseAutoFocus={onCloseAutoFocus}
         onDragOver={onDragOver}
         onDragLeave={(e) => {
           if (e.currentTarget === e.target) setDragging(false);

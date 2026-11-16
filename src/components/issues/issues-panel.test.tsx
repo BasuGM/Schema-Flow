@@ -213,6 +213,12 @@ describe("Issues panel", () => {
 
     importFixture("sql/shop.mysql.sql"); // clean import while open → empty state, not closed
     expect(screen.getByTestId("issues-empty")).toHaveTextContent("No issues for this schema.");
+    // The button stays enabled while the empty panel is open, so it can be closed from there.
+    const button = screen.getByTestId("toolbar-issues");
+    expect(button).not.toHaveAttribute("aria-disabled");
+    await user.click(button);
+    expect(screen.queryByTestId("issues-panel")).toBeNull();
+    expect(button).toHaveAttribute("aria-disabled", "true");
   });
 
   it("opening, closing and resizing the panel keeps the canvas viewport", async () => {
