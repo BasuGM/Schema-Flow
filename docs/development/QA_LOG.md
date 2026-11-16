@@ -396,3 +396,32 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   by a test that sets a mode directly.
 - **Cowork result:** Pending — not independently verified. See
   [handoffs/P2-T07.md](handoffs/P2-T07.md).
+
+---
+
+## 2026-11-16 — Cowork re-verification round 9 at ac91200: P2-T07 all pass; QA-016
+
+- **Handoffs verified:** [handoffs/P2-T07.md](handoffs/P2-T07.md),
+  [handoffs/P2-fix-QA-014-015.md](handoffs/P2-fix-QA-014-015.md)
+- **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
+  2026-11-16.
+- **Verified:** P2-T07 steps 1–14 all PASS (AC-P2-T07-1…9); P2-T07 → **Verified**. QA-014 and
+  QA-015 **Fixed** (AC-P2-T06-12, AC-P1-T06-9).
+- **Cowork's notes:**
+  - Firefox was not available; Ctrl+K's `defaultPrevented` was confirmed in Chromium only.
+  - The IME case was simulated through CDP.
+  - The 2,000-table fixture took 50–160 ms per key on a slower machine, with no long tasks.
+- **New defect:**
+  - **QA-016** · trivial · a11y · _The search result count may not be announced on no match._
+    - Cowork reports that with no match, `search-status` is replaced by a newly inserted
+      `search-empty` live region, and live regions inserted with content already in them are often
+      not announced.
+    - Claude Code's reading of the code: it is one `<p aria-live>` whose `data-testid` switches.
+      React keeps the same element, so it may not actually be re-inserted. This is not checked
+      with a screen reader.
+    - Either way, the live region and the visible message share an element whose identity
+      depends on the state.
+    - Fix, as requested: one always-mounted, screen-reader-only polite region whose text alone
+      changes ("4 results" / "No tables or columns match …"), with the visible status and empty
+      message kept separate.
+    - Folded into P2-T08. Status: **Open — scheduled in P2-T08.**
