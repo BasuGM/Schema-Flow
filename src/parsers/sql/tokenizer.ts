@@ -28,7 +28,9 @@ const OP_CHARS = "+-*/<>=~!@#%^&|`?:";
 export function tokenize(sql: string, dialect: SqlDialect): TokenizeResult {
   const tokens: Token[] = [];
   const issues: ImportIssue[] = [];
-  let i = 0;
+  // A leading byte-order mark (QA-007) is skipped, not stripped, so offsets still index `sql` and
+  // line numbers are unchanged (U+FEFF is not a newline).
+  let i = sql.charCodeAt(0) === 0xfeff ? 1 : 0;
   let line = 1;
   const n = sql.length;
 

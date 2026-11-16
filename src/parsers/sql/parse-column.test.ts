@@ -93,6 +93,8 @@ describe("parseColumn", () => {
       primaryKey: true,
       default: { kind: "autoincrement" },
     });
+    // QA-008: a bare name (before `,`, `)` or the end) is a column with no type.
+    expect(column("name", "sqlite").column).toEqual({ name: "name", type: "" });
     expect(column("anything NOT NULL", "sqlite").column).toEqual({
       name: "anything",
       type: "",

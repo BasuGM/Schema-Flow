@@ -14,6 +14,7 @@ import {
   parseCreateIndex,
   parseCreateTable,
   parseCreateType,
+  warnNoType,
   type AlterTable,
 } from "./parse-statements";
 import { splitStatements, type SqlStatement } from "./split";
@@ -190,8 +191,11 @@ class DraftBuilder {
           else warn(`ALTER TABLE references unknown table "${label}".`, action.line);
           break;
         case "addColumn":
-          if (table) table.columns.push(action.column);
-          else warn(`ALTER TABLE references unknown table "${label}".`, action.line);
+          if (table) {
+            table.columns.push(action.column);
+            if (action.column.type === "")
+              warnNoType(warn, table.name, action.column.name, action.line);
+          } else warn(`ALTER TABLE references unknown table "${label}".`, action.line);
           break;
         case "columnDefault":
         case "columnNullable": {

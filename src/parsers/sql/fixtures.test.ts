@@ -161,6 +161,60 @@ describe("blog.sqlite.sql", () => {
   });
 });
 
+describe("bom.postgres.sql — leading byte-order mark (QA-007)", () => {
+  const { result, schema } = parse("bom.postgres.sql");
+
+  it("starts with U+FEFF and still imports the first statement", () => {
+    expect(loadFixture("bom.postgres.sql").charCodeAt(0)).toBe(0xfeff);
+    expect(result.ok).toBe(true);
+    expect(schema.tableOrder).toEqual(["public.users", "public.posts"]);
+    expect(rels(schema)).toEqual(["public.posts.user_id -> public.users.id (many-to-one)"]);
+  });
+
+  it("keeps line numbers unshifted (the view is on line 4)", () => {
+    expect(issueList(result)).toEqual(["warning@4: Skipped unsupported statement: CREATE VIEW."]);
+  });
+});
+
+describe("typeless.sqlite.sql — columns without a type (QA-008)", () => {
+  const { result, schema } = parse("typeless.sqlite.sql");
+
+  it("imports the tables, keeps typeless columns and warns once per column with its line", () => {
+    expect(result.ok).toBe(true);
+    const t = Object.values(schema.tables).find((x) => x.name === "t")!;
+    const u = Object.values(schema.tables).find((x) => x.name === "u")!;
+    expect(t.columns.map((c) => [c.name, c.dataType.raw])).toEqual([
+      ["id", "int"],
+      ["name", ""],
+      ["note", ""],
+    ]);
+    expect(u.columns.map((c) => c.name)).toEqual(["id", "t_id", "label"]);
+    expect(Object.keys(schema.relationships)).toHaveLength(1);
+    expect(issueList(result)).toEqual([
+      'warning@2: Column "t.name" has no type; its type is shown as empty.',
+      'warning@2: Column "t.note" has no type; its type is shown as empty.',
+      'warning@5: Column "u.t_id" has no type; its type is shown as empty.',
+      'warning@6: Column "u.label" has no type; its type is shown as empty.',
+    ]);
+  });
+
+  it("parses the exact repro from the report", () => {
+    const r = parseSql("CREATE TABLE t (id int primary key, name, note);", { dialect: "sqlite" });
+    expect(r.ok).toBe(true);
+    expect(r.schema?.tables["t"]?.columns.map((c) => c.name)).toEqual(["id", "name", "note"]);
+    expect(r.issues).toHaveLength(2);
+  });
+});
+
+describe("BOM repro from the report (QA-007)", () => {
+  it("imports a one-table file that starts with U+FEFF", () => {
+    const r = parseSql("\uFEFFCREATE TABLE users (id int primary key);");
+    expect(r.ok).toBe(true);
+    expect(r.schema?.tableOrder).toEqual(["public.users"]);
+    expect(r.issues).toEqual([]);
+  });
+});
+
 describe("pgdump.postgres.sql — real pg_dump style", () => {
   const { result, schema } = parse("pgdump.postgres.sql");
 

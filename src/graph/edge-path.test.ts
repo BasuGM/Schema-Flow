@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { labelTransform, routeSegments, samePosition, segmentsToPath } from "./edge-path";
+import {
+  labelOverflowShift,
+  labelTransform,
+  routeSegments,
+  samePosition,
+  segmentsToPath,
+} from "./edge-path";
 
 describe("routeSegments / segmentsToPath", () => {
   it("builds one cubic per consecutive point pair with horizontal tangents", () => {
@@ -49,5 +55,38 @@ describe("labelTransform (QA-005)", () => {
   it("falls back to scale 1 for an invalid zoom", () => {
     expect(labelTransform({ x: 0, y: 0 }, "left", 0)).toContain("scale(1)");
     expect(labelTransform({ x: 0, y: 0 }, "left", Number.NaN)).toContain("scale(1)");
+  });
+});
+
+describe("labelOverflowShift (QA-006)", () => {
+  const base = { gapPx: 52, widthPx: 405, paneWidth: 900 };
+
+  it("shifts a left-side label right so it is not clipped under the left panel", () => {
+    // Cowork repro: categories self-loop after Fit view, label left edge ~76 px left of the pane.
+    const shift = labelOverflowShift({ ...base, anchorScreenX: 381, side: "left" });
+    expect(shift).toBe(8 - (381 - 52 - 405));
+    expect(381 - 52 - 405 + shift).toBe(8);
+  });
+
+  it("shifts a right-side label left at the right edge, never past the left margin", () => {
+    expect(labelOverflowShift({ ...base, anchorScreenX: 700, side: "right" })).toBe(
+      900 - 8 - (700 + 52 + 405),
+    );
+    expect(labelOverflowShift({ ...base, paneWidth: 300, anchorScreenX: 10, side: "right" })).toBe(
+      8 - (10 + 52),
+    );
+  });
+
+  it("leaves fitting labels alone and ignores unknown sizes", () => {
+    expect(labelOverflowShift({ ...base, anchorScreenX: 600, side: "left" })).toBe(0);
+    expect(labelOverflowShift({ ...base, paneWidth: 0, anchorScreenX: 0, side: "left" })).toBe(0);
+    expect(labelOverflowShift({ ...base, widthPx: 0, anchorScreenX: 0, side: "left" })).toBe(0);
+  });
+
+  it("is applied as a trailing screen-pixel translate", () => {
+    expect(labelTransform({ x: 0, y: 0 }, "left", 0.5, 12, 76)).toBe(
+      "translate(0px, 0px) scale(2) translate(-12px, 0) translate(-100%, -50%) translate(76px, 0)",
+    );
+    expect(labelTransform({ x: 0, y: 0 }, "left", 0.5, 12, 0)).not.toContain("76");
   });
 });

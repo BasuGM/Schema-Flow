@@ -55,12 +55,45 @@ export function labelTransform(
   side: "left" | "right",
   zoom: number,
   gapPx = 12,
+  shiftPx = 0,
 ): string {
   const scale = 1 / (zoom > 0 && Number.isFinite(zoom) ? zoom : 1);
   const r = (n: number) => Math.round(n * 1000) / 1000;
-  const shift =
+  const place =
     side === "left"
       ? `translate(${-gapPx}px, 0) translate(-100%, -50%)`
       : `translate(${gapPx}px, 0) translate(0%, -50%)`;
-  return `translate(${r(anchor.x)}px, ${r(anchor.y)}px) scale(${r(scale)}) ${shift}`;
+  const shift = shiftPx !== 0 && Number.isFinite(shiftPx) ? ` translate(${r(shiftPx)}px, 0)` : "";
+  return `translate(${r(anchor.x)}px, ${r(anchor.y)}px) scale(${r(scale)}) ${place}${shift}`;
+}
+
+/**
+ * Horizontal screen-pixel shift that keeps a label inside the visible canvas pane (QA-006). Labels
+ * have a constant on-screen size, so a long one beside a table near the pane edge would otherwise
+ * be clipped under the side panel. Returns 0 when it fits or when the sizes are not known yet.
+ */
+export function labelOverflowShift({
+  anchorScreenX,
+  side,
+  gapPx,
+  widthPx,
+  paneWidth,
+  marginPx = 8,
+}: {
+  /** Anchor x relative to the pane's left edge, in screen pixels. */
+  anchorScreenX: number;
+  side: "left" | "right";
+  gapPx: number;
+  widthPx: number;
+  paneWidth: number;
+  marginPx?: number;
+}): number {
+  if (!(paneWidth > 0) || !(widthPx > 0) || !Number.isFinite(anchorScreenX)) return 0;
+  const left = side === "left" ? anchorScreenX - gapPx - widthPx : anchorScreenX + gapPx;
+  const right = left + widthPx;
+  if (left < marginPx) return marginPx - left;
+  // Too far right: move left, but never past the left margin (a label wider than the pane keeps
+  // its start visible).
+  if (right > paneWidth - marginPx) return Math.max(paneWidth - marginPx - right, marginPx - left);
+  return 0;
 }

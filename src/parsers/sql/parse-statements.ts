@@ -28,7 +28,9 @@ export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable {
   while (!ts.done && !ts.isPunct(")")) {
     if (atTableConstraint(ts)) applyConstraint(table, parseTableConstraint(ts), warn, ts.line);
     else {
+      const columnLine = ts.line;
       const { column, checks } = parseColumn(ts);
+      if (column.type === "") warnNoType(warn, table.name, column.name, columnLine);
       table.columns.push(column);
       if (checks.length > 0) (table.checkConstraints ??= []).push(...checks);
     }
@@ -37,6 +39,11 @@ export function parseCreateTable(ts: TokenStream, warn: Warn): DraftTable {
   ts.expectPunct(")");
   // Table options (ENGINE=…, WITHOUT ROWID, INHERITS (…), PARTITION BY …) are ignored.
   return table;
+}
+
+/** Typeless columns are kept (SQLite allows them) but reported, one warning per column (QA-008). */
+export function warnNoType(warn: Warn, table: string, column: string, line?: number): void {
+  warn(`Column "${table}.${column}" has no type; its type is shown as empty.`, line);
 }
 
 export function applyConstraint(

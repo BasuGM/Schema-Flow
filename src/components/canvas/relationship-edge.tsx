@@ -8,9 +8,15 @@ import {
   useStore,
   type EdgeProps,
 } from "@xyflow/react";
-import { memo, useState } from "react";
+import { memo, useLayoutEffect, useRef, useState } from "react";
 import { describeRelationship } from "@/graph/describe";
-import { labelTransform, routeSegments, samePosition, segmentsToPath } from "@/graph/edge-path";
+import {
+  labelOverflowShift,
+  labelTransform,
+  routeSegments,
+  samePosition,
+  segmentsToPath,
+} from "@/graph/edge-path";
 import type { RelationshipFlowEdge } from "@/graph/types";
 import { cn } from "@/lib/utils";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -136,10 +142,13 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
 
 const STROKE_WIDTH = { default: 1.25, highlighted: 2, selected: 3 } as const;
 const zoomSelector = (s: { transform: [number, number, number] }) => s.transform[2];
+const panXSelector = (s: { transform: [number, number, number] }) => s.transform[0];
+const paneWidthSelector = (s: { width: number }) => s.width;
 
 /**
  * Rendered only while a label is visible, so only this component (not every edge) re-renders on
- * zoom. Counter-scaled to a constant screen size (QA-005).
+ * zoom or pan. Counter-scaled to a constant screen size (QA-005) and shifted to stay inside the
+ * visible pane (QA-006).
  */
 function EdgeLabel({
   id,
@@ -157,9 +166,26 @@ function EdgeLabel({
   gapPx: number;
 }) {
   const zoom = useStore(zoomSelector);
+  const panX = useStore(panXSelector);
+  const paneWidth = useStore(paneWidthSelector);
+  const ref = useRef<HTMLDivElement>(null);
+  // The shift depends on the rendered label width, so it is measured and applied before paint.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const shift = labelOverflowShift({
+      anchorScreenX: panX + x * zoom,
+      side,
+      gapPx,
+      widthPx: el.offsetWidth,
+      paneWidth,
+    });
+    el.style.transform = labelTransform({ x, y }, side, zoom, gapPx, shift);
+  }, [x, y, side, gapPx, zoom, panX, paneWidth, text]);
   return (
     <EdgeLabelRenderer>
       <div
+        ref={ref}
         data-testid={`edge-label-${id}`}
         style={{
           transform: labelTransform({ x, y }, side, zoom, gapPx),

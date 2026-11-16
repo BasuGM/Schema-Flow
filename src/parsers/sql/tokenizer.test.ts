@@ -57,6 +57,15 @@ describe("tokenize", () => {
     expect(kinds("# note; here\nx", "mysql")).toEqual(["word:x"]);
   });
 
+  it("skips a leading byte-order mark without shifting offsets or lines (QA-007)", () => {
+    const { tokens, issues } = tokenize("\uFEFFCREATE\nTABLE", "postgresql");
+    expect(issues).toEqual([]);
+    expect(tokens.map((t) => [t.text, t.offset, t.line])).toEqual([
+      ["CREATE", 1, 1],
+      ["TABLE", 8, 2],
+    ]);
+  });
+
   it("tracks line numbers", () => {
     const { tokens } = tokenize("a\n'multi\nline'\n  b", "postgresql");
     expect(tokens.map((t) => t.line)).toEqual([1, 2, 4]);

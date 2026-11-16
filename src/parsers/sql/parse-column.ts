@@ -111,8 +111,9 @@ function continuesType(prev: string, word: string, nextWord: string | undefined)
  */
 function readType(ts: TokenStream): string {
   const first = ts.peek();
-  if (!first || (first.kind !== "word" && first.kind !== "quoted"))
-    return ts.fail("Expected a column type");
+  // A bare column name (`name,` / `name)` / end of input) has no type; SQLite allows it (QA-008).
+  if (!first || (first.kind === "punct" && (first.text === "," || first.text === ")"))) return "";
+  if (first.kind !== "word" && first.kind !== "quoted") return ts.fail("Expected a column type");
   // Some dialects allow omitting the type entirely (SQLite) — treat a constraint keyword as "no type".
   if (
     first.kind === "word" &&
