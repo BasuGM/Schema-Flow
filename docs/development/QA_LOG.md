@@ -232,3 +232,26 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     for enum-typed fields, value names (also inside list defaults) are replaced by their stored
     `@map` values. Regression test in `src/parsers/prisma/fixtures.test.ts`.
     Status: **Fixed — awaiting re-verification.**
+
+---
+
+## 2026-11-16 — P2-T05 (Import dialog)
+
+- **Plan:** approved with amendments (file card instead of a controlled textarea, BOM/binary
+  handling, any extension, inline replace note, draft kept on Cancel, scrolling layout, detailed
+  handoff).
+- **Commit:** `f874d46`. `npm run check` passes: 34 files / 245 tests, build ✔.
+- **Defects found by Claude Code while testing (not by Cowork):**
+  - **QA-011** · major · _Format detection sampled only the first 200,000 characters._ A file whose
+    DDL starts after a long header (here, 1.1 MB of comments) was reported as "doesn't look like
+    SQL". Found by the "paste over 1 MB" dialog test. Fix: `detectFormat` checks the whole text
+    (about 1 ms per MB; input is capped at 5 MB). Regression test in `detect-format.test.ts`,
+    which fails on the old code. Status: **Fixed — awaiting verification.**
+  - **QA-012** · minor · _The toolbar overflowed at phone width._ At 390 px, the right-hand toolbar
+    group ended at 416 px, widening the page to 417 px and clipping the import dialog. Found in the
+    headless phone screenshot; it existed before P2-T05 (Phase 1 checked narrow windows only at the
+    900 px breakpoint). Fix: the "SchemaFlow" wordmark is hidden below `sm` (the logo stays).
+    Status: **Fixed — awaiting verification.**
+  - `loadSchema` appended validation issues that importers had already added (duplicates for
+    broken schemas). Fixed with a regression test.
+- **Cowork result:** Pending — not independently verified. See [handoffs/P2-T05.md](handoffs/P2-T05.md).

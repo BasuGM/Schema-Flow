@@ -276,3 +276,56 @@ Run `npx vitest run src/parsers/prisma` (4 files, 20 tests). Fixtures are in
 - AC-P2-T04-7 (QA-010): An enum field's `@default(VALUE)` uses the value's stored `@map` name
   (`AUTHOR @map("author")` → default `author`), also inside list defaults; unmapped values are
   unchanged. _Auto_
+
+## P2-T05 — Import dialog
+
+Expected preview when each fixture is **chosen or dropped as a file**, with Format left on Auto
+(`.prisma` files pre-select Prisma). Status, counts, issue summary and button text are exact
+(`import-status`, `import-counts`, `import-issue-summary`, `import-confirm`); the schema name is
+shown in the toolbar after import.
+
+| Fixture                       | Status                   | Counts                                              | Issues               | Button                    | Schema name         |
+| ----------------------------- | ------------------------ | --------------------------------------------------- | -------------------- | ------------------------- | ------------------- |
+| `sql/blog.sqlite.sql`         | Parsed as SQLite SQL     | 4 tables · 12 columns · 3 relationships             | 1 warning            | Import 4 tables           | blog.sqlite         |
+| `sql/bom.postgres.sql`        | Parsed as PostgreSQL SQL | 2 tables · 3 columns · 1 relationship               | 1 warning            | Import 2 tables           | bom.postgres        |
+| `sql/ecommerce.postgres.sql`  | Parsed as PostgreSQL SQL | 12 tables · 71 columns · 13 relationships · 2 enums | No issues            | Import 12 tables          | ecommerce.postgres  |
+| `sql/edge-cases.postgres.sql` | Parsed as PostgreSQL SQL | 3 tables · 10 columns · 2 relationships             | 1 error · 5 warnings | Import 3 tables (1 error) | edge-cases.postgres |
+| `sql/pgdump.postgres.sql`     | Parsed as PostgreSQL SQL | 3 tables · 14 columns · 3 relationships · 1 enum    | 2 warnings           | Import 3 tables           | pgdump.postgres     |
+| `sql/shop.mysql.sql`          | Parsed as MySQL SQL      | 5 tables · 18 columns · 4 relationships             | No issues            | Import 5 tables           | shop.mysql          |
+| `sql/typeless.sqlite.sql`     | Parsed as PostgreSQL SQL | 2 tables · 6 columns · 1 relationship               | 4 warnings           | Import 2 tables           | typeless.sqlite     |
+| `sql/utf16le.postgres.sql`    | Parsed as PostgreSQL SQL | 2 tables · 4 columns · 1 relationship               | No issues            | Import 2 tables           | utf16le.postgres    |
+| `prisma/blog.prisma`          | Parsed as Prisma schema  | 9 tables · 31 columns · 11 relationships · 1 enum   | 1 warning            | Import 9 tables           | blog                |
+| `prisma/edge-cases.prisma`    | Parsed as Prisma schema  | 3 tables · 8 columns · 1 relationship               | 1 error · 8 warnings | Import 3 tables (1 error) | edge-cases          |
+| `prisma/shop.mysql.prisma`    | Parsed as Prisma schema  | 4 tables · 14 columns · 3 relationships · 1 enum    | No issues            | Import 4 tables           | shop.mysql          |
+
+Pasting the same text gives the same preview, but the schema name is "Pasted SQL" or "Pasted
+Prisma schema". `typeless.sqlite.sql` has no SQLite-specific markers, so Auto detects PostgreSQL;
+choosing SQLite gives the same counts.
+
+- AC-P2-T05-1: Toolbar **Import** opens the dialog with focus in the textarea; the description says
+  "Parsed in your browser. Nothing is uploaded or executed."; the footer says "This replaces the
+  current diagram." _Auto_; _Manual_
+- AC-P2-T05-2: Pasted text, a chosen file and a dropped file each produce the preview in the table
+  above; a file is shown as a card (name, size, Remove) and never in the textarea; the picker has
+  no `accept` filter. _Auto_; _Manual_
+- AC-P2-T05-3: Changing **Format** re-parses immediately; Auto shows the detected format. _Auto_
+- AC-P2-T05-4: UTF-16 files (BOM) import; gzip/zip files and files with NUL bytes show "This looks
+  like a binary or compressed file."; files over 5 MB show "This file is N MB; the limit is 5.0 MB."
+  and are not read. Import stays disabled in all three error cases. _Auto_; _Manual_
+- AC-P2-T05-5: Import is enabled when at least one table was parsed, even with errors
+  ("Import 3 tables (1 error)"); with no tables it is disabled. _Auto_
+- AC-P2-T05-6: Import replaces the diagram, closes the dialog and resets it; the selection, pinned
+  edge and table filter are cleared; the canvas fits the new schema. Importing the same file again
+  reuses the stored layout (dragged positions are kept; `layout-store.version` unchanged). _Auto_;
+  _Manual_
+- AC-P2-T05-7: Cancel, Escape or the close button keep the draft (text or file, including typing
+  that wasn't committed yet) and the canvas selection; reopening shows the draft. _Auto_; _Manual_
+- AC-P2-T05-8: Pastes over 1 MB turn into a "Pasted text" card instead of staying in the textarea.
+  _Auto_
+- AC-P2-T05-9: The dialog fits 1280×720 and 390 px wide screens in light and dark themes: the
+  footer stays visible and the middle section scrolls. _Manual (Claude Code captured headless
+  screenshots; not independent verification)_
+- AC-P2-T05-10: The parsers are not in the initial bundle (ADR-014 evidence). _Auto (build grep)_
+- AC-P2-T01-6 (QA-011): Format detection finds DDL or Prisma models after a header longer than
+  200,000 characters. _Auto_
+- AC-P1-T06-8 (QA-012): At 390 px wide the toolbar fits without horizontal page overflow. _Manual_

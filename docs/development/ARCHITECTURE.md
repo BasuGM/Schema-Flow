@@ -1,7 +1,7 @@
 # Architecture
 
-SchemaFlow is a static, client-only Next.js app. A schema (sample now; SQL/Prisma import in
-Phase 2) is normalized into one in-memory `Schema` model, from which the React Flow diagram, the
+SchemaFlow is a static, client-only Next.js app. A schema (a built-in sample, or SQL/Prisma
+imported through the Import dialog) is normalized into one in-memory `Schema` model, from which the React Flow diagram, the
 table list and the inspector are derived. Nothing is sent to a server and imported SQL is never
 executed.
 
@@ -11,7 +11,7 @@ executed.
 flowchart LR
   subgraph pure["Pure TypeScript (no React)"]
     S[samples/*] --> D[DraftSchema]
-    P["parsers/* (Phase 2)"] --> D
+    IMP["Import dialog (lazy import())"] --> P["parsers/*"] --> D
     D --> N[normalizeSchema] --> M[(Schema)]
     M --> V[validateSchema]
     M --> F[fingerprintSchema]
@@ -40,7 +40,12 @@ flowchart LR
 3. `SchemaCanvas` derives nodes/edges with `schemaToFlow()` when the schema, collapse modes or a
    layout "version" (re-layout / reset) changes. Between those events, React Flow owns transient
    node state (`applyNodeChanges`) and drag-stop writes the final position back to `layout-store`.
-4. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
+4. **Import** (P2-T05): the toolbar's `ImportDialog` lazy-loads `@/parsers` (a separate chunk),
+   decodes a file with `decodeSchemaFile` (UTF-8/UTF-16, binary rejected; 5 MB cap checked first)
+   and previews `parseSchemaText()` results. Confirming calls `applyImportedSchema()`:
+   `loadSchema` → `ensureLayout` (reused for a known fingerprint) → `clearSelection()` and an empty
+   table filter.
+5. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
    with a boolean selector (`s.selectedTableId === id`), so a selection change re-renders only the
    affected node(s)/edges — the nodes array is not rebuilt.
 
@@ -127,8 +132,8 @@ finds the same saved layout (Phase 3).
 - **Result:** the draft goes through the existing `normalizeSchema`/`validateSchema`.
   `parseSql` returns an `ImportResult` and never throws. SQL is treated purely as text and never
   executed.
-- **Lazy loading:** the whole `src/parsers` module will be loaded with a dynamic `import()` by the
-  Import dialog (P2-T05), so it isn't in the initial bundle.
+- **Lazy loading:** the whole `src/parsers` module is loaded with a dynamic `import()` by the
+  Import dialog (P2-T05), so it isn't in the initial bundle (ADR-014).
 - **Not supported:** `COPY … FROM stdin` data blocks (use a schema-only dump, `pg_dump -s`), MySQL
   `DELIMITER` blocks (reported), and table inheritance or partitions (options ignored).
 
@@ -391,6 +396,32 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
   - **Size:** larger than the 350–450 lines estimated when the option was offered (926 lines,
     Prettier-formatted). The block parser and the mapping (relations, implicit many-to-many) are
     each about 350 lines.
+
+### ADR-014 — Import dialog: lazy parsers on the main thread, no Web Worker (2026-11-16)
+
+- **Decision:** parse imports on the main thread, with `@/parsers` loaded by a dynamic `import()`
+  when the dialog opens. Parsing runs after one `setTimeout(0)`, so "Parsing…" paints first.
+  Inputs over **5 MB** are refused before being read.
+- **Context:** measured parse cost is small: ~1 MB of SQL in 99–144 ms, and a 500-model Prisma
+  schema in 57–118 ms (Node, M1), so 5 MB is about 0.75 s worst case. The dominant cost after
+  import is the Dagre layout, which already runs on the main thread and which a parse worker
+  wouldn't move. A worker would add a message protocol, a second bundle entry and jsdom test gaps.
+- **Evidence (static build, `out/index.html`):**
+  - Before (`8f5afbc`): 8 initial chunks, 1,069,890 B raw / 338,645 B gzip, with no parser code.
+  - After (`f874d46`): 9 initial chunks, 1,087,080 B raw / 343,877 B gzip (+17 KB / +5 KB for the
+    dialog UI).
+  - Parsers (SQL + Prisma): chunk `2h8w4ivmr4jd6.js`, 35,611 B raw / 12,146 B gzip. It is not
+    referenced by `index.html`, only by name from the app chunk's dynamic-import loader.
+- **Related rules:**
+  - Files are decoded by BOM (UTF-16 LE/BE, else UTF-8); gzip/zip magic or NUL characters are
+    refused as binary.
+  - The picker has no `accept` filter: detection decides.
+  - Large content never lives in a controlled textarea: files, and pastes over 1 MB, are shown as
+    a card.
+  - Import is allowed with at least one table even when there are errors.
+  - Import replaces the diagram (no undo until Phase 3), which the dialog states inline.
+- **Revisit:** move parsing to a worker if real files approach the cap and the parse becomes
+  noticeable.
 
 ## Known limitations (Phase 1)
 
