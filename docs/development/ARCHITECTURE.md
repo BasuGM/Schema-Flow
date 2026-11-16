@@ -50,7 +50,15 @@ flowchart LR
    `tableId` (case-insensitive, like all name lookups), so issues can link to the canvas. The
    imported text is kept in `schema-store.sourceText` (≤ 5 MB, not part of the schema or its
    fingerprint) for source excerpts; only the expanded excerpt component reads it.
-6. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
+6. **Search** (P2-T07, ADR-016): `src/domain/search` builds an index per `Schema` object (cached
+   in a `WeakMap`) and ranks tables and columns. The toolbar `SearchDialog` (open state
+   `ui-store.searchOpen`, also opened by ⌘K / Ctrl+K / `/`) mounts `SearchPanel` only while
+   open. Choosing a result calls `revealTable(tableId, columnId?)` (`src/stores/reveal.ts`, shared
+   with the issues panel's **Show table**): it clears a table-list filter that hides the table,
+   selects it, sets `ui-store.highlightedColumn`, and issues a focus request that the canvas
+   centers on the table, or on the column's row (`rowCenterOffset`). A new import or sample calls
+   `resetForNewSchema()`, which clears the selection, filter and highlight and closes search.
+7. Selection lives in `ui-store` (`selectedTableId`). `TableNode` and `RelationshipEdge` subscribe
    with a boolean selector (`s.selectedTableId === id`), so a selection change re-renders only the
    affected node(s)/edges — the nodes array is not rebuilt.
 
@@ -59,6 +67,7 @@ flowchart LR
 | Path                  | Responsibility                                             | May import                   |
 | --------------------- | ---------------------------------------------------------- | ---------------------------- |
 | `src/domain/schema`   | Types, IDs, normalize, validate, fingerprint, selectors    | nothing app-specific         |
+| `src/domain/search`   | Search index and ranking (P2-T07)                          | domain                       |
 | `src/samples`         | E-commerce sample, synthetic generator, `?sample=` parsing | domain                       |
 | `src/graph`           | `schemaToFlow`, Dagre layout, node metrics, handle IDs     | domain, `@xyflow` types only |
 | `src/stores`          | Zustand slices                                             | domain, graph                |
@@ -467,6 +476,46 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
 - **Bundle:** +11.8 KB raw / +3.0 KB gzip initial JS (initial chunks 1,099,225 B raw / 346,959 B
   gzip at `62ba31d`). The parsers stay lazy (chunk `2s-fxisvw7v--.js`, not referenced by
   `index.html`).
+
+### ADR-016 — Own search palette instead of shadcn `command` / cmdk (2026-11-16)
+
+- **Decision:** search is our own pure index and ranking (`src/domain/search`) with a Radix
+  Dialog and the WAI-ARIA combobox/listbox pattern. No new dependency. The ROADMAP had named
+  shadcn `command` (cmdk).
+- **Why not cmdk:**
+  - It renders and scores every item on each keystroke, with no windowing; a 2,000-table schema
+    has about 40,000 columns.
+  - Its fuzzy ranking doesn't know `table.column` or snake_case / camelCase segments.
+  - It would be a new dependency.
+- **Ranking:** case-insensitive tiers per term: exact, prefix, segment prefix, substring, then a
+  segment-anchored fuzzy subsequence (terms of 3+ characters; every run of matched characters
+  starts at a segment start, so `uid` → `user_id` but not `unit_price_cents`). Names are also
+  compared without spaces, `_` and `-` at the same tier, so `createdAt` finds `created_at`.
+  Ties: the sum of tiers, the shorter name, declaration order.
+- **Query syntax:** one term matches the primary field (table name / column name); several
+  space-separated terms are ANDed over schema / table / column with one on the primary field;
+  dotted queries are positional from the right (`ord.user`, `billing.inv`, `orders.`).
+- **Schema names** are shown unless they are the source default (none, or `public` on
+  PostgreSQL).
+- **Performance:**
+  - Prepared names are shared per distinct name.
+  - Schema and table matches are memoized per query.
+  - Each group keeps only its best 50 in a bounded insertion list.
+  - Results follow a `useDeferredValue` of the query.
+  - 2,000 × 20 with every column name distinct (test, alone): index about 80–90 ms, queries 7–25 ms (first, unwarmed runs).
+  - In headless Chrome on the production build, with the 2,000 × 20 fixture
+    (`tests/fixtures/large/search-2000.postgres.sql`): 31–61 ms from input to painted results.
+- **Found while building it:** the wall-clock budgets (this one and the parser ones) failed when
+  run alongside 40 other test files on this 8 GB machine, measuring contention. Files named
+  `*performance.test.ts` now run in their own Vitest project after the others, one at a time
+  (`vitest.config.mts`); the budgets are unchanged.
+- **Revealing a column:** the canvas centers on the row. If a collapse mode (P3-T02) would hide
+  it, the node still renders that row (marked) while it is highlighted.
+- **Phone toolbar:** Layout, Theme and Settings move into one **More** menu below `sm`, so new
+  toolbar buttons don't overflow 390 px again (QA-012 twice).
+  `scripts/headless/toolbar-width.mjs` checks this against a running server.
+- **Bundle:** +16.1 KB raw / +4.5 KB gzip initial JS (1,115,374 B raw / 351,499 B gzip), under
+  the 5 KB threshold for lazy-loading the dialog. Parsers are still lazy (`2s-fxisvw7v--.js`).
 
 ## Known limitations (Phase 1)
 

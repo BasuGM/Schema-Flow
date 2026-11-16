@@ -415,3 +415,47 @@ without a line. The excerpt is ±2 lines around the issue line, clamped to the f
 - AC-P1-T06-9 (QA-015): After the Import dialog closes (Import, Cancel or Escape), focus is back
   on the Import button and its tooltip is **not** shown. Hovering it or tabbing to it still shows
   the tooltip. _Auto (`import-dialog.test.tsx`; fails without the fix)_; _Manual_
+
+## P2-T07 — Search
+
+Expected results (generated with `search()`, checked in the UI). Tables come first, then columns;
+the order within each group is the ranking.
+
+| Fixture                       | Query         | Expected rows, in order                                                                      |
+| ----------------------------- | ------------- | -------------------------------------------------------------------------------------------- |
+| sample (e-commerce)           | `user`        | table `users` · columns `addresses.user_id`, `orders.user_id`, `reviews.user_id` (4 results) |
+| sample                        | `ord.user`    | column `orders.user_id` (1 result)                                                           |
+| sample                        | `uid`         | columns `addresses.user_id`, `orders.user_id`, `reviews.user_id` (fuzzy; 3 results)          |
+| sample                        | `zzzz`        | none: "No tables or columns match “zzzz”."                                                   |
+| `prisma/blog.prisma`          | `authorId`    | columns `Comment.authorId`, `posts.author_id`                                                |
+| `prisma/blog.prisma`          | `createdAt`   | column `users.created_at`                                                                    |
+| `sql/edge-cases.postgres.sql` | `order lines` | table `Order Lines`                                                                          |
+| `sql/edge-cases.postgres.sql` | `quoted`      | column `Order Lines.weird "quoted" col`                                                      |
+| `sql/edge-cases.postgres.sql` | `billing.inv` | table `billing.invoices` (schema shown: not the default)                                     |
+
+- AC-P2-T07-1: ⌘K / Ctrl+K (default prevented) and `/` open search; `/` in a text field types a
+  slash. The toolbar **Search** button (`toolbar-search`) opens it and is disabled without a
+  schema. Nothing opens over another dialog or menu. _Auto_; _Manual_
+- AC-P2-T07-2: Results match the table above: tiers exact → prefix → segment → substring →
+  fuzzy (3+ characters, segment-anchored), multi-word AND, dotted positional queries, camelCase
+  vs snake_case, unusual names. Matched characters are highlighted. _Auto_; _Manual_
+- AC-P2-T07-3: Each group shows at most 50 rows plus "+ N more … — keep typing to narrow"; an
+  empty query lists the first 50 tables and "Type to search N tables and M columns"; no match
+  shows "No tables or columns match “q”.". _Auto_; _Manual_
+- AC-P2-T07-4: Keyboard: ↑/↓ wrap, Home/End, Enter chooses (ignored while an IME composes),
+  Escape closes without clearing the selection. Combobox/listbox roles, `aria-activedescendant`,
+  `aria-selected`, labelled groups, and a polite result count. _Auto_; _Manual_
+- AC-P2-T07-5: Choosing a table selects and centers it and clears a table-list filter that hides
+  it. Choosing a column also highlights its row (`data-highlighted`) and centers the canvas on
+  that row, even in a long table; the highlight clears when the selection changes or on Escape.
+  _Auto_; _Manual_
+- AC-P2-T07-6: A new import or sample closes search and clears the highlight. _Auto_
+- AC-P2-T07-7: On close, focus returns to where it was (or the Search button) without showing a
+  tooltip. _Auto_; _Manual_
+- AC-P2-T07-8: Typing stays responsive on 2,000 tables × 20 columns
+  (`tests/fixtures/large/search-2000.postgres.sql`): each query under 30 ms in the test (index under
+  150 ms). Opening search and typing don't re-render the canvas (`Profiler`). _Auto_; _Manual
+  (Claude Code headless Chrome: 31–61 ms input → painted results; not independent verification)_
+- AC-P2-T07-9: Below `sm`, Layout, Theme and Settings are in the **More** menu
+  (`toolbar-more`), and the page is 390 px wide at 390×844 with the Issues counts showing
+  (`node scripts/headless/toolbar-width.mjs`). _Auto (menu)_; _Manual_

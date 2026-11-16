@@ -360,3 +360,39 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     - Status: **Fixed — awaiting re-verification.**
 - **Checks:** `npm run check` green: 39 files / 276 tests, build ✔.
 - **Re-verification handoff:** [handoffs/P2-fix-QA-014-015.md](handoffs/P2-fix-QA-014-015.md) (code `2d52d95`). Pending — not independently verified.
+
+---
+
+## 2026-11-16 — P2-T07 (Search)
+
+- **Plan:** approved with amendments 1–8:
+  - the fuzzy rule;
+  - spaces and dots;
+  - the default-schema rule;
+  - centering on the row and showing hidden rows;
+  - a reset on new schema;
+  - IME, ⌘K and `/` edge cases;
+  - a phone More menu;
+  - exact handoff orders and a 2,000-table timing sample.
+- **Commit:** `72dabd2`. `npm run check` passes 3× in a row: 44 files / 307 tests, build ✔.
+- **Found by Claude Code while building it (not Cowork defects):**
+  - **Timing tests measured contention.** With 44 test files in parallel on this 8 GB machine,
+    the new search budgets (and once the existing 1 MB parser budget) failed even after 3
+    attempts. They pass alone with wide margins. Files named `*performance.test.ts` now run in
+    their own Vitest project after the others, one file at a time. Budgets unchanged.
+  - **The 2,000-table fixture slowed the robustness suite** to 11.8 s, because it mutates every
+    file in `tests/fixtures/sql/`. Moved to `tests/fixtures/large/`.
+  - **jsdom focus:** in jsdom the resizable-panels pointer hit-testing (all rects are 0×0) moved
+    focus to a separator when a toolbar button was clicked. The dialog tests open search with the
+    keyboard instead. This doesn't happen in a browser: headless Chrome returns focus to the
+    Search button.
+  - **Synthetic sample cap:** `?sample=synthetic&tables=2000` is capped at 1,000 tables (8,606
+    columns). For the requested 2,000-table timing, the handoff uses the generated fixture
+    `tests/fixtures/large/search-2000.postgres.sql` (2,000 × 20, 1.16 MB) instead.
+- **Plan deviation:** after choosing a result, focus returns to where it was (or the Search
+  button), not to the table node. Focusing a React Flow node can auto-pan it into view, which
+  would fight the centering on a row.
+- **Known limitation:** collapse modes have no UI yet (P3-T02). The hidden-row reveal is covered
+  by a test that sets a mode directly.
+- **Cowork result:** Pending — not independently verified. See
+  [handoffs/P2-T07.md](handoffs/P2-T07.md).
