@@ -2,9 +2,9 @@
 
 ## Now
 
-- **Task:** P3-T02 (per-table collapse modes UI): **Awaiting Cowork verification**. P3-T01 Verified (Cowork round 15 at `4ef042a`). Next up: P3-T03 (image export). HEAD: see the latest commit.
+- **Task:** P3-T03 (image export): not started (plan first). P3-T02 Verified with known issues (Cowork round 16 at `bef3380`); P3-T01 Verified (round 15). HEAD: see the latest commit.
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** P3-T03 (plan first). P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
+- **Next:** P3-T03 (plan first, in progress). P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
 - **Backlog:** 4 open: QA-018 deferred → P3-T07; QA-027…029 deferred → P3-T08 ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
 - **Latest handoff:** [handoffs/P3-T02.md](handoffs/P3-T02.md).
@@ -82,7 +82,7 @@ focus targets, unconditionally). Fold into an earlier P3 task if it touches the 
 AC-P3-T01-1…6). Per-fingerprint localStorage keys, LRU 20, debounced saves, safe when storage is
 blocked; neighbourhood depth saved; the viewport still fits on load (restore: P3-T06). Note (no action): positions are saved rounded to whole px (≤0.5 px shift on reload).
 
-**P3-T02 Collapse modes UI: Awaiting Cowork verification** (ADR-026; AC-P3-T02-1…6). Inspector
+**P3-T02 Collapse modes UI: Verified with known issues** (Cowork round 16 at `bef3380`, no new defects; ADR-026; AC-P3-T02-1…6). Inspector
 control, node-header toggle, "All tables" actions; modes persist per fingerprint.
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre

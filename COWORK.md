@@ -28,8 +28,8 @@ Now block. Do **not** read `docs/development/handoffs/archive/` unless asked.
 ## Planning and models
 
 - Planning stays in Claude Code (Plan mode). Cowork reviews only large or risky plans.
-- Use **Opus** for a feature's first verification, big plan reviews and phase close-outs; use
-  **Sonnet** for re-verification.
+- Cowork runs on **Opus** for every round (verification, re-verification and plan reviews).
+  Token savings come from Claude Code's side (Sonnet for implementing well-specified plans).
 
 ## Verification tooling (Cowork cloud)
 

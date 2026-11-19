@@ -711,5 +711,5 @@ Automated in `tests/e2e/collapse.spec.ts` and unit tests (`layout-store-collapse
   horizontal overflow at 900/768 px; a search hit hidden by the mode is still revealed and
   highlighted. _Auto_ (focus ring: _Manual_)
 
-- **Status: Awaiting Cowork verification.** Not independently verified.
+- **Status: Verified with known issues** (Cowork round 16 at `bef3380`: e2e 149/0/20 on `out/`; AC-P3-T02-1…6 pass, including keyboard radios with 2 px focus ring, real-mouse chevron, reload persistence, no overflow at 900/768/390). Known issues: nodes overlap until Layout; first Headers-only on GitLab ~257 ms on M1.
 

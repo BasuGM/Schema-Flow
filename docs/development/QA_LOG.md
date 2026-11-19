@@ -747,10 +747,21 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 ## 2026-11-19 — P3-T02 (collapse modes UI)
 
 - **Handoff:** [handoffs/P3-T02.md](handoffs/P3-T02.md)
-- **Cowork result:** Pending — not independently verified.
+- **Cowork result:** Verified with known issues (round 16, below).
 - **Defects:** none logged. Claude Code's own e2e run caught one regression in this task (the new
   control's `sr-only` inputs caused 59–135 px horizontal overflow at 900/768 px, `bug-bash.spec.ts`
   AC-BB-P2-2); fixed in the same task.
 - **Checks:** `npm run check` green; `npm run e2e` on a served build: 149 passed, 0 failed, 20
   skipped; `toolbar-width.mjs` PASS light and dark.
 
+## 2026-11-19 — Cowork round 16 at `bef3380`: P3-T02 Verified with known issues
+
+- **Found by: Cowork round 16** (report pasted by the user). `npm run e2e` on `out/`: 149 passed, 0
+  failed, 20 skipped. Inspector radios via real Tab (2 px ring), ArrowRight Full→Keys→Header; Keys
+  shows 4 PK/FK rows of 7 ("4 / 7"), Header "0 / 7". Node chevron cycles keys→header→all without
+  selecting or moving (also with drag during press); hidden when zoomed out. Settings → Headers
+  only: 0 rows, 13/13 edges; More → Keys at 390 px. Modes survive reload; Header-mode search reveals
+  and highlights the row; Show all → Layout: 0 overlaps. No overflow at 900/768/390. GitLab longest
+  task 191–243 ms in the cloud (2–3× slower than M1). Console empty.
+- **Defects:** none new. Known issues unchanged (overlap until Layout; first Headers-only ~257 ms on M1).
+- **Status:** P3-T02 Verified with known issues.
