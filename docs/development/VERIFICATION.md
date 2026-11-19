@@ -724,5 +724,5 @@ Automated in `tests/e2e/export.spec.ts` and unit tests (`diagram-svg`, `raster-s
 - AC-P3-T03-5: A rasterization failure shows an inline error, the dialog stays open and the app keeps working. _Auto_ (unit)
 - AC-P3-T03-6: Every control is labelled and keyboard operable with a visible focus ring on its label; the dialog has no horizontal overflow at 390×844; the phone toolbar width is unchanged (`toolbar-width.mjs` PASS). _Auto_ (focus ring: _Manual_)
 
-- **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green, 481 tests; `npm run e2e` on a served build 157 passed, 0 failed, 20 skipped; `toolbar-width.mjs` PASS light and dark). Not independently verified.
+- **Status: Verified** (Cowork round 17 at `785a41c`: e2e 157/0/20 on `out/`; AC-P3-T03-1…6 pass. Sample: SVG 12 tables / 13 relationships at the canvas positions, PNG 1× 1592×1283 and 2× 3184×2566 = size line; Light/Dark differ, `<html>` class restored; odd names parse; focus returns to Settings / More; phone dialog 344 px, no overflow. GitLab: reduced 0.0675× note, busy state, SVG 992 tables / 1,720 relationships.) Not browser-tested: menu item disabled with no tables (jsdom only, accepted). Note: dialog options reset on each open; GitLab PNG is unreadably small (QA-018 → P3-T07).
 

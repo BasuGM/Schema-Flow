@@ -769,6 +769,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 ## 2026-11-19 — P3-T03 (image export)
 
 - **Handoff:** [handoffs/P3-T03.md](handoffs/P3-T03.md)
-- **Cowork result:** Pending — not independently verified.
+- **Cowork result:** Verified (round 17, below).
 - **Defects:** none logged. Claude Code's own e2e run found the new radios' `sr-only` inputs cannot be force-checked (tests click their labels, as a user does). Render tests timed out intermittently under full-suite load across several runs (a different file each time, each passing in isolation); not changed in this task.
 - **Checks:** `npm run check` green (481 tests); `npm run e2e` on a served build: 157 passed, 0 failed, 20 skipped; `toolbar-width.mjs` PASS light and dark; `export-perf.mjs` on GitLab: SVG 0.2-0.3 s / 9.3 MB, PNG 1.5 s at 0.0675×.
+
+## 2026-11-19 — Cowork round 17 at `785a41c`: P3-T03 Verified
+
+- **Found by: Cowork round 17** (report pasted by the user). `npm run e2e` on `out/`: 157 passed, 0 failed, 20 skipped. Sample: size line 1,592 × 1,283; SVG 12 tables / 13 relationships, each at its canvas x,y; PNG 1× 1592×1283, 2× 3184×2566; Light/Dark backgrounds #f7f7f7 / #0b0b0b, `<html>` class restored, no running transitions; Keys-only 23 rows, all PK/FK. Odd names (`a<b&c`, `q\"t\\u0001x`, self-reference): SVG parses, PNG valid. Focus: Escape / Cancel / Download → Settings; phone Escape → More; one Tab stop per radio group with a label ring; phone dialog 344 px, no overflow. GitLab (cloud): reduced note 0.0675×, PNG 269×16365 in 2.7 s with the busy state, SVG 9.78 MB, 992 tables, 1,720 relationships (= parser) in 0.54 s; console empty.
+- **Defects:** none new. **Not tested in a browser:** the menu item disabled with no tables (jsdom only; accepted).
+- **Notes (no action):** dialog options reset on each open; GitLab PNG is unreadably small (QA-018 → P3-T07).
+- **Status:** P3-T03 Verified.
