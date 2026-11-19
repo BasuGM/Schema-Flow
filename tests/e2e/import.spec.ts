@@ -275,19 +275,19 @@ const REAL: { file: string; status: string; counts: string; issues: string }[] =
   {
     file: "real/mysqldump-180.mysql.sql",
     status: "Parsed as MySQL SQL",
-    counts: "180 tables · 1625 columns · 306 relationships",
+    counts: "180 tables · 1,625 columns · 306 relationships",
     issues: "1 warning",
   },
   {
     file: "real/large-200.prisma",
     status: "Parsed as Prisma schema",
-    counts: "220 tables · 1692 columns · 354 relationships · 10 enums",
+    counts: "220 tables · 1,692 columns · 354 relationships · 10 enums",
     issues: "No issues",
   },
   {
     file: "real/gitlab-structure.postgres.sql",
     status: "Parsed as PostgreSQL SQL",
-    counts: "992 tables · 9982 columns · 1720 relationships",
+    counts: "992 tables · 9,982 columns · 1,720 relationships",
     issues: "140 warnings",
   },
 ];

@@ -11,7 +11,9 @@ import type { ImportParseState } from "./use-import-parse";
 /** Issues listed in the dialog; the full list is the issues panel (P2-T06). */
 const MAX_LISTED_ISSUES = 50;
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+/** "1,234 tables": counts get thousands separators (QA-023). */
+const plural = (n: number, word: string) =>
+  `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
 
 const DIALECT_LABEL = { postgresql: "PostgreSQL", mysql: "MySQL", sqlite: "SQLite" } as const;
 

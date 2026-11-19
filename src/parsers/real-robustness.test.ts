@@ -5,8 +5,8 @@ import { parseSchemaText } from "./parse-schema-text";
 
 const REAL = new URL("../../tests/fixtures/real/", import.meta.url);
 const files = readdirSync(REAL).filter((f) => /\.(sql|prisma)$/.test(f));
-/** Per parse. The largest file (GitLab, 2.8 MB) parses in about 0.4 s. */
-const PARSE_LIMIT_MS = 2000;
+/** Per parse: a hang detector, not a perf budget (GitLab, 2.8 MB, takes ~0.4 s; one run under a loaded machine exceeded 2 s). */
+const PARSE_LIMIT_MS = 5000;
 const NASTY = ["'", '"', "`", "$$", "(", ")", ";", "/*", "*/", "/*!", "--", "{", "}", "@@", "\n"];
 
 function expectParses(text: string): void {

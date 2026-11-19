@@ -200,4 +200,36 @@ test.describe("neighbourhood highlighting (sample)", () => {
     await page.getByTestId("theme-dark").click();
     await expect.poll(tokens).toEqual([0.4, 0.25, 0.75]);
   });
+  test("QA-020: a dimmed edge fades its stroke and fill, not its group opacity", async ({
+    page,
+  }) => {
+    await clickTable(page, "orders");
+    const dimmed = page.locator('g.relationship-edge[data-dimmed="true"]');
+    await expect(dimmed.first()).toBeAttached();
+    const read = () =>
+      dimmed.evaluateAll((groups) =>
+        groups.map((g) => {
+          const path = g.querySelector("path");
+          const marker = g.querySelector("text");
+          return {
+            group: Number.parseFloat(getComputedStyle(g).opacity),
+            stroke: path ? Number.parseFloat(getComputedStyle(path).strokeOpacity) : null,
+            fill: marker ? Number.parseFloat(getComputedStyle(marker).fillOpacity) : null,
+          };
+        }),
+      );
+    for (const [theme, value] of [
+      ["light", 0.15],
+      ["dark", 0.25],
+    ] as const) {
+      await page.getByTestId("toolbar-theme").click();
+      await page.getByTestId(`theme-${theme}`).click();
+      await expect(page.getByTestId(`theme-${theme}`)).toHaveCount(0);
+      await expect.poll(async () => (await read()).every((r) => r.stroke === value)).toBe(true);
+      for (const r of await read()) {
+        expect(r.group).toBe(1);
+        if (r.fill !== null) expect(r.fill).toBe(value);
+      }
+    }
+  });
 });

@@ -649,12 +649,13 @@ gives the commands to recount them. Issues are grouped by kind (names blanked).
 Tooling only (ADR-024; plan [plans/e2e-suite.md](plans/e2e-suite.md)). Specs in `tests/e2e/`:
 import, issues, search, inspector, neighbourhood, panels, phone, error-regions.
 
-- AC-E2E-01-1: `npm run e2e` against a served build: 120 passed, 0 failed, 20 skipped (error-region
+- AC-E2E-01-1: `npm run e2e` against a served build: 123 passed, 0 failed, 20 skipped (120/0/20 before the two round-13 specs) (error-region
   tests skip without `E2E_QA_HOOKS=1`; one UTF-16 paste test skips). _Auto_
 - AC-E2E-01-2: With `E2E_QA_HOOKS=1` against `out-qa/`, `error-regions.spec.ts`: 19 passed, 0 failed,
   1 skipped. _Auto_
 - AC-E2E-01-3: A compact summary and `e2e-results.json` are produced; verified with a deliberately
   failing test, which was then removed. _Auto_
 - AC-E2E-01-4: `npm run check` passes with e2e excluded (400 unit tests). _Auto_
-- **Status: Awaiting Cowork verification.** Claude Code ran the automated checks only; no Cowork or
-  human verification has been done.
+- **Status: Verified** (Cowork round 13, `3fdd4c9`: 120 / 0 / 20 and 19 / 0 / 1). Two specs were
+  added afterwards (QA-020 opacity, zoomed-out rendering): Claude Code ran them only.
+- Revision (QA-023): import preview counts show thousands separators ("9,982 columns").

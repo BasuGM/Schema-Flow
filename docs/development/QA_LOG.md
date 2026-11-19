@@ -5,13 +5,14 @@
 Every QA item that is not Verified. Status: open / fixed – pending QA / verified / deferred → target.
 Update this table when an item changes; the dated log below stays append-only.
 
-| ID     | Found in                      | Description                                                      | Repro (one line)                                                                          | Severity | Status             |
-| ------ | ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------- | ------------------ |
-| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice | Import GitLab `structure.sql`, press Reset view                                           | Medium   | deferred → P3-T07  |
-| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks   | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium   | fixed – pending QA |
-| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                     | Select a hub in a packed large layout, pan at zoom 1                                      | Low      | fixed – pending QA |
-| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body               | Focus the issues divider, press Enter                                                     | Low      | fixed – pending QA |
-| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed              | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low      | fixed – pending QA |
+| ID     | Found in                      | Description                                                      | Repro (one line)                                                                          | Severity | Status              |
+| ------ | ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------- | ------------------- |
+| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice | Import GitLab `structure.sql`, press Reset view                                           | Medium   | deferred → P3-T07   |
+| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks   | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium   | verified (round 13) |
+| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                     | Select a hub in a packed large layout, pan at zoom 1                                      | Low      | verified (round 13) |
+| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body               | Focus the issues divider, press Enter                                                     | Low      | verified (round 13) |
+| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed              | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low      | verified (round 13) |
+| QA-023 | Cowork round 13 (P2-T10)      | Import counts lack thousands separators ("9982 columns")         | Import GitLab `structure.sql`, read the preview counts                                    | Low      | fixed – pending QA  |
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -664,3 +665,27 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   Cowork or human run. See VERIFICATION AC-E2E-01-1…4.
 - **Note:** `python -m http.server` resets connections when browsers run in parallel, so the e2e
   suite defaults to 1 worker.
+
+## 2026-11-19 — Cowork round 13 at `3fdd4c9`: P2-T10 and E2E-01 verified; QA-023
+
+- **Cowork result (pasted report):** e2e 120 passed / 0 failed / 20 skipped against `out/`;
+  error-regions 19 / 0 / 1 against `out-qa/` (`E2E_QA_HOOKS=1`).
+  - **Verified:** QA-019, QA-020, QA-021, QA-022; P2-T10 steps 6–7 (AC-P2-T10-3/4, via
+    `error-regions.spec`); zoomed-out rendering (revised AC-P2-T10-7); E2E-01.
+  - Cowork's real-input harness (cloud, 1 hop): deselect 63–66 ms, hub→other 38–58 ms (was
+    215–400), pan at zoom 1 with `t_1500` selected 60 fps (was 28–30). Dimmed edge: group opacity 1,
+    stroke/fill-opacity 0.15 light / 0.25 dark.
+  - **Phase 2 closed as "Verified with known issues":** QA-018 → P3-T07, hub select/deselect over
+    40 ms, parsing on the main thread, skipped DDL kinds.
+- **QA-023 (Low) — import counts lack thousands separators ("9982 columns").** Fixed: the count
+  formatter uses `toLocaleString("en-US")` ("9,982 columns · 1,720 relationships", and in the
+  Import button label). Unit test `import-preview.test.ts`; `import.spec.ts` strings updated.
+  Status: Fixed — pending re-verification.
+- **E2E-01 follow-up (Cowork request):** two specs added: QA-020 dimmed-edge stroke/fill opacity
+  and group opacity 1 in both themes (`neighbourhood.spec.ts`); zoomed-out rendering
+  (`zoomed-out.spec.ts`: `data-zoomed-out`, `skeleton-rows`, no `column-*`, `edge-hit-*` or
+  markers; zooming in restores detail; the sample is never an overview).
+- **Flake fixed:** `real-robustness.test.ts` per-parse limit 2 s → 5 s (hang detector); one run
+  under load exceeded 2 s on a 0.4 s parse.
+- **Checks:** `npm run check` exit 0; `npm run e2e` on a served normal build: 123 passed, 0 failed,
+  20 skipped.
