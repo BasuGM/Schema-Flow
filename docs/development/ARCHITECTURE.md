@@ -723,6 +723,22 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   47–95 ms before with real input). The remaining cost is restyling and repainting the ~650
   tables and edges whose dimming flips; meeting it needs the same overview renderer.
 
+### ADR-024 — Committed Playwright e2e suite (2026-11-19, E2E-01)
+
+- **Why:** Cowork's browser checks were ad-hoc harnesses (CDP scripts, console snippets). A
+  committed suite makes the UI-observable ACs repeatable and gives every handoff a command to run.
+- **Dependency:** `@playwright/test` (dev only, Chromium only). It is the only runner that gives
+  real mouse/keyboard input, auto-waiting on state, file-chooser and drag-and-drop events, viewport
+  emulation and a JSON reporter without hand-written CDP code. It never ships in the bundle.
+- **Shape:** `tests/e2e/*.spec.ts` plus `tests/e2e/support/`. The suite never starts a server: it
+  targets `E2E_BASE_URL` (default `http://localhost:3000`, i.e. `npm run start` on `out/`).
+  `E2E_QA_HOOKS=1` (against an `out-qa/` build) enables the error-region spec; otherwise it is
+  skipped. Assertions use `data-testid`, `data-*` and ARIA state, never pixels or fixed timeouts.
+- **Separate from `npm run check`:** it needs a built, served app and a browser, so it is its own
+  command (`npm run e2e`). Vitest does not collect `tests/e2e`; tsc, ESLint and Prettier cover it.
+- **Reporting:** a compact reporter prints passed/failed counts and one line per failure; the JSON
+  reporter writes `e2e-results.json` (git-ignored).
+
 ## Known limitations (Phase 1)
 
 - Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).

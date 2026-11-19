@@ -42,3 +42,7 @@ next-env.d.ts
 
 # QA-hook build for Cowork (P2-T10 steps 6-7); never committed
 /out-qa/
+
+# Playwright (E2E-01)
+/test-results/
+/e2e-results.json

@@ -643,3 +643,11 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   Found by the check-runner smoke test (39 errors, 3,173 warnings from minified QA-hook chunks).
   Fixed: `out-qa/**` added to the ESLint ignores, `out-qa` to `.prettierignore`, and `out-qa` to
   the tsconfig `exclude`. Vitest only includes `src/**`, so it needed no change. Status: Fixed.
+
+## 2026-11-19 — E2E-01: Playwright e2e suite (tooling)
+
+- **E2E-01 — Pending — not independently verified.** The suite was run only by Claude Code
+  (`npm run e2e`, `E2E_QA_HOOKS=1` against `out-qa/`, and `npm run check` with e2e excluded). No
+  Cowork or human run. See VERIFICATION AC-E2E-01-1…4.
+- **Note:** `python -m http.server` resets connections when browsers run in parallel, so the e2e
+  suite defaults to 1 worker.

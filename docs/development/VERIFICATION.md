@@ -643,3 +643,18 @@ gives the commands to recount them. Issues are grouped by kind (names blanked).
   `invoices`) on the canvas and in the table list, with matching test IDs (ADR-019).
 - MySQL: `/*!NNNNN … */` executable comments are now read as code, as MySQL does; statements made
   entirely of them are skipped silently, so `sql/shop.mysql.sql` still has no issues (ADR-019).
+
+## E2E-01 — Playwright e2e suite
+
+Tooling only (ADR-024; plan [plans/e2e-suite.md](plans/e2e-suite.md)). Specs in `tests/e2e/`:
+import, issues, search, inspector, neighbourhood, panels, phone, error-regions.
+
+- AC-E2E-01-1: `npm run e2e` against a served build: 120 passed, 0 failed, 20 skipped (error-region
+  tests skip without `E2E_QA_HOOKS=1`; one UTF-16 paste test skips). _Auto_
+- AC-E2E-01-2: With `E2E_QA_HOOKS=1` against `out-qa/`, `error-regions.spec.ts`: 19 passed, 0 failed,
+  1 skipped. _Auto_
+- AC-E2E-01-3: A compact summary and `e2e-results.json` are produced; verified with a deliberately
+  failing test, which was then removed. _Auto_
+- AC-E2E-01-4: `npm run check` passes with e2e excluded (400 unit tests). _Auto_
+- **Status: Awaiting Cowork verification.** Claude Code ran the automated checks only; no Cowork or
+  human verification has been done.

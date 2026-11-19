@@ -16,6 +16,32 @@ Linked from the root `CLAUDE.md`. Everything here is still a rule; nothing was d
 - Phone toolbar regression: `node scripts/headless/toolbar-width.mjs` (needs Chrome and the server
   running) must print PASS for light and dark at 390×844.
 
+## Browser suite (e2e, Playwright)
+
+`tests/e2e/` is a committed Chromium-only suite (ADR-024) for the UI-observable AC-P1-\* and
+AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served app and a browser).
+
+- Run: serve a production build, then `npm run e2e` (the suite never starts a server).
+  `npm run build && npm run start` serves `out/` on :3000; with the dev server already on :3000,
+  serve `out/` elsewhere (`python3 -m http.server 3100 --directory out`) and set
+  `E2E_BASE_URL=http://localhost:3100`. Default `E2E_BASE_URL` is `http://localhost:3000`.
+- One worker by default (`E2E_WORKERS` raises it): python's `http.server` resets connections when
+  two browsers load chunks at once, so the app never hydrates. Full run: about 2 minutes.
+- Output: a compact summary (`e2e: N passed, N failed, N skipped`, then one line per failure with
+  the locator and expected/received values) and `e2e-results.json` (Playwright JSON reporter, git-
+  ignored). `npm run e2e -- phone.spec.ts -g "overflow"` runs a subset.
+- Error regions (`error-regions.spec.ts`) need the QA-hook build: serve `out-qa/`
+  (`NEXT_PUBLIC_QA_HOOKS=1 npm run build`, copied to `out-qa/`) and run
+  `E2E_QA_HOOKS=1 E2E_BASE_URL=<that server> npm run e2e -- error-regions.spec.ts`. Without
+  `E2E_QA_HOOKS=1` those tests are skipped and one test checks that `schemaflowQa` is undefined.
+- Specs, one per area: `import` (paste / file picker / drop for every fixture, plus the real
+  fixtures), `issues`, `search`, `inspector`, `neighbourhood`, `panels` (inert, Enter, keyboard),
+  `phone` (390×844), `error-regions`. Shared helpers: `tests/e2e/support/app.ts`.
+- Rules: assert on `data-testid`, `data-*` and ARIA state, never pixels or fixed timeouts (wait on
+  state); use real mouse and keyboard input. The one synthetic input is the file **drop** (a test
+  cannot start an OS drag), which dispatches `dragenter`/`dragover`/`drop` with a `DataTransfer`.
+- Handoffs list the e2e command, the spec files added or changed, and the result.
+
 ## Architecture boundaries (detail)
 
 - `src/domain`, `src/graph`, `src/samples`, `src/parsers` (and later `src/analysis`,

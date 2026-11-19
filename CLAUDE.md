@@ -13,7 +13,8 @@ Workflow skills: implement-plan, fix-qa-round (user-level). Plans go in `docs/de
 
 - `npm run check` — typecheck → lint → test → build (fail fast). Must be green before a commit.
 - `npm run dev` — http://localhost:3000. At most one; never leave watchers running (`vitest run`).
-- Also: `test`, `test:coverage`, `typecheck`, `lint`, `format`; production check, perf sample,
+- Also: `test`, `test:coverage`, `typecheck`, `lint`, `format`; `npm run e2e` (Playwright, separate
+  from `check`; needs a served build); production check, perf sample,
   performance budgets and the phone toolbar regression (`scripts/headless/toolbar-width.mjs`
   must print PASS at 390×844) are in the reference.
 
