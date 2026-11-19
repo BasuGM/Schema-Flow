@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
 import { CollapseAllItems } from "./collapse-all-items";
+import { ExportImageItem, keepFocusForExportDialog } from "./export-image-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 export function SettingsMenu() {
@@ -25,7 +26,7 @@ export function SettingsMenu() {
           <Settings aria-hidden />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={keepFocusForExportDialog}>
         <DropdownMenuLabel>View</DropdownMenuLabel>
         <DropdownMenuCheckboxItem
           checked={showMiniMap}
@@ -38,6 +39,8 @@ export function SettingsMenu() {
         <NeighbourhoodRadio testIdPrefix="settings" />
         <DropdownMenuSeparator />
         <CollapseAllItems testIdPrefix="settings" />
+        <DropdownMenuSeparator />
+        <ExportImageItem testId="settings-export-image" returnFocusTestId="toolbar-settings" />
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>More settings arrive in later phases</DropdownMenuItem>
       </DropdownMenuContent>

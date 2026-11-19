@@ -122,7 +122,6 @@ describe("renderDiagramSvg", () => {
     const { svg } = render(nasty, l);
     const doc = parse(svg);
     expect(doc.querySelector("parsererror")).toBeNull();
-    // eslint-disable-next-line no-control-regex
     expect(svg).not.toMatch(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/);
     expect(doc.querySelector("title")?.textContent).toBe("My <shop>  database diagram");
     expect(doc.querySelector("text")?.textContent).toBe('a<b&"c');

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
 import { CollapseAllItems } from "./collapse-all-items";
+import { ExportImageItem, keepFocusForExportDialog } from "./export-image-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 /**
@@ -45,7 +46,7 @@ export function MoreMenu({
           <Ellipsis aria-hidden />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={keepFocusForExportDialog}>
         <DropdownMenuItem disabled={!canRelayout} onSelect={onRelayout} data-testid="more-layout">
           <Workflow aria-hidden />
           Re-run layout
@@ -78,6 +79,8 @@ export function MoreMenu({
         <NeighbourhoodRadio testIdPrefix="more" />
         <DropdownMenuSeparator />
         <CollapseAllItems testIdPrefix="more" />
+        <DropdownMenuSeparator />
+        <ExportImageItem testId="more-export-image" returnFocusTestId="toolbar-more" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

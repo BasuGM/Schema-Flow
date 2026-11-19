@@ -71,6 +71,9 @@ interface UiState {
   issuesPanelOpen: boolean;
   /** Search dialog (P2-T07). */
   searchOpen: boolean;
+  /** Export image dialog (P3-T03) and the toolbar button that gets focus back when it closes. */
+  exportImageOpen: boolean;
+  exportImageReturnFocus: string | null;
   /** Cleared when the selection changes, on Escape and on a new schema. */
   highlightedColumn: HighlightedColumn | null;
   /** Inspector tab (P2-T08); plain table selection never changes it. */
@@ -106,6 +109,9 @@ interface UiState {
   setPanelOpen: (panel: "left" | "right", open: boolean) => void;
   setIssuesPanelOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
+  /** `returnFocusTestId` is the `data-testid` of the toolbar button the dialog was opened from. */
+  openExportImage: (returnFocusTestId: string) => void;
+  closeExportImage: () => void;
   /** A new import or sample: clear selection, pinned edge, filter and highlight; close search. */
   resetForNewSchema: () => void;
   reset: () => void;
@@ -121,6 +127,8 @@ const initial = {
   clearRequest: 0,
   issuesPanelOpen: false,
   searchOpen: false,
+  exportImageOpen: false,
+  exportImageReturnFocus: null,
   highlightedColumn: null,
   inspectorTab: "columns" as InspectorTab,
   inspectorBack: null,
@@ -180,6 +188,9 @@ export const useUiStore = create<UiState>()((set) => ({
   setIssuesPanelOpen: (issuesPanelOpen) =>
     set((s) => (s.issuesPanelOpen === issuesPanelOpen ? s : { issuesPanelOpen })),
   setSearchOpen: (searchOpen) => set((s) => (s.searchOpen === searchOpen ? s : { searchOpen })),
+  openExportImage: (exportImageReturnFocus) =>
+    set({ exportImageOpen: true, exportImageReturnFocus }),
+  closeExportImage: () => set({ exportImageOpen: false }),
   resetForNewSchema: () =>
     set((s) => ({
       selectedTableId: null,
@@ -187,6 +198,7 @@ export const useUiStore = create<UiState>()((set) => ({
       clearRequest: s.clearRequest + 1,
       tableFilter: "",
       searchOpen: false,
+      exportImageOpen: false,
       inspectorTab: "columns",
       inspectorBack: null,
       focusSet: null,

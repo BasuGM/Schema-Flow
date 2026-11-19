@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, PanelLeft, PanelRight, Workflow } from "lucide-react";
+import { ExportImageDialog } from "@/components/export/export-image-dialog";
 import { ImportDialog } from "@/components/import/import-dialog";
 import { IssuesButton } from "@/components/issues/issues-button";
 import { SearchDialog } from "@/components/search/search-dialog";
@@ -67,6 +68,7 @@ export function Toolbar() {
       <div className="ml-auto flex items-center gap-0.5">
         <SearchDialog />
         <ImportDialog />
+        <ExportImageDialog />
         <IssuesButton />
         {/* A disabled placeholder; hidden on phones so the toolbar fits 390 px (QA-012). */}
         <ToolbarButton
