@@ -31,7 +31,7 @@ function renderToolbar() {
 async function openFromSettings(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByTestId("toolbar-settings"));
   await user.click(await screen.findByTestId("settings-export-image"));
-  return screen.findByTestId("export-image-dialog");
+  return screen.findByTestId("export-dialog");
 }
 
 beforeEach(() => {
@@ -85,7 +85,7 @@ describe("Export image dialog", () => {
     expect(blob.type).toContain("image/svg+xml");
     expect(name).toBe(exportFileName(useSchemaStore.getState().schema!.name, "svg"));
     expect(await blob.text()).toContain("<svg");
-    await waitFor(() => expect(screen.queryByTestId("export-image-dialog")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("export-dialog")).toBeNull());
   });
 
   it("downloads a PNG at the chosen scale", async () => {
@@ -108,7 +108,7 @@ describe("Export image dialog", () => {
     await user.click(screen.getByTestId("export-download"));
     expect(await screen.findByRole("alert")).toHaveTextContent("No canvas here.");
     expect(downloadBlob).not.toHaveBeenCalled();
-    expect(screen.getByTestId("export-image-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("export-dialog")).toBeInTheDocument();
     expect(screen.getByTestId("export-download")).toBeEnabled();
   });
 
@@ -135,7 +135,7 @@ describe("Export image dialog", () => {
     renderToolbar();
     await openFromSettings(user);
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByTestId("export-image-dialog")).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("export-dialog")).toBeNull());
     await waitFor(() => expect(screen.getByTestId("toolbar-settings")).toHaveFocus());
   });
 
@@ -144,7 +144,7 @@ describe("Export image dialog", () => {
     renderToolbar();
     await user.click(screen.getByTestId("toolbar-more"));
     await user.click(await screen.findByTestId("more-export-image"));
-    await screen.findByTestId("export-image-dialog");
+    await screen.findByTestId("export-dialog");
     await user.click(screen.getByTestId("export-cancel"));
     await waitFor(() => expect(screen.getByTestId("toolbar-more")).toHaveFocus());
   });

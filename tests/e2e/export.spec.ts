@@ -1,10 +1,11 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { openImport, openSample, pasteText, importDialog } from "./support/app";
 
-// P3-T03: image export. AC-P3-T03-1…6.
+// P3-T03: image export (AC-P3-T03-1…6). P3-T05: text export tabs (AC-P3-T05-1…6).
 
-const dialog = (page: Page) => page.getByTestId("export-image-dialog");
+const dialog = (page: Page) => page.getByTestId("export-dialog");
 
 async function openFromSettings(page: Page): Promise<void> {
   await page.getByTestId("toolbar-settings").click();
@@ -148,7 +149,11 @@ test.describe("export image", () => {
 
   test("AC-P3-T03-6: a radio shows a visible focus ring on its label", async ({ page }) => {
     await openFromSettings(page);
-    await page.keyboard.press("Tab");
+    // The first stops are the active tab and the panel; the next is the first radio.
+    for (let k = 0; k < 4; k++) {
+      await page.keyboard.press("Tab");
+      if (await page.evaluate(() => document.activeElement?.matches("input[type=radio]"))) break;
+    }
     const ring = await page.evaluate(() => {
       const label = document.activeElement?.closest("label");
       return label ? getComputedStyle(label).boxShadow : "none";
@@ -168,7 +173,7 @@ test.describe("export image on a phone (390×844)", () => {
     await page.getByTestId("more-export-image").click();
     await expect(dialog(page)).toBeVisible();
     const overflow = await page.evaluate(() => {
-      const d = document.querySelector<HTMLElement>('[data-testid="export-image-dialog"]')!;
+      const d = document.querySelector<HTMLElement>('[data-testid="export-dialog"]')!;
       return {
         dialog: d.scrollWidth - d.clientWidth,
         page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -181,5 +186,162 @@ test.describe("export image on a phone (390×844)", () => {
     await expect(dialog(page)).toBeHidden();
     await expect(page.getByTestId("toolbar-more")).toBeFocused();
     expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe("BODY");
+  });
+});
+
+// ---- P3-T05: text tabs --------------------------------------------------------------------------
+
+type TextTab = "sql" | "prisma" | "mermaid" | "json";
+
+/** The CLI export for the same built-in sample the app loads (scripts/headless/generate.ts). */
+function cliOutput(target: string): string {
+  return execFileSync(
+    process.execPath,
+    [
+      "--experimental-transform-types",
+      "--no-warnings",
+      "--import",
+      "./scripts/headless/alias-hook.mjs",
+      "scripts/headless/generate.ts",
+      "--sample",
+      target,
+    ],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 },
+  );
+}
+
+async function openExportDialog(page: Page, tab: TextTab): Promise<void> {
+  await page.getByTestId("toolbar-export").click();
+  await expect(dialog(page)).toBeVisible();
+  await page.getByTestId(`export-tab-${tab}`).click();
+  await expect(page.getByTestId("export-preview")).toBeVisible();
+}
+
+async function downloadText(page: Page): Promise<{ text: string; name: string }> {
+  const [saved] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByTestId("export-download-text").click(),
+  ]);
+  return { text: readFileSync((await saved.path())!, "utf8"), name: saved.suggestedFilename() };
+}
+
+const CASES: { label: string; tab: TextTab; pick?: string; target: string; name: RegExp }[] = [
+  { label: "SQL PostgreSQL", tab: "sql", target: "postgres", name: /\.postgresql\.sql$/ },
+  {
+    label: "SQL MySQL",
+    tab: "sql",
+    pick: "export-dialect-mysql",
+    target: "mysql",
+    name: /\.mysql\.sql$/,
+  },
+  {
+    label: "SQL SQLite",
+    tab: "sql",
+    pick: "export-dialect-sqlite",
+    target: "sqlite",
+    name: /\.sqlite\.sql$/,
+  },
+  { label: "Prisma", tab: "prisma", target: "prisma", name: /\.prisma$/ },
+  { label: "Mermaid (all)", tab: "mermaid", target: "mermaid", name: /\.mmd$/ },
+  {
+    label: "Mermaid (keys)",
+    tab: "mermaid",
+    pick: "export-mermaid-keys",
+    target: "mermaid-keys",
+    name: /\.mmd$/,
+  },
+  { label: "JSON", tab: "json", target: "json", name: /\.json$/ },
+];
+
+test.describe("export text tabs", () => {
+  test.beforeEach(async ({ page }) => {
+    await openSample(page);
+  });
+
+  for (const c of CASES) {
+    test(`AC-P3-T05-4: ${c.label} download equals the CLI output byte for byte`, async ({
+      page,
+    }) => {
+      await openExportDialog(page, c.tab);
+      if (c.pick) await choose(page, c.pick);
+      await expect(page.getByTestId("export-copy")).toBeEnabled();
+      const { text, name } = await downloadText(page);
+      expect(name).toMatch(c.name);
+      expect(text).toBe(cliOutput(c.target));
+      await expect(dialog(page)).toBeVisible();
+    });
+  }
+
+  test("AC-P3-T05-3: Copy puts the full text on the clipboard", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await openExportDialog(page, "sql");
+    await expect(page.getByTestId("export-copy")).toBeEnabled();
+    await page.getByTestId("export-copy").click();
+    await expect(page.getByTestId("export-copy-status")).toHaveText("Copied");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(cliOutput("postgres"));
+  });
+
+  test("AC-P3-T05-2: the preview shows the text, size and warnings", async ({ page }) => {
+    await openExportDialog(page, "sql");
+    await expect(page.getByTestId("export-preview")).toContainText("CREATE TABLE");
+    await expect(page.getByTestId("export-text-size")).toContainText("lines");
+    await choose(page, "export-dialect-mysql");
+    await expect(page.getByTestId("export-warnings")).toContainText(/\d+ warnings?/);
+  });
+
+  test("AC-P3-T05-1: tabs by keyboard, Escape returns focus to Export", async ({ page }) => {
+    await page.getByTestId("toolbar-export").focus();
+    await page.keyboard.press("Enter");
+    await expect(dialog(page)).toBeVisible();
+    await page.getByTestId("export-tab-sql").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("export-tab-prisma")).toBeFocused();
+    await expect(page.getByTestId("export-preview")).toContainText("model");
+    await page.keyboard.press("Escape");
+    await expect(dialog(page)).toBeHidden();
+    await expect(page.getByTestId("toolbar-export")).toBeFocused();
+  });
+
+  test("AC-P3-T05-1: Settings → Export image… opens the Image tab", async ({ page }) => {
+    await openFromSettings(page);
+    await expect(page.getByTestId("export-tab-image")).toHaveAttribute("data-state", "active");
+  });
+});
+
+test.describe("export text tabs on a phone (390×844)", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("AC-P3-T05-6: More → Export…, no overflow, the last tab is reachable and visible", async ({
+    page,
+  }) => {
+    await openSample(page);
+    await page.getByTestId("toolbar-more").click();
+    await page.getByTestId("more-export").click();
+    await expect(dialog(page)).toBeVisible();
+    await expect(page.getByTestId("export-preview")).toBeVisible();
+    await page.getByTestId("export-tab-sql").focus();
+    // Radix moves focus on the next tick, so wait for each tab before the next arrow.
+    for (const next of ["prisma", "mermaid", "json", "image"]) {
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId(`export-tab-${next}`)).toBeFocused();
+    }
+    const image = page.getByTestId("export-tab-image");
+    await expect(image).toBeFocused();
+    const box = (await image.boundingBox())!;
+    const list = (await page.getByRole("tablist").boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(list.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(list.x + list.width + 0.5);
+    const ring = await image.evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(ring).not.toBe("none");
+    const overflow = await page.evaluate(() => {
+      const d = document.querySelector<HTMLElement>('[data-testid="export-dialog"]')!;
+      return {
+        dialog: d.scrollWidth - d.clientWidth,
+        page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    expect(overflow).toEqual({ dialog: 0, page: 0 });
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("toolbar-more")).toBeFocused();
   });
 });

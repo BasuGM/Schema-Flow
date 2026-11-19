@@ -1,7 +1,8 @@
-// Image export cost (P3-T03): imports tests/fixtures/real/gitlab-structure.postgres.sql (992 tables),
+// Export cost (P3-T03 image, P3-T05 text tabs): imports tests/fixtures/real/gitlab-structure.postgres.sql (992 tables),
 // opens Settings → "Export image…" and measures, with real mouse input over CDP, the time from the
 // Download click until the file is handed to the browser (SVG ×2, PNG ×1 at the reduced scale),
-// the file size and the longest main-thread task. The download itself is intercepted at the
+// the file size and the longest main-thread task. Then, for the SQL and JSON tabs, the time from the
+// tab click until the preview is on screen (P3-T05; informational, ~1 s on an M1 is the guide). The download itself is intercepted at the
 // anchor click, so no file is written.
 // Informational: over ~3 s on an M1 is noted as a known issue (P3-T03 plan); nothing is optimised
 // there, so the exit code is 0 unless the run could not complete (2).
@@ -141,8 +142,7 @@ async function exportOnce(format) {
   await click("toolbar-settings");
   await sleep(400);
   await click("settings-export-image");
-  for (let k = 0; k < 40 && !(await evaluate(`!!${q("export-image-dialog")}`)); k++)
-    await sleep(100);
+  for (let k = 0; k < 40 && !(await evaluate(`!!${q("export-dialog")}`)); k++) await sleep(100);
   await clickLabelOf(`export-format-${format}`);
   const note = await evaluate(`${q("export-reduced-note")}?.textContent ?? ''`);
   const size = await evaluate(`${q("export-size")}?.textContent ?? ''`);
@@ -189,6 +189,36 @@ for (const format of ["svg", "svg", "png"]) {
   );
   if (r.ms > 3000) slow = true;
   // The dialog closes itself after a successful download.
+}
+/** Opens Export…, clicks a text tab and times the click until the preview is visible. */
+async function textTabOnce(tab) {
+  await click("toolbar-export");
+  for (let k = 0; k < 40 && !(await evaluate(`!!${q("export-dialog")}`)); k++) await sleep(100);
+  await sleep(300);
+  await evaluate(`(() => {
+    window.__t0 = null;
+    addEventListener('pointerdown', () => { window.__t0 = performance.now(); }, { capture: true, once: true });
+  })()`);
+  await click(`export-tab-${tab}`);
+  for (let k = 0; k < 600; k++) {
+    if (await evaluate(`!!${q("export-preview")}`)) break;
+    await sleep(50);
+  }
+  const ms = await evaluate(`Math.round(performance.now() - window.__t0)`);
+  const info = await evaluate(
+    `(${q("export-text-size")}?.textContent ?? '') + (${q("export-preview-truncated")} ? ' (preview truncated)' : '')`,
+  );
+  await evaluate(
+    `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`,
+  );
+  await sleep(500);
+  return { ms, info: info.trim() };
+}
+
+for (const tab of ["sql", "json"]) {
+  const r = await textTabOnce(tab);
+  console.log(`${tab.toUpperCase()} tab: ${r.ms} ms to preview (${r.info})`);
+  if (r.ms > 1000) slow = true;
 }
 console.log(slow ? "NOTE: over ~3 s (known issue)" : "Within ~3 s");
 ws.close();

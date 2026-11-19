@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
 import { CollapseAllItems } from "./collapse-all-items";
-import { ExportImageItem, keepFocusForExportDialog } from "./export-image-item";
+import { ExportItem, keepFocusForExportDialog } from "./export-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 /**
@@ -80,7 +80,8 @@ export function MoreMenu({
         <DropdownMenuSeparator />
         <CollapseAllItems testIdPrefix="more" />
         <DropdownMenuSeparator />
-        <ExportImageItem testId="more-export-image" returnFocusTestId="toolbar-more" />
+        <ExportItem testId="more-export" returnFocusTestId="toolbar-more" />
+        <ExportItem testId="more-export-image" returnFocusTestId="toolbar-more" tab="image" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

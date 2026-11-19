@@ -86,11 +86,27 @@ describe("Toolbar", () => {
       </TooltipProvider>,
     );
     expect(screen.getByTestId("toolbar-import")).not.toHaveAttribute("aria-disabled");
-    expect(screen.getByTestId("toolbar-export")).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByTestId("toolbar-layout")).not.toHaveAttribute("aria-disabled");
     expect(screen.getByTestId("toolbar-schema-name")).toHaveTextContent("E-commerce sample");
-    await userEvent.hover(screen.getByTestId("toolbar-export"));
-    expect(await screen.findByRole("tooltip")).toHaveTextContent("Export is coming in Phase 3");
+  });
+
+  it("keeps Export focusable but inert without tables, and opens the dialog with tables", async () => {
+    render(
+      <TooltipProvider delayDuration={0}>
+        <Toolbar />
+      </TooltipProvider>,
+    );
+    const button = screen.getByTestId("toolbar-export");
+    expect(button).not.toHaveAttribute("aria-disabled");
+    act(() => resetStores(null));
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    button.focus();
+    expect(button).toHaveFocus();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Load a schema to export it");
+    await userEvent.click(button);
+    await userEvent.keyboard("{Enter}");
+    expect(useUiStore.getState().exportOpen).toBe(false);
+    expect(screen.queryByTestId("export-dialog")).toBeNull();
   });
 
   it("re-runs layout from the Layout button", async () => {

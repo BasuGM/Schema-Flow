@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, PanelLeft, PanelRight, Workflow } from "lucide-react";
-import { ExportImageDialog } from "@/components/export/export-image-dialog";
+import { ExportDialog } from "@/components/export/export-dialog";
 import { ImportDialog } from "@/components/import/import-dialog";
 import { IssuesButton } from "@/components/issues/issues-button";
 import { SearchDialog } from "@/components/search/search-dialog";
@@ -18,6 +18,7 @@ import { ToolbarButton } from "./toolbar-button";
 export function Toolbar() {
   const schemaName = useSchemaStore((s) => s.schema?.name);
   const tableCount = useSchemaStore((s) => s.schema?.tableOrder.length ?? 0);
+  const hasTables = tableCount > 0;
   const leftOpen = useUiStore((s) => s.leftPanelOpen);
   const rightOpen = useUiStore((s) => s.rightPanelOpen);
   const setPanelOpen = useUiStore((s) => s.setPanelOpen);
@@ -68,12 +69,13 @@ export function Toolbar() {
       <div className="ml-auto flex items-center gap-0.5">
         <SearchDialog />
         <ImportDialog />
-        <ExportImageDialog />
+        <ExportDialog />
         <IssuesButton />
-        {/* A disabled placeholder; hidden on phones so the toolbar fits 390 px (QA-012). */}
+        {/* Hidden on phones so the toolbar fits 390 px (QA-012); the More menu has Export… there. */}
         <ToolbarButton
-          tooltip="Export is coming in Phase 3"
-          unavailable
+          tooltip={hasTables ? "Export schema or image" : "Load a schema to export it"}
+          unavailable={!hasTables}
+          onClick={() => useUiStore.getState().openExport("toolbar-export")}
           className="hidden sm:inline-flex"
           data-testid="toolbar-export"
         >

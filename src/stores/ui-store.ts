@@ -18,6 +18,8 @@ export interface FocusRequest {
 }
 
 /** Neighbourhood highlighting depth (P2-T09): 0 = off. */
+export type ExportTab = "sql" | "prisma" | "mermaid" | "json" | "image";
+
 export type NeighbourhoodDepth = 0 | 1 | 2;
 
 /** Preferences kept across visits (P3-T01). Read after mount, never at store creation. */
@@ -71,9 +73,10 @@ interface UiState {
   issuesPanelOpen: boolean;
   /** Search dialog (P2-T07). */
   searchOpen: boolean;
-  /** Export image dialog (P3-T03) and the toolbar button that gets focus back when it closes. */
-  exportImageOpen: boolean;
-  exportImageReturnFocus: string | null;
+  /** Export dialog (P3-T03, P3-T05), its tab (session only) and the button that gets focus back. */
+  exportOpen: boolean;
+  exportTab: ExportTab;
+  exportReturnFocus: string | null;
   /** Cleared when the selection changes, on Escape and on a new schema. */
   highlightedColumn: HighlightedColumn | null;
   /** Inspector tab (P2-T08); plain table selection never changes it. */
@@ -110,8 +113,9 @@ interface UiState {
   setIssuesPanelOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
   /** `returnFocusTestId` is the `data-testid` of the toolbar button the dialog was opened from. */
-  openExportImage: (returnFocusTestId: string) => void;
-  closeExportImage: () => void;
+  openExport: (returnFocusTestId: string, tab?: ExportTab) => void;
+  setExportTab: (tab: ExportTab) => void;
+  closeExport: () => void;
   /** A new import or sample: clear selection, pinned edge, filter and highlight; close search. */
   resetForNewSchema: () => void;
   reset: () => void;
@@ -127,8 +131,9 @@ const initial = {
   clearRequest: 0,
   issuesPanelOpen: false,
   searchOpen: false,
-  exportImageOpen: false,
-  exportImageReturnFocus: null,
+  exportOpen: false,
+  exportTab: "sql",
+  exportReturnFocus: null,
   highlightedColumn: null,
   inspectorTab: "columns" as InspectorTab,
   inspectorBack: null,
@@ -188,9 +193,10 @@ export const useUiStore = create<UiState>()((set) => ({
   setIssuesPanelOpen: (issuesPanelOpen) =>
     set((s) => (s.issuesPanelOpen === issuesPanelOpen ? s : { issuesPanelOpen })),
   setSearchOpen: (searchOpen) => set((s) => (s.searchOpen === searchOpen ? s : { searchOpen })),
-  openExportImage: (exportImageReturnFocus) =>
-    set({ exportImageOpen: true, exportImageReturnFocus }),
-  closeExportImage: () => set({ exportImageOpen: false }),
+  openExport: (exportReturnFocus, tab) =>
+    set((s) => ({ exportOpen: true, exportReturnFocus, exportTab: tab ?? s.exportTab })),
+  setExportTab: (exportTab) => set({ exportTab }),
+  closeExport: () => set({ exportOpen: false }),
   resetForNewSchema: () =>
     set((s) => ({
       selectedTableId: null,
@@ -198,7 +204,7 @@ export const useUiStore = create<UiState>()((set) => ({
       clearRequest: s.clearRequest + 1,
       tableFilter: "",
       searchOpen: false,
-      exportImageOpen: false,
+      exportOpen: false,
       inspectorTab: "columns",
       inspectorBack: null,
       focusSet: null,

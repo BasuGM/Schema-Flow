@@ -4,15 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { computeDiagramBounds } from "@/generators/diagram-bounds";
 import { exportFileName, rasterSize } from "@/generators/raster-size";
 import { afterNextPaint } from "@/lib/after-next-paint";
@@ -43,38 +35,8 @@ const SCALES: Option<Scale>[] = [
   { value: "2", label: "2×", testId: "export-scale-2" },
 ];
 
-/**
- * Export image dialog (P3-T03, ADR-027): PNG or SVG of the whole diagram, in the current, light or
- * dark theme. Opened from the Settings / More menus through the UI store; on close, focus goes to
- * the toolbar button the menu belongs to, never to `body`.
- */
-export function ExportImageDialog() {
-  const open = useUiStore((s) => s.exportImageOpen);
-  const closeExportImage = useUiStore((s) => s.closeExportImage);
-  return (
-    <Dialog open={open} onOpenChange={(next) => !next && closeExportImage()}>
-      <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-md"
-        data-testid="export-image-dialog"
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          const id = useUiStore.getState().exportImageReturnFocus;
-          document.querySelector<HTMLElement>(`[data-testid="${id}"]`)?.focus();
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>Export image</DialogTitle>
-          <DialogDescription>
-            Draws the whole diagram in your browser. Nothing is uploaded.
-          </DialogDescription>
-        </DialogHeader>
-        {open && <ExportImageForm />}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ExportImageForm() {
+/** Image tab of the Export dialog (P3-T03, ADR-027): PNG or SVG of the whole diagram. */
+export function ExportImagePanel() {
   const { resolvedTheme } = useTheme();
   const schema = useSchemaStore((s) => s.schema);
   const fingerprint = useSchemaStore((s) => s.fingerprint);
@@ -122,7 +84,7 @@ function ExportImageForm() {
         }
         downloadBlob(png.blob, exportFileName(schema.name, "png"));
       }
-      useUiStore.getState().closeExportImage();
+      useUiStore.getState().closeExport();
     } catch (e) {
       setError(e instanceof Error ? e.message : "The image could not be created.");
     } finally {

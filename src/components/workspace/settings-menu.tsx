@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
 import { CollapseAllItems } from "./collapse-all-items";
-import { ExportImageItem, keepFocusForExportDialog } from "./export-image-item";
+import { ExportItem, keepFocusForExportDialog } from "./export-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 export function SettingsMenu() {
@@ -40,7 +40,12 @@ export function SettingsMenu() {
         <DropdownMenuSeparator />
         <CollapseAllItems testIdPrefix="settings" />
         <DropdownMenuSeparator />
-        <ExportImageItem testId="settings-export-image" returnFocusTestId="toolbar-settings" />
+        <ExportItem testId="settings-export" returnFocusTestId="toolbar-settings" />
+        <ExportItem
+          testId="settings-export-image"
+          returnFocusTestId="toolbar-settings"
+          tab="image"
+        />
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>More settings arrive in later phases</DropdownMenuItem>
       </DropdownMenuContent>

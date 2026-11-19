@@ -9,6 +9,11 @@ interface SchemaState {
   status: SchemaStatus;
   schema: Schema | null;
   fingerprint: string | null;
+  /**
+   * Bumped on every load or clear. The fingerprint hashes only table IDs and column names, so a
+   * re-import with changed types or defaults keeps it; derived output (exports) keys on this.
+   */
+  revision: number;
   /** Import issues plus any validation issues found on load. */
   issues: ImportIssue[];
   /**
@@ -24,18 +29,27 @@ export const useSchemaStore = create<SchemaState>()((set) => ({
   status: "empty",
   schema: null,
   fingerprint: null,
+  revision: 0,
   issues: [],
   sourceText: null,
   loadSchema: (schema, sourceText) =>
-    set({
+    set((s) => ({
       status: "ready",
+      revision: s.revision + 1,
       schema,
       fingerprint: fingerprintSchema(schema),
       issues: withValidation(schema),
       sourceText: sourceText ?? null,
-    }),
+    })),
   clear: () =>
-    set({ status: "empty", schema: null, fingerprint: null, issues: [], sourceText: null }),
+    set((s) => ({
+      status: "empty",
+      schema: null,
+      fingerprint: null,
+      revision: s.revision + 1,
+      issues: [],
+      sourceText: null,
+    })),
 }));
 
 const issueKey = (i: ImportIssue) => `${i.severity}|${i.line ?? ""}|${i.message}`;

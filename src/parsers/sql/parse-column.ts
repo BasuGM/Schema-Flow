@@ -158,7 +158,12 @@ function readDefaultExpression(ts: TokenStream): string {
   let first = true;
   while (!ts.done && !ts.isPunct(",") && !ts.isPunct(")")) {
     const t = ts.peek()!;
-    if (!first && t.kind === "word" && CONSTRAINT_START.has(t.value.toUpperCase()) && !isCastType(ts))
+    if (
+      !first &&
+      t.kind === "word" &&
+      CONSTRAINT_START.has(t.value.toUpperCase()) &&
+      !isCastType(ts)
+    )
       break;
     if (t.kind === "punct" && t.text === "(") ts.readParenthesized();
     else ts.next();

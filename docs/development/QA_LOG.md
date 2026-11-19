@@ -19,6 +19,10 @@ Update this table when an item changes; the dated log below stays append-only.
 | QA-027 | Cowork round 14 (BB-P2)       | Enter on inspector-relation-target shows the target but focus goes to `body`   | Open a table, Relations tab, focus a target, Enter                                        | Medium (a11y) | deferred → P3-T08   |
 | QA-028 | Cowork round 14 (BB-P2)       | Enter on inspector-back returns to the previous table but focus goes to `body` | Follow a relation, focus Back, Enter                                                      | Medium (a11y) | deferred → P3-T08   |
 | QA-029 | Cowork round 14 (BB-P2)       | Import dialog "Choose file…" label shows no focus ring (sr-only input focused) | Open Import, Tab to Choose file…                                                          | Medium (a11y) | deferred → P3-T08   |
+| QA-030 | Cowork round 18 (P3-T04)      | PG defaults with multi-word cast type truncated (`''::character varying` → `''::`), every target emits `DEFAULT (''::)` | `gen gitlab-structure.postgres.sql postgres \| grep -c '::)'` | High | fixed – pending QA (22534f2) |
+| QA-031 | Cowork round 18 (P3-T04)      | PG `::type` casts and `~` in CHECK/defaults copied into SQLite/MySQL; GitLab→sqlite fails ("unrecognized token ':'"). Suggest: strip simple `::ident[(n)][[]]` casts cross-dialect; drop CHECKs with PG-only operators with a warning | `gen gitlab-structure.postgres.sql sqlite \| sqlite3 :memory:` | Medium | deferred → BB-P3 |
+| QA-032 | Cowork round 18 (P3-T04)      | Mermaid entity name containing `\` fails mmdc parse (replace `\`)              | Generate mermaid for a table named with a backslash, run mmdc                             | Low           | deferred → BB-P3    |
+| QA-033 | Cowork round 18 (P3-T04), pre-existing | MySQL parser fails on backtick identifiers containing ' or \ → 0 tables, 1 import error | CREATE TABLE `we'ird` (id int);                                                  | Low           | deferred → BB-P3    |
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -786,3 +790,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Cowork result:** Pending — not independently verified.
 - **Defects:** none logged. Claude Code's own CLI run found a gap in the first SQL type map (MySQL `SET(…)`, `YEAR`, `… UNSIGNED` copied into SQLite output, which SQLite rejects); fixed in the same task with a SQLite execution test over Sakila, mysqldump-180 and shop.mysql.
 - **Checks:** `npm run check` green (77 files, 593 tests); CLI on 10 fixtures × 6 targets exit 0; SQLite output executes in `sqlite3` for every fixture; 1,000 synthetic tables: 6–17 ms per generator. No e2e run (no UI change).
+
+## 2026-11-19 — Cowork round 18 at `4dd3a36`: P3-T04 NOT CLOSED
+
+- **Found by:** Cowork round 18 (report pasted by the user).
+- **Passed (CLI, cloud):** 11 fixtures × 7 targets exit 0; SQLite DDL executes (FKs on, `foreign_key_check` empty) for all 11; ecommerce → mysql warnings as expected, → postgres 0; second pass identical (mysql, postgres, prisma); Prisma implicit m:n folding + `@@map` + Unsupported warning; Mermaid 12/13 and mmdc renders ecommerce, blog, edge-cases and sakila; JSON deterministic; hostile names: SQLite executes, Postgres fixed point.
+- **Defects:**
+  - QA-030 (High): fixed in `22534f2`. Cause: `CHARACTER` is in the column-constraint keyword set, so a DEFAULT expression ended at `::character varying`. A word directly after `::` (or `NATIONAL`) is no longer treated as a constraint. Regression tests: `src/parsers/sql/pg-cast-defaults.test.ts` (values, constraints kept, no `::)` in any target); fixture `tests/fixtures/sql/pg-casts.postgres.sql` added to the same-dialect round-trip. GitLab `grep -c '::)'` = 0 for postgres, mysql, sqlite, prisma. `npm run check` green.
+  - QA-031, QA-032, QA-033: deferred → BB-P3 (Backlog rows already added).
+- **Status:** Fixed — pending Cowork verification (not independently verified). Cowork re-verifies with the P3-T05 handoff.
+- **Notes (no action):** Prisma → Prisma renames models (`User` → `Users` with `@@map("users")`) per ADR-028. Cast stripping from literal defaults is intentional (`''::character varying` is stored as `''`).
