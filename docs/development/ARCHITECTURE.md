@@ -37,6 +37,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-023](#adr-023--real-input-selection-costs-lighter-zoomed-out-canvas-edge-dimming-packed-layout-deferred-2026-11-19-p2-t10-round-12) | 2026-11-19 | Real-input costs, lighter zoomed-out canvas, edge dimming; packed layout deferred | Synthetic clicks hid pointerdown cost; group opacity was slow                | Packing pass now (fitted view too heavy); hiding edges while moving     |
 | [ADR-024](#adr-024--committed-playwright-e2e-suite-2026-11-19-e2e-01)                                                                    | 2026-11-19 | Committed Playwright e2e suite                                                    | Repeatable, real-input checks for every handoff; dev-only dependency         | Ad-hoc CDP harnesses                                                    |
 | [ADR-025](#adr-025--layout-persistence-per-fingerprint-localstorage-keys-2026-11-19-p3-t01)                                              | 2026-11-19 | Layout persistence in localStorage (per-fingerprint keys, LRU 20)                 | P3-T01                                                                       |
+| [ADR-026](#adr-026--collapse-modes-ui-keep-positions-mouse-toggle-keyboard-inspector-2026-11-19-p3-t02)                                              | 2026-11-19 | Collapse modes UI: positions kept, mouse toggle + inspector control, bulk actions | P3-T02 |
 
 ## Data flow
 
@@ -794,6 +795,17 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   `hydratePrefs()` in an effect after mount, so server and first client render match.
 - **Limits:** multi-tab is last-write-wins (no `storage` event sync). Adding or removing a table or
   column changes the fingerprint, so positions do not carry over (partial reuse is out of scope).
+
+### ADR-026 — Collapse modes UI: positions kept, mouse toggle + keyboard inspector control (2026-11-19, P3-T02)
+
+- **Decision:** `layout-store.setCollapse` / `setAllCollapse` change modes without re-running layout
+  or bumping `version`; `full` is stored as absence; routes touching the table are dropped. Controls:
+  inspector fieldset of native radios (keyboard path), a mouse-only node-header toggle
+  (`tabIndex=-1`, no extra tab stops), and "All tables" actions in Settings / More.
+- **Consequence:** expanding a node can overlap the one below it until the user presses Layout, which
+  re-packs using the current modes. Hidden columns show as "visible / total" in the node header.
+- **Found while building:** `sr-only` inputs need a positioned ancestor, or they escape the
+  collapsed panel's clipping and cause horizontal overflow at 900/768 px.
 
 ## Known limitations (Phase 1)
 

@@ -743,3 +743,14 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   and `setItem` quota, 390 px: all pass; console clean. No new defects. P3-T01 is **Verified**.
 - **Note (no action):** positions are saved rounded to whole px (≤0.5 px shift on reload).
 - **Not tested:** `out-qa` error regions (not rebuilt).
+
+## 2026-11-19 — P3-T02 (collapse modes UI)
+
+- **Handoff:** [handoffs/P3-T02.md](handoffs/P3-T02.md)
+- **Cowork result:** Pending — not independently verified.
+- **Defects:** none logged. Claude Code's own e2e run caught one regression in this task (the new
+  control's `sr-only` inputs caused 59–135 px horizontal overflow at 900/768 px, `bug-bash.spec.ts`
+  AC-BB-P2-2); fixed in the same task.
+- **Checks:** `npm run check` green; `npm run e2e` on a served build: 149 passed, 0 failed, 20
+  skipped; `toolbar-width.mjs` PASS light and dark.
+

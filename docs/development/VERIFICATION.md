@@ -673,7 +673,7 @@ Charter: [plans/bug-bash-p2.md](plans/bug-bash-p2.md). Automated in `tests/e2e/b
   search, settings, the issues panel (Close), or the inspector (Clear selection). _Auto_
 - AC-BB-P2-4 (QA-024): a file just over 5 MiB reads "This file is 5,242,881 bytes; the limit is
   5.0 MB." _Auto_
-- **Status: Self-checked.** Pending: Cowork.
+- **Status: Verified with known issues** (Cowork round 14, `021f867`); QA-027…029 → P3-T08.
 
 ## P3-T01 — Layout persistence
 
@@ -691,3 +691,25 @@ Automated in `tests/e2e/persistence.spec.ts` and unit tests (`layout-persistence
   partial data falls back to auto-layout; at most 20 layouts are kept (least recently used out). _Auto_
 
 - **Status: Verified** (Cowork round 15 at `4ef042a`: e2e 144/0/20 on `out/`; AC-P3-T01-1…6 pass, including corrupt data, blocked storage and 390 px).
+
+## P3-T02 — Per-table collapse modes
+
+Automated in `tests/e2e/collapse.spec.ts` and unit tests (`layout-store-collapse`,
+`collapse-mode-control`, `table-node`, `more-menu`). Plan: [plans/p3-t02.md](plans/p3-t02.md).
+
+- AC-P3-T02-1: The inspector's "Show on canvas" control (All columns · Keys · Header only) sets the
+  selected table's mode and the node updates at once. _Auto_
+- AC-P3-T02-2: Keys shows only primary- and foreign-key columns, Header only shows no rows; the node
+  count reads "visible / total" with an aria-label ("4 of 12 columns shown"); edges to hidden
+  columns attach to the header. _Auto_
+- AC-P3-T02-3: The node-header toggle cycles modes with the real mouse without selecting or moving
+  the node; it is absent while zoomed out. _Auto_
+- AC-P3-T02-4: Settings (and the phone More menu) → All tables sets every table's mode. _Auto_
+- AC-P3-T02-5: Modes survive a reload; after Headers only → Show all columns, Layout leaves no
+  overlapping nodes. _Auto_
+- AC-P3-T02-6: The control is keyboard operable (arrows) with a visible focus ring and causes no
+  horizontal overflow at 900/768 px; a search hit hidden by the mode is still revealed and
+  highlighted. _Auto_ (focus ring: _Manual_)
+
+- **Status: Awaiting Cowork verification.** Not independently verified.
+
