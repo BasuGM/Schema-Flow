@@ -5,17 +5,20 @@
 Every QA item that is not Verified. Status: open / fixed – pending QA / verified / deferred → target.
 Update this table when an item changes; the dated log below stays append-only.
 
-| ID     | Found in                      | Description                                                      | Repro (one line)                                                                          | Severity      | Status              |
-| ------ | ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------- | ------------------- |
-| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice | Import GitLab `structure.sql`, press Reset view                                           | Medium        | deferred → P3-T07   |
-| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks   | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium        | verified (round 13) |
-| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                     | Select a hub in a packed large layout, pan at zoom 1                                      | Low           | verified (round 13) |
-| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body               | Focus the issues divider, press Enter                                                     | Low           | verified (round 13) |
-| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed              | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low           | verified (round 13) |
-| QA-023 | Cowork round 13 (P2-T10)      | Import counts lack thousands separators ("9982 columns")         | Import GitLab `structure.sql`, read the preview counts                                    | Low           | fixed – pending QA  |
-| QA-024 | Claude Code bug-bash (BB-P2)  | A file 1 byte over the limit reads "5.0 MB; the limit is 5.0 MB" | Choose a 5 MiB + 1 byte file                                                              | Low           | fixed – pending QA  |
-| QA-025 | Claude Code bug-bash (BB-P2)  | Close button of the issues panel drops focus to `body`           | Open issues, focus Close, Enter                                                           | Medium (a11y) | fixed – pending QA  |
-| QA-026 | Claude Code bug-bash (BB-P2)  | Inspector "Clear selection" button drops focus to `body`         | Select a table, focus the X, Enter                                                        | Medium (a11y) | fixed – pending QA  |
+| ID     | Found in                      | Description                                                                    | Repro (one line)                                                                          | Severity      | Status              |
+| ------ | ----------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------- | ------------------- |
+| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice               | Import GitLab `structure.sql`, press Reset view                                           | Medium        | deferred → P3-T07   |
+| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks                 | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium        | verified (round 13) |
+| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                                   | Select a hub in a packed large layout, pan at zoom 1                                      | Low           | verified (round 13) |
+| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body                             | Focus the issues divider, press Enter                                                     | Low           | verified (round 13) |
+| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed                            | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low           | verified (round 13) |
+| QA-023 | Cowork round 13 (P2-T10)      | Import counts lack thousands separators ("9982 columns")                       | Import GitLab `structure.sql`, read the preview counts                                    | Low           | verified (round 14) |
+| QA-024 | Claude Code bug-bash (BB-P2)  | A file 1 byte over the limit reads "5.0 MB; the limit is 5.0 MB"               | Choose a 5 MiB + 1 byte file                                                              | Low           | verified (round 14) |
+| QA-025 | Claude Code bug-bash (BB-P2)  | Close button of the issues panel drops focus to `body`                         | Open issues, focus Close, Enter                                                           | Medium (a11y) | verified (round 14) |
+| QA-026 | Claude Code bug-bash (BB-P2)  | Inspector "Clear selection" button drops focus to `body`                       | Select a table, focus the X, Enter                                                        | Medium (a11y) | verified (round 14) |
+| QA-027 | Cowork round 14 (BB-P2)       | Enter on inspector-relation-target shows the target but focus goes to `body`   | Open a table, Relations tab, focus a target, Enter                                        | Medium (a11y) | deferred → P3-T08   |
+| QA-028 | Cowork round 14 (BB-P2)       | Enter on inspector-back returns to the previous table but focus goes to `body` | Follow a relation, focus Back, Enter                                                      | Medium (a11y) | deferred → P3-T08   |
+| QA-029 | Cowork round 14 (BB-P2)       | Import dialog "Choose file…" label shows no focus ring (sr-only input focused) | Open Import, Tab to Choose file…                                                          | Medium (a11y) | deferred → P3-T08   |
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -713,3 +716,21 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   bug-fix task is added before P3-T01.
 - **Checks:** `npm run check` exit 0 (59 files / 405 tests); `npm run e2e` on a served normal
   build: 137 passed, 0 failed, 20 skipped; `toolbar-width.mjs` PASS light and dark.
+
+## 2026-11-19 — Cowork round 14 at `021f867`: BB-P2 Verified with known issues
+
+- **Found by: Cowork round 14** (report pasted by the user). `npm run e2e` on `out/`: 137 passed,
+  0 failed, 20 skipped. QA-023, QA-024, QA-025 and QA-026 verified; row 1 (import × state) clean;
+  console empty. BB-P2 is **Verified with known issues**.
+- **User decision: do not fix now.** All three new defects are deferred to P3-T08 (a bug-fix task
+  placed before the Phase 3 bug-bash; fold earlier if a P3 task touches the inspector or the
+  import dialog).
+- **QA-027 (Medium, a11y)** — Enter or click on `inspector-relation-target` shows the target but
+  focus goes to `body`. Likely the `key={table.id}` remount of the Relations tab. Expected: focus
+  stays in the inspector with a visible ring.
+- **QA-028 (Medium, a11y)** — Enter on `inspector-back` returns to the previous table but focus
+  goes to `body`. Expected: focus on a stable inspector element.
+- **QA-029 (Medium, a11y, Phase 1)** — Import dialog "Choose file…": Tab focuses the sr-only
+  `input[type=file]` but its `<label>` shows no focus ring. Expected: a ring via `:focus-within`.
+- **Spec gap (P3-T08):** AC-BB-P2-3 asserts only "not `body`" and the inspector case sits behind
+  `if (isVisible)`. Assert exact focus targets and make it unconditional.

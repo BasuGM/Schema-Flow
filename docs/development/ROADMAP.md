@@ -2,10 +2,10 @@
 
 ## Now
 
-- **Task:** BB-P2 (Phase 2 bug-bash): Self-checked, Awaiting Cowork verification. HEAD: see the latest commit.
+- **Task:** P3-T01 (Layout persistence): Not started. BB-P2 Verified with known issues (Cowork round 14 at `021f867`). HEAD: see the latest commit.
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** Cowork runs `npm run e2e`, re-checks QA-023…026, and a ≤ 20 min exploration of rows 1 and 4; then P3-T01.
-- **Backlog:** 5 open: QA-018 deferred → P3-T07; QA-023…026 fixed – pending QA ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Next:** plan and build P3-T01; P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
+- **Backlog:** 4 open: QA-018 deferred → P3-T07; QA-027…029 deferred → P3-T08 ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
 - **Latest handoff:** [handoffs/BB-P2.md](handoffs/BB-P2.md).
 
@@ -55,7 +55,7 @@ issues accepted at close-out:
 | P2-T09 | Neighbourhood highlighting                | **Verified** (Cowork, `c82ba77`: steps 1–14 pass; AC-P2-T09-1…6; QA-017 fixed, AC-P1-T06-10). Selecting a table dims every table more than 1 or 2 hops away (setting: Off / 1 / 2, default 1; ADR-018), with per-theme dim tokens. Collapsed side panels are inert.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | P2-T10 | Phase 2 hardening                         | **Verified with known issues** (Cowork round 13 at `3fdd4c9`; QA-019…022 verified, QA-018 → P3-T07; `2be3530`, `70bdf99`, `9a53579`, `418c542`, `5a92986` + docs; round 12 fixes `9168b2a`: QA-019, QA-020, QA-021; QA-018 deferred to P3-T07). Real-world fixtures (GitLab `structure.sql`, Sakila, generated mysqldump-180 and Prisma-200) with source-derived counts; partitions folded, MySQL `DELIMITER` and `/*! */`, qualified table names (ADR-019); import busy state; error boundaries per region, app/global error pages and build-time QA hooks (ADR-020); phone table-list sheet and Enter on separators (ADR-021); large-schema frame costs (ADR-022: two of four budgets met). README and Phase 2 docs. |
 | E2E-01 | Playwright e2e suite (tooling)            | **Verified** (Cowork round 13; two specs added after: QA-020 dim opacity, zoomed-out rendering; ADR-024; plan [plans/e2e-suite.md](plans/e2e-suite.md); AC-E2E-01-1…4). Specs in `tests/e2e`; `npm run e2e` against a served build, plus error-region specs with `E2E_QA_HOOKS=1` against `out-qa/`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| BB-P2  | Phase 2 bug-bash (exploratory)            | **Self-checked** (plan [plans/bug-bash-p2.md](plans/bug-bash-p2.md); AC-BB-P2-1…4). 7 charter rows; QA-024…026 found and fixed; `tests/e2e/bug-bash.spec.ts` (console, viewport × theme, focus).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| BB-P2  | Phase 2 bug-bash (exploratory)            | **Verified with known issues** (Cowork round 14 at `021f867`; QA-023…026 verified, QA-027…029 → P3-T08; plan [plans/bug-bash-p2.md](plans/bug-bash-p2.md); AC-BB-P2-1…4). 7 charter rows; QA-024…026 found and fixed; `tests/e2e/bug-bash.spec.ts` (console, viewport × theme, focus).                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 **Phase 2 overall: Verified with known issues** (Cowork round 13; final handoff
 [handoffs/P2-final.md](handoffs/P2-final.md)). Accepted known issues:
@@ -74,7 +74,10 @@ P3-T01 Layout persistence (localStorage, keyed by fingerprint) · P3-T02 Per-tab
 UI · P3-T03 Image export (PNG/SVG via `html-to-image`) · P3-T04 Schema generators (SQL DDL,
 Prisma, Mermaid, JSON) · P3-T05 Export dialog · P3-T06 Session restore · P3-T07 Packed layout for
 large, shallow schemas together with a cheap overview renderer (QA-018; a packed 2,000-table
-overview drawn as DOM costs 150–330 ms per click and 10–17 fps panning, ADR-023).
+overview drawn as DOM costs 150–330 ms per click and 10–17 fps panning, ADR-023) · P3-T08
+Bug-fix task before the Phase 3 bug-bash: QA-027 and QA-028 (inspector focus after relation
+navigation and Back), QA-029 (import file label focus ring), and the AC-BB-P2-3 spec gap (assert exact
+focus targets, unconditionally). Fold into an earlier P3 task if it touches the inspector or import dialog.
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),
