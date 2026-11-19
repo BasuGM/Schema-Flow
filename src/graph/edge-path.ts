@@ -109,3 +109,29 @@ export function dropRoutesAt(
   );
   return kept.length === Object.keys(routes).length ? routes : Object.fromEntries(kept);
 }
+
+/**
+ * The SVG path of a relationship edge, shared by the canvas and the image export. A self-reference
+ * loops out of the left side and back into the referenced row; otherwise the auto-layout route
+ * (when still valid) is smoothed through, so all edges share one curve style (QA-001).
+ */
+export function edgePath(
+  selfReference: boolean,
+  sourceX: number,
+  sourceY: number,
+  targetX: number,
+  targetY: number,
+  route: { waypoints: Position[] } | null,
+): string {
+  if (selfReference) {
+    const loop = 56;
+    return `M ${sourceX} ${sourceY} C ${sourceX - loop} ${sourceY}, ${sourceX - loop} ${targetY}, ${sourceX} ${targetY}`;
+  }
+  return segmentsToPath(
+    routeSegments([
+      { x: sourceX, y: sourceY },
+      ...(route?.waypoints ?? []),
+      { x: targetX, y: targetY },
+    ]),
+  );
+}

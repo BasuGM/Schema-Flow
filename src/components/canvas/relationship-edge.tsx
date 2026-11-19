@@ -10,13 +10,7 @@ import {
 } from "@xyflow/react";
 import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { describeRelationship } from "@/graph/describe";
-import {
-  labelOverflowShift,
-  labelTransform,
-  routeSegments,
-  samePosition,
-  segmentsToPath,
-} from "@/graph/edge-path";
+import { edgePath, labelOverflowShift, labelTransform, samePosition } from "@/graph/edge-path";
 import type { RelationshipFlowEdge } from "@/graph/types";
 import { cn } from "@/lib/utils";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -141,30 +135,6 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
         />
       )}
     </g>
-  );
-}
-
-function edgePath(
-  selfReference: boolean,
-  sourceX: number,
-  sourceY: number,
-  targetX: number,
-  targetY: number,
-  route: { waypoints: { x: number; y: number }[] } | null,
-): string {
-  if (selfReference) {
-    // Loop out of the left side and back into the referenced row on the same side.
-    const loop = 56;
-    return `M ${sourceX} ${sourceY} C ${sourceX - loop} ${sourceY}, ${sourceX - loop} ${targetY}, ${sourceX} ${targetY}`;
-  }
-  // Auto-layout route around intermediate tables (QA-001), dropped once either end is moved;
-  // otherwise the same curve style, so all edges look consistent.
-  return segmentsToPath(
-    routeSegments([
-      { x: sourceX, y: sourceY },
-      ...(route?.waypoints ?? []),
-      { x: targetX, y: targetY },
-    ]),
   );
 }
 
