@@ -36,7 +36,10 @@ export function rasterSize(width: number, height: number, requested: number): Ra
 }
 
 /** `my-shop.svg`: a safe, lower-case file name for the schema; `schema` when nothing usable remains. */
-export function exportFileName(schemaName: string, extension: "png" | "svg"): string {
+export function exportFileName(
+  schemaName: string,
+  extension: "png" | "svg" | "sql" | "prisma" | "mmd" | "json",
+): string {
   const slug = schemaName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
