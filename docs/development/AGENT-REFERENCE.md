@@ -1,0 +1,58 @@
+# Agent reference (detail moved from CLAUDE.md)
+
+Linked from the root `CLAUDE.md`. Everything here is still a rule; nothing was dropped in the move.
+
+## Commands (detail)
+
+- `npm run dev` — dev server on http://localhost:3000. Run **at most one**; never leave watchers
+  running (`vitest run`, not `vitest --watch`). Machine is an 8 GB M1 shared with VS Code/Chrome.
+- `npm run test` / `npm run test:coverage` / `npm run typecheck` / `npm run lint` / `npm run format`.
+- Production check: stop the dev server, `npm run build` (static export to `out/`), then
+  `npm run start`, which serves `out/` with `python3 -m http.server 3000`. It is a static file
+  server, not `next start`.
+- Dev-only perf sample: `/?sample=synthetic&tables=200` (capped at 1,000 tables).
+- Wall-clock budgets live in `*performance.test.ts`; Vitest runs them in their own project after
+  the other tests, one file at a time.
+- Phone toolbar regression: `node scripts/headless/toolbar-width.mjs` (needs Chrome and the server
+  running) must print PASS for light and dark at 390×844.
+
+## Architecture boundaries (detail)
+
+- `src/domain`, `src/graph`, `src/samples`, `src/parsers` (and later `src/analysis`,
+  `src/generators`) are **pure TypeScript**: no React, Next or browser imports. Fully unit-tested.
+  SQL fixtures live in `tests/fixtures/sql/`.
+- The normalized `Schema` (`src/domain/schema/types.ts`) is the single source of truth. React Flow
+  nodes/edges are derived by `schemaToFlow()`; never store schema data in React Flow state.
+- Parsers never touch React Flow; canvas components never touch parsers.
+- State lives in three Zustand stores (`src/stores`): `schema-store`, `layout-store`, `ui-store`.
+  Subscribe with narrow selectors; use `useShallow` when a selector returns an object/array.
+- React Flow `nodeTypes`/`edgeTypes` are module-scope constants; custom nodes/edges are `memo`ed and
+  receive only IDs + minimal display data. Selection/highlight state is read per node from
+  `ui-store`, so selecting a table does not rebuild the nodes array.
+- Every new dependency is justified in `docs/development/ARCHITECTURE.md` before it is added.
+  SQL and Prisma are parsed by our own tolerant parsers (ADR-012, ADR-013; no dependency).
+  Fixtures live in `tests/fixtures/sql/` and `tests/fixtures/prisma/`.
+
+## Conventions (detail)
+
+- Strict TS (`noUncheckedIndexedAccess`, `noImplicitOverride`). No `any`, no `@ts-ignore`, no
+  disabled lint rules without a documented, specific justification.
+- kebab-case files, PascalCase components, named exports, colocated `*.test.ts(x)`.
+  Component tests start with `// @vitest-environment jsdom`.
+- Components stay small (> ~200 lines is a smell). No dead code, no commented-out blocks, no TODO
+  without a ROADMAP task ID.
+- Add `data-testid` to key UI (toolbar buttons, `table-list-item-<name>`, `table-node-<name>`,
+  inspector root, empty states).
+
+## Per-task protocol (detail)
+
+1. Fix failures at the root cause; run `npm run check`; record actual results.
+2. Commit referencing task IDs.
+3. Update `ROADMAP.md` (status vocabulary: Not started | In progress | Self-checked | Awaiting Cowork
+   verification | Verified | Verified with known issues | Blocked), `VERIFICATION.md` (numbered ACs
+   `AC-<task>-<n>`), `QA_LOG.md` (append-only).
+4. Ensure exactly one dev server is running and report its URL.
+5. Write `docs/development/handoffs/<TASK>.md` and print it under the heading
+   `### Claude Cowork Verification Handoff`.
+6. When a Cowork report is pasted: log it in QA_LOG (`QA-###` defects), fix root causes with
+   regression tests, re-run checks, commit, and issue a re-verification handoff for affected ACs.
