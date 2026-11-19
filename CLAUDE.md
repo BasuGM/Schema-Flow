@@ -37,16 +37,20 @@ Workflow skills: implement-plan, fix-qa-round (user-level). Plans go in `docs/de
 - Accessibility: semantic elements, labelled icon buttons, visible focus, keyboard reachable.
 - `data-testid` on key UI (list in the reference).
 
-## Per-task protocol
+## Workflow rules
 
-1. Fix failures at the root cause; run `npm run check`; record actual results.
-2. Commit referencing task IDs.
-3. Update `ROADMAP.md`, `VERIFICATION.md` (`AC-<task>-<n>`), `QA_LOG.md` (append-only); status
-   vocabulary is in the reference.
-4. Ensure exactly one dev server is running and report its URL.
-5. Write `docs/development/handoffs/<TASK>.md`; print it under `### Claude Cowork Verification Handoff`.
-6. On a pasted Cowork report: log `QA-###` defects, fix root causes with regression tests,
-   re-run checks, commit, issue a re-verification handoff for affected ACs.
+- Start of every session: read the **Now** block in `docs/development/ROADMAP.md`, then the plan or
+  handoff you were given. Don't read `docs/development/handoffs/archive/`.
+- End of every task:
+  1. Write the handoff in `docs/development/handoffs/<TASK>.md`: Summary (2 lines) / Commits / Files
+     changed / How to test (steps → expected) / ACs met yes/no / Open items or deviations.
+  2. Update the ROADMAP Now block and the task status.
+  3. Add new decisions as ADRs plus a line in the Decision index (ARCHITECTURE.md).
+  4. Update ARCHITECTURE only if structure or the data model changed.
+  5. Set fixed QA items to "fixed – pending QA" in the QA_LOG Backlog table.
+  6. Commit `<TASK>: <short title>` and push.
+- Fix failures at the root cause; `npm run check` must be green; record actual results.
+- Cowork instructions live in `COWORK.md`; a pasted Cowork report is handled with `/qa`.
 
 ## Honesty rule
 

@@ -70,15 +70,9 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
 - Add `data-testid` to key UI (toolbar buttons, `table-list-item-<name>`, `table-node-<name>`,
   inspector root, empty states).
 
-## Per-task protocol (detail)
+## Workflow and status vocabulary
 
-1. Fix failures at the root cause; run `npm run check`; record actual results.
-2. Commit referencing task IDs.
-3. Update `ROADMAP.md` (status vocabulary: Not started | In progress | Self-checked | Awaiting Cowork
-   verification | Verified | Verified with known issues | Blocked), `VERIFICATION.md` (numbered ACs
-   `AC-<task>-<n>`), `QA_LOG.md` (append-only).
-4. Ensure exactly one dev server is running and report its URL.
-5. Write `docs/development/handoffs/<TASK>.md` and print it under the heading
-   `### Claude Cowork Verification Handoff`.
-6. When a Cowork report is pasted: log it in QA_LOG (`QA-###` defects), fix root causes with
-   regression tests, re-run checks, commit, and issue a re-verification handoff for affected ACs.
+The workflow (session start, end-of-task steps, handoff format) is in CLAUDE.md "Workflow rules".
+Status vocabulary (ROADMAP): Not started | In progress | Self-checked | Awaiting Cowork
+verification | Verified | Verified with known issues | Blocked. ACs in `VERIFICATION.md` are
+numbered `AC-<task>-<n>`; `QA_LOG.md` is append-only apart from its Backlog table.

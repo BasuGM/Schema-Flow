@@ -1,5 +1,18 @@
 # QA log
 
+## Backlog
+
+Every QA item that is not Verified. Status: open / fixed – pending QA / verified / deferred → target.
+Update this table when an item changes; the dated log below stays append-only.
+
+| ID     | Found in                      | Description                                                      | Repro (one line)                                                                          | Severity | Status             |
+| ------ | ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------- | ------------------ |
+| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice | Import GitLab `structure.sql`, press Reset view                                           | Medium   | deferred → P3-T07  |
+| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks   | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium   | fixed – pending QA |
+| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                     | Select a hub in a packed large layout, pan at zoom 1                                      | Low      | fixed – pending QA |
+| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body               | Focus the issues divider, press Enter                                                     | Low      | fixed – pending QA |
+| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed              | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low      | fixed – pending QA |
+
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
 
@@ -19,7 +32,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 
 ## 2026-11-13 — P1-T06…P1-T09 + Phase 1 final
 
-- **Handoff:** [handoffs/P1-final.md](handoffs/P1-final.md)
+- **Handoff:** [handoffs/archive/P1-final.md](handoffs/archive/P1-final.md)
 - **Cowork result:** Pending — not independently verified.
 - **Defects:** none recorded by Cowork. Issues found and fixed by Claude Code before handoff
   (self-found, not QA defects): workspace not filling the viewport with `h-dvh` in headless Chrome
@@ -32,7 +45,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 
 ## 2026-11-13 — Cowork report: Phase 1 (P1-T04 browser checks, P1-T06…T09)
 
-- **Handoff verified:** [handoffs/P1-final.md](handoffs/P1-final.md)
+- **Handoff verified:** [handoffs/archive/P1-final.md](handoffs/archive/P1-final.md)
 - **Source:** Claude Cowork report pasted into the Claude Code session on 2026-11-13. Chrome on the
   user's MacBook, dev server only, usable viewport 1440×525 (plus a narrow test at 850 px). Real
   pointer and keyboard interaction plus DOM inspection. Cowork did not run the npm scripts or
@@ -64,13 +77,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Fixes:** commit `c879f58`, with regression tests in `src/graph/layout-dagre.test.ts`,
   `src/graph/edge-path.test.ts`, `src/components/canvas/relationship-edge.test.ts` and
   `src/components/workspace/selection-sync.test.tsx`. `npm run check` passes: 18 files / 111 tests.
-- **Re-verification:** pending, see [handoffs/P1-fix-QA-001-003.md](handoffs/P1-fix-QA-001-003.md).
+- **Re-verification:** pending, see [handoffs/archive/P1-fix-QA-001-003.md](handoffs/archive/P1-fix-QA-001-003.md).
 
 ---
 
 ## 2026-11-13 — Cowork re-verification: QA-001…003 (c879f58) + Phase 1 open items
 
-- **Handoff verified:** [handoffs/P1-fix-QA-001-003.md](handoffs/P1-fix-QA-001-003.md)
+- **Handoff verified:** [handoffs/archive/P1-fix-QA-001-003.md](handoffs/archive/P1-fix-QA-001-003.md)
 - **Source:** Claude Cowork report pasted into the Claude Code session on 2026-11-13. Dev server,
   1440×525 viewport, real pointer and keyboard input plus DOM checks.
 - **Defect status:**
@@ -104,13 +117,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   116 tests.
 - **Environment change:** the dev server was stopped and the production static export is being
   served on http://localhost:3000 (`npm run start`), as Cowork requested for AC-P1-T09-7.
-- **Re-verification:** pending, see [handoffs/P1-fix-QA-004.md](handoffs/P1-fix-QA-004.md).
+- **Re-verification:** pending, see [handoffs/archive/P1-fix-QA-004.md](handoffs/archive/P1-fix-QA-004.md).
 
 ---
 
 ## 2026-11-13 — Cowork re-verification round 3: QA-004 (f382257) + production build
 
-- **Handoff verified:** [handoffs/P1-fix-QA-004.md](handoffs/P1-fix-QA-004.md)
+- **Handoff verified:** [handoffs/archive/P1-fix-QA-004.md](handoffs/archive/P1-fix-QA-004.md)
 - **Source:** the user pasted a summary of Cowork's round-3 report into the Claude Code session on
   2026-11-13. Verified on the production static build served on http://localhost:3000.
 - **Result:**
@@ -135,13 +148,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   clicked edge. Distinct selected-edge style. Regression tests are in `edge-path.test.ts` and
   `selection-sync.test.tsx`. `npm run check` passes: 19 files / 124 tests.
 - **Environment:** dev server back on http://localhost:3000.
-- **Re-verification:** pending, see [handoffs/P1-QA-005.md](handoffs/P1-QA-005.md).
+- **Re-verification:** pending, see [handoffs/archive/P1-QA-005.md](handoffs/archive/P1-QA-005.md).
 
 ---
 
 ## 2026-11-13 — P2-T01…T03 (SQL import core, pure logic)
 
-- **Handoff:** [handoffs/P2-T01-T03.md](handoffs/P2-T01-T03.md)
+- **Handoff:** [handoffs/archive/P2-T01-T03.md](handoffs/archive/P2-T01-T03.md)
 - **Commit:** `2efa17c`. `npm run check` passes: 27 files / 185 tests (parser: 8 files / 61 tests).
 - **Cowork result:** Pending — not independently verified.
 - **Defects:** none recorded.
@@ -152,8 +165,8 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 
 - **Source:** the user pasted a summary of Cowork's findings at `ca08df3` into the Claude Code
   session on 2026-11-16. The summary lists these three defects only; it does not report results
-  for the steps of [handoffs/P1-QA-005.md](handoffs/P1-QA-005.md) or
-  [handoffs/P2-T01-T03.md](handoffs/P2-T01-T03.md), so those ACs stay awaiting verification.
+  for the steps of [handoffs/archive/P1-QA-005.md](handoffs/archive/P1-QA-005.md) or
+  [handoffs/archive/P2-T01-T03.md](handoffs/archive/P2-T01-T03.md), so those ACs stay awaiting verification.
 - **New defects:**
   - **QA-006** · minor · _Edge labels near the canvas edge are clipped under the side panel._
     Repro: e-commerce, auto layout, Fit view; the `categories` self-loop label spans x≈184–589
@@ -172,13 +185,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     `typeless.sqlite.sql`. Status: **Fixed — awaiting re-verification.**
 - **Fix commit:** `12697ac`. `npm run check` passes: 27 files / 195 tests (parser: 8 files / 67),
   build ✔. Pushed to `origin/main`.
-- **Re-verification:** pending, see [handoffs/P2-fix-QA-006-008.md](handoffs/P2-fix-QA-006-008.md).
+- **Re-verification:** pending, see [handoffs/archive/P2-fix-QA-006-008.md](handoffs/archive/P2-fix-QA-006-008.md).
 
 ---
 
 ## 2026-11-16 — Cowork re-verification round 5 at 3806424: QA-006…008 fixed; QA-009
 
-- **Handoff verified:** [handoffs/P2-fix-QA-006-008.md](handoffs/P2-fix-QA-006-008.md)
+- **Handoff verified:** [handoffs/archive/P2-fix-QA-006-008.md](handoffs/archive/P2-fix-QA-006-008.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16.
 - **Result:**
@@ -202,7 +215,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 ## 2026-11-16 — QA-009 fix, Escape decision, P2-T04 (Prisma import)
 
 - **QA-009 fix and Escape:** commit `57ce4f9` (pushed). `npm run check` passed: 27 files / 199 tests.
-  Re-verification pending, see [handoffs/P2-T04.md](handoffs/P2-T04.md).
+  Re-verification pending, see [handoffs/archive/P2-T04.md](handoffs/archive/P2-T04.md).
 - **Escalation (P2-T04):** the planned `@mrleebo/prisma-ast@0.16.0` runs a filesystem config search
   (`lilconfig`) and imports Node's `os` at import time, so it doesn't bundle for the browser without
   shims; it's also all-or-nothing on syntax errors. The user chose a hand-written parser (ADR-013).
@@ -219,7 +232,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 
 ## 2026-11-16 — Cowork re-verification round 6 at c9c49a3: all pass; QA-010
 
-- **Handoff verified:** [handoffs/P2-T04.md](handoffs/P2-T04.md)
+- **Handoff verified:** [handoffs/archive/P2-T04.md](handoffs/archive/P2-T04.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16: everything passes.
 - **Verified:** QA-009 (fixed), AC-P1-T08-12, AC-P1-T08-13, AC-P2-T01-5, AC-P2-T04-1…6.
@@ -254,13 +267,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     Status: **Fixed — awaiting verification.**
   - `loadSchema` appended validation issues that importers had already added (duplicates for
     broken schemas). Fixed with a regression test.
-- **Cowork result:** Pending — not independently verified. See [handoffs/P2-T05.md](handoffs/P2-T05.md).
+- **Cowork result:** Pending — not independently verified. See [handoffs/archive/P2-T05.md](handoffs/archive/P2-T05.md).
 
 ---
 
 ## 2026-11-16 — Cowork re-verification round 7 at 3a17db4: P2-T05 all pass; QA-013
 
-- **Handoff verified:** [handoffs/P2-T05.md](handoffs/P2-T05.md)
+- **Handoff verified:** [handoffs/archive/P2-T05.md](handoffs/archive/P2-T05.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16.
 - **Verified:** all 15 P2-T05 steps PASS. QA-010, QA-011 and QA-012 **Fixed**.
@@ -320,14 +333,14 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
     which `react-resizable-panels` needs.
 - **Plan deviation:** the `issuesPanelDismissed` flag was not added; the rule "errors open,
   anything else leaves it as it is" gives the requested behaviour (ADR-015).
-- **Cowork result:** Pending — not independently verified. See [handoffs/P2-T06.md](handoffs/P2-T06.md).
+- **Cowork result:** Pending — not independently verified. See [handoffs/archive/P2-T06.md](handoffs/archive/P2-T06.md).
 
 ---
 
 ## 2026-11-16 — Cowork re-verification round 8 at 83558da: P2-T06 all pass; QA-014, QA-015
 
-- **Handoffs verified:** [handoffs/P2-T06.md](handoffs/P2-T06.md),
-  [handoffs/P2-fix-QA-013.md](handoffs/P2-fix-QA-013.md)
+- **Handoffs verified:** [handoffs/archive/P2-T06.md](handoffs/archive/P2-T06.md),
+  [handoffs/archive/P2-fix-QA-013.md](handoffs/archive/P2-fix-QA-013.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16.
 - **Verified:** QA-013 **Fixed** (AC-P2-T01-7). P2-T06 steps 1–14 all PASS (AC-P2-T06-1…11).
@@ -359,7 +372,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
       fails without the fix.
     - Status: **Fixed — awaiting re-verification.**
 - **Checks:** `npm run check` green: 39 files / 276 tests, build ✔.
-- **Re-verification handoff:** [handoffs/P2-fix-QA-014-015.md](handoffs/P2-fix-QA-014-015.md) (code `2d52d95`). Pending — not independently verified.
+- **Re-verification handoff:** [handoffs/archive/P2-fix-QA-014-015.md](handoffs/archive/P2-fix-QA-014-015.md) (code `2d52d95`). Pending — not independently verified.
 
 ---
 
@@ -395,14 +408,14 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Known limitation:** collapse modes have no UI yet (P3-T02). The hidden-row reveal is covered
   by a test that sets a mode directly.
 - **Cowork result:** Pending — not independently verified. See
-  [handoffs/P2-T07.md](handoffs/P2-T07.md).
+  [handoffs/archive/P2-T07.md](handoffs/archive/P2-T07.md).
 
 ---
 
 ## 2026-11-16 — Cowork re-verification round 9 at ac91200: P2-T07 all pass; QA-016
 
-- **Handoffs verified:** [handoffs/P2-T07.md](handoffs/P2-T07.md),
-  [handoffs/P2-fix-QA-014-015.md](handoffs/P2-fix-QA-014-015.md)
+- **Handoffs verified:** [handoffs/archive/P2-T07.md](handoffs/archive/P2-T07.md),
+  [handoffs/archive/P2-fix-QA-014-015.md](handoffs/archive/P2-fix-QA-014-015.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16.
 - **Verified:** P2-T07 steps 1–14 all PASS (AC-P2-T07-1…9); P2-T07 → **Verified**. QA-014 and
@@ -468,13 +481,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   - Console empty.
 - **Bundle:** +17.1 KB raw / +4.8 KB gzip initial JS. Parsers still lazy.
 - **Cowork result:** Pending — not independently verified. See
-  [handoffs/P2-T08.md](handoffs/P2-T08.md).
+  [handoffs/archive/P2-T08.md](handoffs/archive/P2-T08.md).
 
 ---
 
 ## 2026-11-16 — Cowork re-verification round 10 at 30260fe: P2-T08 all pass; QA-017
 
-- **Handoff verified:** [handoffs/P2-T08.md](handoffs/P2-T08.md)
+- **Handoff verified:** [handoffs/archive/P2-T08.md](handoffs/archive/P2-T08.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16.
 - **Verified:** P2-T08 steps 1–12 all PASS (AC-P2-T08-1…8 and the revised AC-P1-T08-5); P2-T08 →
@@ -507,7 +520,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   auto-collapse. They fail on the old code (no wrapper). Status: **Fixed — awaiting
   re-verification.**
 - **Found by Claude Code while building it (not Cowork defects):**
-  - **Separator keyboard:** Enter on a resize separator toggles the panel *before* it (the
+  - **Separator keyboard:** Enter on a resize separator toggles the panel _before_ it (the
     library's primary panel), so Enter on "Resize inspector" acts on the canvas and does nothing
     useful. Arrow keys (← on the inspector separator, → on the table-list separator) and Home/End
     do expand and collapse the side panels. Pre-existing library behaviour, unchanged; the
@@ -532,13 +545,13 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   - `toolbar-width.mjs` PASS (light and dark).
 - **Bundle:** +2.4 KB raw / +1.6 KB gzip initial JS.
 - **Cowork result:** Pending — not independently verified. See
-  [handoffs/P2-T09.md](handoffs/P2-T09.md).
+  [handoffs/archive/P2-T09.md](handoffs/archive/P2-T09.md).
 
 ---
 
 ## 2026-11-16 — Cowork re-verification round 11 at c82ba77: P2-T09 all pass; QA-017 fixed
 
-- **Handoff verified:** [handoffs/P2-T09.md](handoffs/P2-T09.md)
+- **Handoff verified:** [handoffs/archive/P2-T09.md](handoffs/archive/P2-T09.md)
 - **Source:** the user pasted a summary of Cowork's report into the Claude Code session on
   2026-11-16.
 - **Verified:** P2-T09 steps 1–14 all PASS (AC-P2-T09-1…6); P2-T09 → **Verified**. QA-017
@@ -566,7 +579,7 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Found by Claude Code with the real fixtures (not Cowork defects), fixed with regression
   tests:**
   - GitLab `structure.sql`: 434 partitions drawn as tables and 2,536 warnings (1,871 `ALTER INDEX
-    … ATTACH PARTITION`). Partitions are now folded into their parent (ADR-019): 992 tables,
+… ATTACH PARTITION`). Partitions are now folded into their parent (ADR-019): 992 tables,
     1,720 relationships, 140 warnings.
   - Sakila: MySQL `DELIMITER` blocks were not supported, so procedure bodies split into stray
     statements and a `CREATE TEMPORARY TABLE` inside a procedure became a 17th table.

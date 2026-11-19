@@ -42,7 +42,7 @@ this handoff after confirming `git ls-remote origin` = `HEAD`.
 4. Repeat with a 5 MB file of blank lines (`setInputFiles` with `Buffer.alloc(5_000_000, 10)`).
    → It is under the 5.0 MB cap, parses within about a second, and the status reads
    "The input is empty."
-5. Regression: the fixture previews in `handoffs/P2-T05.md` are unchanged.
+5. Regression: the fixture previews in `handoffs/archive/P2-T05.md` are unchanged.
 
 **Measured by Claude Code (Node, M1):**
 
