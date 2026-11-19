@@ -779,3 +779,10 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Defects:** none new. **Not tested in a browser:** the menu item disabled with no tables (jsdom only; accepted).
 - **Notes (no action):** dialog options reset on each open; GitLab PNG is unreadably small (QA-018 → P3-T07).
 - **Status:** P3-T03 Verified.
+
+## 2026-11-19 — P3-T04 (schema text generators)
+
+- **Handoff:** [handoffs/P3-T04.md](handoffs/P3-T04.md)
+- **Cowork result:** Pending — not independently verified.
+- **Defects:** none logged. Claude Code's own CLI run found a gap in the first SQL type map (MySQL `SET(…)`, `YEAR`, `… UNSIGNED` copied into SQLite output, which SQLite rejects); fixed in the same task with a SQLite execution test over Sakila, mysqldump-180 and shop.mysql.
+- **Checks:** `npm run check` green (77 files, 593 tests); CLI on 10 fixtures × 6 targets exit 0; SQLite output executes in `sqlite3` for every fixture; 1,000 synthetic tables: 6–17 ms per generator. No e2e run (no UI change).

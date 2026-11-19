@@ -726,3 +726,16 @@ Automated in `tests/e2e/export.spec.ts` and unit tests (`diagram-svg`, `raster-s
 
 - **Status: Verified** (Cowork round 17 at `785a41c`: e2e 157/0/20 on `out/`; AC-P3-T03-1…6 pass. Sample: SVG 12 tables / 13 relationships at the canvas positions, PNG 1× 1592×1283 and 2× 3184×2566 = size line; Light/Dark differ, `<html>` class restored; odd names parse; focus returns to Settings / More; phone dialog 344 px, no overflow. GitLab: reduced 0.0675× note, busy state, SVG 992 tables / 1,720 relationships.) Not browser-tested: menu item disabled with no tables (jsdom only, accepted). Note: dialog options reset on each open; GitLab PNG is unreadably small (QA-018 → P3-T07).
 
+## P3-T04 — Schema text generators
+
+Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `src/generators/text/generators-performance.test.ts`; Cowork runs the CLI. Plan: [plans/p3-t04.md](plans/p3-t04.md).
+
+- AC-P3-T04-1: `generateSql` produces DDL for PostgreSQL, MySQL and SQLite; same-dialect output re-imports to an identical canonical schema (fixed point) for ecommerce, pgdump, edge-cases, shop.mysql, blog.sqlite, Sakila and mysqldump-180; the SQLite output executes in an in-memory database (and in `sqlite3`) with a clean `foreign_key_check`. _Auto_ (CLI + `sqlite3`: _Manual_)
+- AC-P3-T04-2: Cross-dialect SQL keeps tables, columns, keys and relationships; every approximation is a warning; MySQL TEXT/BLOB keys become VARCHAR(255)/VARBINARY(255); CHECKs and expression defaults give one "copied as written" warning per table; index and constraint names are unique per target namespace; identifiers over 63 (PostgreSQL) / 64 (MySQL) characters warn. _Auto_
+- AC-P3-T04-3: `generatePrisma` output re-imports to an identical canonical schema (fixed point), including implicit many-to-many join tables, `@@map` / `@map` names and enums; CHECK constraints, nullable lists and tables without a key are reported. _Auto_
+- AC-P3-T04-4: `generateMermaid` emits a well-formed `erDiagram` (an entity per table, a line per relationship; keys-only option). _Auto_ (rendering with `mmdc`: _Manual_)
+- AC-P3-T04-5: `generateJson` is deterministic and versioned (`schemaflow-schema` v1), complete, without `issues`, with arrays in declaration order. _Auto_
+- AC-P3-T04-6: Every user string is escaped for where it lands (SQL literals, SQLite `--` comments, Prisma strings and docs, Mermaid quotes); empty schemas and a table without a key give valid output; all generators handle 1,000 tables well inside the 3 s test budget (6–17 ms). _Auto_
+
+- **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green, 77 files / 593 tests; CLI run on 10 fixtures × 6 targets, exit 0; SQLite output executed in `sqlite3` for every fixture). Not independently verified.
+
