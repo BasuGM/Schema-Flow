@@ -101,6 +101,19 @@ describe("SQLite executes the generated DDL (node:sqlite)", () => {
     expect(tables).toHaveLength(original.tableOrder.length);
   });
 
+  for (const [path, label] of [
+    ["sql/shop.mysql.sql", "shop.mysql.sql"],
+    ["real/sakila-schema.mysql.sql", "Sakila (SET, YEAR, UNSIGNED, FULLTEXT)"],
+    ["real/mysqldump-180.mysql.sql", "a 180-table mysqldump"],
+  ] as const) {
+    run(`${label} (from MySQL) becomes a working SQLite database`, () => {
+      const original = parseSql(load(path), { dialect: "mysql", now: NOW }).schema!;
+      const { tables, fkProblems } = exec(sql(original, "sqlite").text);
+      expect(tables).toHaveLength(original.tableOrder.length);
+      expect(fkProblems).toEqual([]);
+    });
+  }
+
   run("a Prisma schema becomes a working SQLite database", () => {
     const prisma = parsePrisma(load("prisma/blog.prisma"), { now: NOW }).schema!;
     const { tables } = exec(sql(prisma, "sqlite").text);

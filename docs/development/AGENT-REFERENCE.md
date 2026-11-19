@@ -15,6 +15,9 @@ Linked from the root `CLAUDE.md`. Everything here is still a rule; nothing was d
   the other tests, one file at a time.
 - Phone toolbar regression: `node scripts/headless/toolbar-width.mjs` (needs Chrome and the server
   running) must print PASS for light and dark at 390×844.
+- Text export from the CLI (P3-T04, plain Node ≥ 22.18, no dependency):
+  `node --experimental-transform-types --no-warnings --import ./scripts/headless/alias-hook.mjs scripts/headless/generate.ts <file> <postgres|mysql|sqlite|prisma|mermaid|mermaid-keys|json>`
+  prints the export to stdout and warnings to stderr.
 
 ## Browser suite (e2e, Playwright)
 

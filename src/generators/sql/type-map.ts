@@ -1,3 +1,4 @@
+import { parseDataType } from "@/domain/schema/data-type";
 import type { DataType, SqlDialect } from "@/domain/schema/types";
 
 export interface MappedType {
@@ -32,6 +33,7 @@ const FAMILY: Record<string, Family> = {
   int2: "smallint",
   smallserial: "smallint",
   tinyint: "smallint",
+  year: "smallint",
   integer: "int",
   int: "int",
   int4: "int",
@@ -188,11 +190,31 @@ export function mapType(
   to: SqlDialect,
   isPrisma: boolean,
 ): MappedType {
-  const base = dt.base.toLowerCase().trim();
+  // MySQL's `UNSIGNED` / `SIGNED` / `ZEROFILL` have no equivalent: the family is kept, the range is
+  // not. They can follow the parameters (`decimal(10,2) unsigned`), so the type is parsed again
+  // without them.
+  const MODIFIER = /\s+(unsigned|signed|zerofill)\b/gi;
+  const modifier = /\s(unsigned|signed|zerofill)\b/i.test(dt.raw);
+  const type = modifier ? parseDataType(dt.raw.replace(MODIFIER, "")) : dt;
+  const base = type.base.toLowerCase().trim();
   const family = (isPrisma ? PRISMA_OVERRIDES[base] : undefined) ?? FAMILY[base];
-  if (!family) return { sql: dt.raw, exact: false };
+  // A type we do not know, with quoted parameters (`SET('a', 'b')`), would be invalid anywhere else.
+  if (!family)
+    return /['"]/.test(dt.raw) ? { sql: "text", exact: false } : { sql: dt.raw, exact: false };
   const fixed = to === "postgresql" ? PG : to === "mysql" ? MYSQL : SQLITE;
+  const result = mapFamily(type, family, base, fixed, from, to, isPrisma);
+  return modifier && to !== "mysql" ? { ...result, exact: false } : result;
+}
 
+function mapFamily(
+  dt: DataType,
+  family: Family,
+  base: string,
+  fixed: typeof PG | typeof MYSQL | typeof SQLITE,
+  from: SqlDialect,
+  to: SqlDialect,
+  isPrisma: boolean,
+): MappedType {
   switch (family) {
     case "varchar":
       if (to === "mysql") {
