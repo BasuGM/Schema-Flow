@@ -96,7 +96,13 @@ export function canonicalSchema(
     ...(on(COLUMN_FIELDS.dataType, options) && { type: norm(c.dataType.raw) }),
     ...(on(COLUMN_FIELDS.nullable, options) && { nullable: c.nullable }),
     ...(on(COLUMN_FIELDS.default, options) && {
-      default: c.default ? { kind: c.default.kind, value: norm(c.default.value) } : null,
+      // An autoincrement's value is only how it was spelled (`nextval(...)`, `identity`).
+      default: c.default
+        ? {
+            kind: c.default.kind,
+            value: c.default.kind === "autoincrement" ? "" : norm(c.default.value),
+          }
+        : null,
     }),
     ...(on(COLUMN_FIELDS.isPrimaryKey, options) && { pk: c.isPrimaryKey }),
     ...(on(COLUMN_FIELDS.isForeignKey, options) && { fk: c.isForeignKey }),
