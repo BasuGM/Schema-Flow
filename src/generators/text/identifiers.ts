@@ -45,3 +45,27 @@ export function pascalCase(name: string): string {
 export function isPrismaIdent(name: string): boolean {
   return /^[A-Za-z][A-Za-z0-9_]*$/.test(name);
 }
+
+export function lowerFirst(name: string): string {
+  return name.charAt(0).toLowerCase() + name.slice(1);
+}
+
+/** Names Prisma refuses for models and enums (its scalars and a few keywords). */
+export const PRISMA_RESERVED = new Set([
+  "String",
+  "Boolean",
+  "Int",
+  "BigInt",
+  "Float",
+  "Decimal",
+  "DateTime",
+  "Json",
+  "Bytes",
+  "Unsupported",
+  "model",
+  "enum",
+  "type",
+  "view",
+  "datasource",
+  "generator",
+]);

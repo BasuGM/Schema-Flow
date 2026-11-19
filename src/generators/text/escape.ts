@@ -51,3 +51,11 @@ export function prismaDocComment(text: string): string {
 export function mermaidString(value: string): string {
   return value.replace(CONTROL, " ").replace(/"/g, "'").replace(/\s+/g, " ").trim();
 }
+
+/** A plain Prisma `//` comment (not a `///` doc comment, which the importer reads as documentation). */
+export function prismaLineComment(text: string): string {
+  return `// ${text
+    .replace(CONTROL, "")
+    .replace(/\s*(?:\r\n|\r|\n)\s*/g, " ")
+    .trim()}`;
+}
