@@ -734,3 +734,12 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   `input[type=file]` but its `<label>` shows no focus ring. Expected: a ring via `:focus-within`.
 - **Spec gap (P3-T08):** AC-BB-P2-3 asserts only "not `body`" and the inspector case sits behind
   `if (isVisible)`. Assert exact focus targets and make it unconditional.
+
+## 2026-11-19 — Cowork round 15 at `4ef042a`: P3-T01 Verified
+
+- **Found by: Cowork round 15** (report pasted by the user). `npm run e2e` on `out/`: 144 passed,
+  0 failed, 20 skipped. Drag → reload (including 50 ms after a drag), re-import restore, Layout
+  reset, 2-hop depth, corrupt JSON/index, NaN positions, depth 7, throwing `localStorage` getter
+  and `setItem` quota, 390 px: all pass; console clean. No new defects. P3-T01 is **Verified**.
+- **Note (no action):** positions are saved rounded to whole px (≤0.5 px shift on reload).
+- **Not tested:** `out-qa` error regions (not rebuilt).

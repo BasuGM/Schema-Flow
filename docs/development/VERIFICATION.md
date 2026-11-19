@@ -689,3 +689,5 @@ Automated in `tests/e2e/persistence.spec.ts` and unit tests (`layout-persistence
   console stays empty. _Auto_
 - AC-P3-T01-6: A schema with a different fingerprint does not inherit saved positions; corrupt or
   partial data falls back to auto-layout; at most 20 layouts are kept (least recently used out). _Auto_
+
+- **Status: Verified** (Cowork round 15 at `4ef042a`: e2e 144/0/20 on `out/`; AC-P3-T01-1…6 pass, including corrupt data, blocked storage and 390 px).
