@@ -13,9 +13,12 @@ export function fixtureText(relative: string): string {
   return readFileSync(fixturePath(relative), "utf8");
 }
 
-/** Opens the app on the default e-commerce sample and waits until the canvas shows its tables. */
+/**
+ * Opens the app on the default e-commerce sample and waits until the canvas shows its tables.
+ * `?sample=` skips the session restore (P3-T06), so a test that imported earlier starts clean.
+ */
 export async function openSample(page: Page): Promise<void> {
-  await page.goto("/");
+  await page.goto("/?sample=ecommerce");
   await expect(page.getByTestId("table-node-orders")).toBeVisible();
 }
 

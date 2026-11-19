@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
+import { ClearDataItem } from "./clear-data-item";
 import { CollapseAllItems } from "./collapse-all-items";
 import { ExportItem, keepFocusForExportDialog } from "./export-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
@@ -82,6 +83,8 @@ export function MoreMenu({
         <DropdownMenuSeparator />
         <ExportItem testId="more-export" returnFocusTestId="toolbar-more" />
         <ExportItem testId="more-export-image" returnFocusTestId="toolbar-more" tab="image" />
+        <DropdownMenuSeparator />
+        <ClearDataItem testId="more-clear-data" returnFocusTestId="toolbar-more" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

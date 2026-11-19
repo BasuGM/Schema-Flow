@@ -34,9 +34,11 @@ export function ExportItem({
 }
 
 /**
- * Pass to the menu content's `onCloseAutoFocus`: when an item opened the export dialog, the menu must
- * not pull focus back to its trigger while the dialog takes it (the dialog returns it on close).
+ * Pass to the menu content's `onCloseAutoFocus`: when an item opened the export or the clear-data
+ * dialog, the menu must not pull focus back to its trigger while the dialog takes it (the dialog
+ * returns it on close).
  */
 export function keepFocusForExportDialog(event: Event) {
-  if (useUiStore.getState().exportOpen) event.preventDefault();
+  const { exportOpen, clearDataOpen } = useUiStore.getState();
+  if (exportOpen || clearDataOpen) event.preventDefault();
 }

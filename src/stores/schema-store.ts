@@ -21,6 +21,9 @@ interface SchemaState {
    * of the schema or its fingerprint; null for samples. Read it only with a narrow selector.
    */
   sourceText: string | null;
+  /** A saved session is being re-parsed (P3-T06): the canvas shows "Restoring <name>…". */
+  restoring: { name: string } | null;
+  setRestoring: (restoring: { name: string } | null) => void;
   loadSchema: (schema: Schema, sourceText?: string) => void;
   clear: () => void;
 }
@@ -32,6 +35,8 @@ export const useSchemaStore = create<SchemaState>()((set) => ({
   revision: 0,
   issues: [],
   sourceText: null,
+  restoring: null,
+  setRestoring: (restoring) => set({ restoring }),
   loadSchema: (schema, sourceText) =>
     set((s) => ({
       status: "ready",

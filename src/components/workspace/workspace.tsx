@@ -17,7 +17,7 @@ import { SideSheet } from "./side-sheet";
 import { Toolbar } from "./toolbar";
 import { usePanelSync } from "./use-panel-sync";
 import { useEscapeToClear } from "./use-escape-to-clear";
-import { useSampleLoader } from "./use-sample-loader";
+import { useSessionRestore } from "./use-session-restore";
 
 const toggle = (side: "left" | "right") => () => {
   const ui = useUiStore.getState();
@@ -26,7 +26,7 @@ const toggle = (side: "left" | "right") => () => {
 const close = (side: "left" | "right") => () => useUiStore.getState().setPanelOpen(side, false);
 
 export function Workspace() {
-  useSampleLoader();
+  useSessionRestore();
   useEffect(hydratePrefs, []);
   // Below md both side panels open as overlay sheets: 200–240 px of panel beside the 320 px
   // minimum canvas can't fit (ADR-017 for the inspector, ADR-021 for the table list).

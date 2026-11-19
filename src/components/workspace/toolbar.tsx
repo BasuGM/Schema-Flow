@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
+import { ClearDataDialog } from "./clear-data-dialog";
 import { MoreMenu } from "./more-menu";
 import { SettingsMenu } from "./settings-menu";
 import { ThemeToggle } from "./theme-toggle";
@@ -70,6 +71,7 @@ export function Toolbar() {
         <SearchDialog />
         <ImportDialog />
         <ExportDialog />
+        <ClearDataDialog />
         <IssuesButton />
         {/* Hidden on phones so the toolbar fits 390 px (QA-012); the More menu has Export… there. */}
         <ToolbarButton

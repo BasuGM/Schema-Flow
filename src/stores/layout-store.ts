@@ -17,6 +17,16 @@ interface LayoutState {
   layouts: Record<string, DiagramLayout>;
   /** Bumped whenever positions are replaced wholesale (auto-layout); the canvas resyncs on change. */
   version: number;
+  /**
+   * One-shot, set only by a session restore: the saved pan and zoom the canvas opens with instead
+   * of fitting the view. The canvas consumes it (`takePendingViewport`).
+   */
+  pendingViewport: Viewport | null;
+  /** Queues the viewport saved with this fingerprint's layout, if there is one. */
+  queueSavedViewport: (fingerprint: string) => void;
+  takePendingViewport: () => Viewport | null;
+  /** "Clear saved data": forget every in-memory layout. */
+  resetAll: () => void;
   ensureLayout: (schema: Schema, fingerprint: string) => void;
   relayout: (schema: Schema, fingerprint: string, direction?: LayoutDirection) => void;
   setPosition: (fingerprint: string, table: TableId, position: Position) => void;
@@ -60,6 +70,17 @@ export const useLayoutStore = create<LayoutState>()((set, get) => {
   return {
     layouts: {},
     version: 0,
+    pendingViewport: null,
+    queueSavedViewport: (fingerprint) => {
+      const viewport = get().layouts[fingerprint]?.viewport;
+      if (viewport) set({ pendingViewport: viewport });
+    },
+    takePendingViewport: () => {
+      const viewport = get().pendingViewport;
+      if (viewport) set({ pendingViewport: null });
+      return viewport;
+    },
+    resetAll: () => set((s) => ({ layouts: {}, pendingViewport: null, version: s.version + 1 })),
     ensureLayout: (schema, fingerprint) => {
       if (get().layouts[fingerprint]) return;
       // A saved layout (an earlier visit or session) wins over running auto-layout again.

@@ -77,6 +77,10 @@ interface UiState {
   exportOpen: boolean;
   exportTab: ExportTab;
   exportReturnFocus: string | null;
+  /** "Clear saved data…" dialog (P3-T06), the button that gets focus back, and its live notice. */
+  clearDataOpen: boolean;
+  clearDataReturnFocus: string | null;
+  clearDataNotice: boolean;
   /** Cleared when the selection changes, on Escape and on a new schema. */
   highlightedColumn: HighlightedColumn | null;
   /** Inspector tab (P2-T08); plain table selection never changes it. */
@@ -116,6 +120,9 @@ interface UiState {
   openExport: (returnFocusTestId: string, tab?: ExportTab) => void;
   setExportTab: (tab: ExportTab) => void;
   closeExport: () => void;
+  openClearData: (returnFocusTestId: string) => void;
+  closeClearData: () => void;
+  setClearDataNotice: (shown: boolean) => void;
   /** A new import or sample: clear selection, pinned edge, filter and highlight; close search. */
   resetForNewSchema: () => void;
   reset: () => void;
@@ -134,6 +141,9 @@ const initial = {
   exportOpen: false,
   exportTab: "sql",
   exportReturnFocus: null,
+  clearDataOpen: false,
+  clearDataReturnFocus: null,
+  clearDataNotice: false,
   highlightedColumn: null,
   inspectorTab: "columns" as InspectorTab,
   inspectorBack: null,
@@ -197,6 +207,10 @@ export const useUiStore = create<UiState>()((set) => ({
     set((s) => ({ exportOpen: true, exportReturnFocus, exportTab: tab ?? s.exportTab })),
   setExportTab: (exportTab) => set({ exportTab }),
   closeExport: () => set({ exportOpen: false }),
+  openClearData: (clearDataReturnFocus) =>
+    set({ clearDataOpen: true, clearDataReturnFocus, clearDataNotice: false }),
+  closeClearData: () => set({ clearDataOpen: false }),
+  setClearDataNotice: (clearDataNotice) => set({ clearDataNotice }),
   resetForNewSchema: () =>
     set((s) => ({
       selectedTableId: null,

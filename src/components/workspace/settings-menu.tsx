@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
+import { ClearDataItem } from "./clear-data-item";
 import { CollapseAllItems } from "./collapse-all-items";
 import { ExportItem, keepFocusForExportDialog } from "./export-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
@@ -46,6 +47,8 @@ export function SettingsMenu() {
           returnFocusTestId="toolbar-settings"
           tab="image"
         />
+        <DropdownMenuSeparator />
+        <ClearDataItem testId="settings-clear-data" returnFocusTestId="toolbar-settings" />
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>More settings arrive in later phases</DropdownMenuItem>
       </DropdownMenuContent>

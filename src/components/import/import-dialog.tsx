@@ -21,7 +21,8 @@ import type { Schema } from "@/domain/schema/types";
 import { afterNextPaint } from "@/lib/after-next-paint";
 import { cn } from "@/lib/utils";
 import type { ImportFormatChoice } from "@/parsers";
-import { applyImportedSchema } from "./apply-import";
+import { resolveSessionFormat } from "@/stores/session-persistence";
+import { applyImportedSchema, type SessionSave } from "./apply-import";
 import {
   EMPTY_DRAFT,
   fileDraft,
@@ -89,8 +90,8 @@ export function ImportDialog() {
     setOpen(next);
   };
 
-  const finishImport = (schema: Schema, text: string) => {
-    applyImportedSchema(schema, text);
+  const finishImport = (schema: Schema, text: string, saved: SessionSave) => {
+    applyImportedSchema(schema, text, saved);
     setDraft(EMPTY_DRAFT);
     setFormat("auto");
     setApplying(null);
@@ -100,10 +101,11 @@ export function ImportDialog() {
   const onImport = () => {
     if (applying !== null || state.status !== "done" || !state.parsed.result.schema) return;
     const { schema } = state.parsed.result;
+    const saved = { format: resolveSessionFormat(state.parsed, schema.source.dialect) };
     const tables = schema.tableOrder.length;
-    if (tables < BUSY_IMPORT_TABLES) return finishImport(schema, state.text);
+    if (tables < BUSY_IMPORT_TABLES) return finishImport(schema, state.text, saved);
     setApplying(tables);
-    void afterNextPaint().then(() => finishImport(schema, state.text));
+    void afterNextPaint().then(() => finishImport(schema, state.text, saved));
   };
 
   // While open, a file dropped outside the drop zone must not make the browser navigate to it.

@@ -13,6 +13,7 @@ import {
   type EdgeChange,
   type NodeChange,
   type OnNodeDrag,
+  type ReactFlowInstance,
   type Viewport,
 } from "@xyflow/react";
 import { LocateFixed } from "lucide-react";
@@ -166,6 +167,21 @@ function SchemaCanvasInner() {
     [fingerprint, setViewport],
   );
 
+  // A restored session opens at its saved pan and zoom instead of fitting the view. Captured once,
+  // when the diagram first appears, and applied in `onInit` (the provider above is created before
+  // the schema loads, so React Flow's `defaultViewport` prop would be ignored);
+  // `useCanvasCommands` consumes the one-shot value.
+  const [openingViewport, setOpeningViewport] = useState<Viewport | null | undefined>(undefined);
+  if (schema && openingViewport === undefined)
+    setOpeningViewport(useLayoutStore.getState().pendingViewport);
+  const onInit = useCallback(
+    (instance: ReactFlowInstance<TableFlowNode, RelationshipFlowEdge>) => {
+      if (openingViewport) void instance.setViewport(openingViewport);
+    },
+    [openingViewport],
+  );
+  const restoring = useSchemaStore((s) => s.restoring);
+
   const large = base.nodes.length > LARGE_SCHEMA_THRESHOLD;
   const { resetView } = useCanvasCommands(base, large);
 
@@ -175,7 +191,13 @@ function SchemaCanvasInner() {
         data-testid="canvas-empty"
         className="flex h-full items-center justify-center text-sm text-muted-foreground"
       >
-        Loading schema…
+        {restoring ? (
+          <p role="status" data-testid="canvas-restoring">
+            Restoring {restoring.name}…
+          </p>
+        ) : (
+          "Loading schema…"
+        )}
       </div>
     );
   }
@@ -206,8 +228,9 @@ function SchemaCanvasInner() {
         onlyRenderVisibleElements={large}
         minZoom={0.05}
         maxZoom={2}
-        fitView
+        fitView={!openingViewport}
         fitViewOptions={FIT_VIEW_OPTIONS}
+        onInit={onInit}
         aria-label="Schema diagram"
       >
         <ZoomDetail enabled={large} />

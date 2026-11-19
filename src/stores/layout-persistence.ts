@@ -9,6 +9,7 @@ import type {
 } from "@/domain/schema/types";
 import { samePosition } from "@/graph/edge-path";
 import { listKeys, readJson, removeKey, writeText } from "@/lib/safe-storage";
+import { savingEnabled } from "./save-gate";
 
 /** One localStorage key per fingerprint, so a drag serialises one layout, not all of them. */
 export const LAYOUT_KEY_PREFIX = "schemaflow:layout:v1:";
@@ -138,6 +139,7 @@ export function loadLayout(schema: Schema, fingerprint: string): DiagramLayout |
 }
 
 export function saveLayout(layout: DiagramLayout): void {
+  if (!savingEnabled()) return;
   const { fingerprint } = layout;
   let text = JSON.stringify(layout);
   if (text.length > MAX_LAYOUT_CHARS) text = JSON.stringify({ ...layout, edgeRoutes: {} });

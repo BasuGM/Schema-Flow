@@ -11,6 +11,7 @@ import {
 } from "@/graph/node-metrics";
 import type { FlowElements } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
+import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 
@@ -114,8 +115,11 @@ export function useCanvasCommands(base: FlowElements, large = false) {
   useEffect(() => {
     if (firstBase.current) {
       firstBase.current = false;
+      useLayoutStore.getState().takePendingViewport();
       return;
     }
+    // A restored session keeps its saved viewport: no fit, and no re-fit on the next resizes.
+    if (useLayoutStore.getState().takePendingViewport()) return;
     fitWindowEnd.current = performance.now() + FIT_WINDOW_MS;
     const frame = requestAnimationFrame(() => resetView());
     return () => cancelAnimationFrame(frame);
