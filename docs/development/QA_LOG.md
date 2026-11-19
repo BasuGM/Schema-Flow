@@ -765,3 +765,10 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   task 191–243 ms in the cloud (2–3× slower than M1). Console empty.
 - **Defects:** none new. Known issues unchanged (overlap until Layout; first Headers-only ~257 ms on M1).
 - **Status:** P3-T02 Verified with known issues.
+
+## 2026-11-19 — P3-T03 (image export)
+
+- **Handoff:** [handoffs/P3-T03.md](handoffs/P3-T03.md)
+- **Cowork result:** Pending — not independently verified.
+- **Defects:** none logged. Claude Code's own e2e run found the new radios' `sr-only` inputs cannot be force-checked (tests click their labels, as a user does). Render tests timed out intermittently under full-suite load across several runs (a different file each time, each passing in isolation); not changed in this task.
+- **Checks:** `npm run check` green (481 tests); `npm run e2e` on a served build: 157 passed, 0 failed, 20 skipped; `toolbar-width.mjs` PASS light and dark; `export-perf.mjs` on GitLab: SVG 0.2-0.3 s / 9.3 MB, PNG 1.5 s at 0.0675×.

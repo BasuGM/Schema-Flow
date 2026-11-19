@@ -2,12 +2,12 @@
 
 ## Now
 
-- **Task:** P3-T03 (image export): not started (plan first). P3-T02 Verified with known issues (Cowork round 16 at `bef3380`); P3-T01 Verified (round 15). HEAD: see the latest commit.
+- **Task:** P3-T03 (image export): Awaiting Cowork verification (self-checked; ADR-027). P3-T02 Verified with known issues (Cowork round 16); P3-T01 Verified (round 15). HEAD: see the latest commit.
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** P3-T03 (plan first, in progress). P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
+- **Next:** P3-T04 (schema generators: SQL DDL, Prisma, Mermaid, JSON; plan first). P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
 - **Backlog:** 4 open: QA-018 deferred → P3-T07; QA-027…029 deferred → P3-T08 ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
-- **Latest handoff:** [handoffs/P3-T02.md](handoffs/P3-T02.md).
+- **Latest handoff:** [handoffs/P3-T03.md](handoffs/P3-T03.md).
 
 Status vocabulary (exact): `Not started | In progress | Self-checked | Awaiting Cowork verification |
 Verified | Verified with known issues | Blocked`. `Verified*` is set only after a Cowork report has
@@ -70,7 +70,7 @@ issues accepted at close-out:
 ## Phase 3 — Persistence & export (summary)
 
 P3-T01 Layout persistence (localStorage, keyed by fingerprint) · P3-T02 Per-table collapse modes
-UI · P3-T03 Image export (PNG/SVG via `html-to-image`) · P3-T04 Schema generators (SQL DDL,
+UI · P3-T03 Image export (PNG/SVG, own SVG renderer, ADR-027) · P3-T04 Schema generators (SQL DDL,
 Prisma, Mermaid, JSON) · P3-T05 Export dialog · P3-T06 Session restore · P3-T07 Packed layout for
 large, shallow schemas together with a cheap overview renderer (QA-018; a packed 2,000-table
 overview drawn as DOM costs 150–330 ms per click and 10–17 fps panning, ADR-023) · P3-T08
@@ -84,6 +84,8 @@ blocked; neighbourhood depth saved; the viewport still fits on load (restore: P3
 
 **P3-T02 Collapse modes UI: Verified with known issues** (Cowork round 16 at `bef3380`, no new defects; ADR-026; AC-P3-T02-1…6). Inspector
 control, node-header toggle, "All tables" actions; modes persist per fingerprint.
+
+**P3-T03 Image export: Awaiting Cowork verification** (ADR-027; AC-P3-T03-1…6). Settings / More → "Export image…": PNG or SVG of the whole diagram, Current / Light / Dark, PNG 1× / 2× (lowered to browser canvas limits). Drawn by our own SVG renderer, not `html-to-image` (the canvas virtualizes large schemas).
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),

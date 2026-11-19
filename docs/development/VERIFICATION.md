@@ -713,3 +713,16 @@ Automated in `tests/e2e/collapse.spec.ts` and unit tests (`layout-store-collapse
 
 - **Status: Verified with known issues** (Cowork round 16 at `bef3380`: e2e 149/0/20 on `out/`; AC-P3-T02-1…6 pass, including keyboard radios with 2 px focus ring, real-mouse chevron, reload persistence, no overflow at 900/768/390). Known issues: nodes overlap until Layout; first Headers-only on GitLab ~257 ms on M1.
 
+## P3-T03 — Image export
+
+Automated in `tests/e2e/export.spec.ts` and unit tests (`diagram-svg`, `raster-size`, `export-adapters`, `export-image-dialog`). Plan: [plans/p3-t03.md](plans/p3-t03.md).
+
+- AC-P3-T03-1: Settings (and the phone More menu) → "Export image…" opens the dialog; it is disabled with no tables; closing it (Escape or Cancel) returns focus to the Settings / More button, never to the page body. _Auto_
+- AC-P3-T03-2: The SVG contains every table at its saved position with its current collapse mode, and every relationship; names with `<`, `&`, quotes and control characters are escaped or stripped and the file parses as XML. _Auto_
+- AC-P3-T03-3: The PNG is a valid image at the size line (1×) and twice that at 2×; Light, Dark and Current themes apply (background, card and text colours differ; the dark border keeps its alpha). _Auto_
+- AC-P3-T03-4: Large schema (GitLab, 992 tables): the PNG scale is reduced with a visible note, SVG is unaffected, a busy state shows while exporting, nothing crashes. _Manual_ (perf script: `scripts/headless/export-perf.mjs`)
+- AC-P3-T03-5: A rasterization failure shows an inline error, the dialog stays open and the app keeps working. _Auto_ (unit)
+- AC-P3-T03-6: Every control is labelled and keyboard operable with a visible focus ring on its label; the dialog has no horizontal overflow at 390×844; the phone toolbar width is unchanged (`toolbar-width.mjs` PASS). _Auto_ (focus ring: _Manual_)
+
+- **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green, 481 tests; `npm run e2e` on a served build 157 passed, 0 failed, 20 skipped; `toolbar-width.mjs` PASS light and dark). Not independently verified.
+

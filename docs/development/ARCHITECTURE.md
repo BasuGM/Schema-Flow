@@ -37,7 +37,8 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-023](#adr-023--real-input-selection-costs-lighter-zoomed-out-canvas-edge-dimming-packed-layout-deferred-2026-11-19-p2-t10-round-12) | 2026-11-19 | Real-input costs, lighter zoomed-out canvas, edge dimming; packed layout deferred | Synthetic clicks hid pointerdown cost; group opacity was slow                | Packing pass now (fitted view too heavy); hiding edges while moving     |
 | [ADR-024](#adr-024--committed-playwright-e2e-suite-2026-11-19-e2e-01)                                                                    | 2026-11-19 | Committed Playwright e2e suite                                                    | Repeatable, real-input checks for every handoff; dev-only dependency         | Ad-hoc CDP harnesses                                                    |
 | [ADR-025](#adr-025--layout-persistence-per-fingerprint-localstorage-keys-2026-11-19-p3-t01)                                              | 2026-11-19 | Layout persistence in localStorage (per-fingerprint keys, LRU 20)                 | P3-T01                                                                       |
-| [ADR-026](#adr-026--collapse-modes-ui-keep-positions-mouse-toggle-keyboard-inspector-2026-11-19-p3-t02)                                              | 2026-11-19 | Collapse modes UI: positions kept, mouse toggle + inspector control, bulk actions | P3-T02 |
+| [ADR-026](#adr-026--collapse-modes-ui-keep-positions-mouse-toggle-keyboard-inspector-2026-11-19-p3-t02)                                  | 2026-11-19 | Collapse modes UI: positions kept, mouse toggle + inspector control, bulk actions | P3-T02                                                                       |
+| [ADR-027](#adr-027--image-export-own-svg-renderer-instead-of-html-to-image-2026-11-19-p3-t03)                                            | 2026-11-19 | Image export: own SVG renderer, no `html-to-image`                                | P3-T03                                                                       |
 
 ## Data flow
 
@@ -111,17 +112,17 @@ flowchart LR
 
 ## Module boundaries
 
-| Path                  | Responsibility                                                | May import                   |
-| --------------------- | ------------------------------------------------------------- | ---------------------------- |
-| `src/domain/schema`   | Types, IDs, normalize, validate, fingerprint, selectors       | nothing app-specific         |
-| `src/domain/search`   | Search index and ranking (P2-T07)                             | domain                       |
-| `src/samples`         | E-commerce sample, synthetic generator, `?sample=` parsing    | domain                       |
-| `src/graph`           | `schemaToFlow`, Dagre layout, node metrics, handle IDs        | domain, `@xyflow` types only |
-| `src/stores`          | Zustand slices                                                | domain, graph                |
-| `src/components`      | React UI (`workspace/`, `canvas/`, `errors/`, `ui/` = shadcn) | everything above             |
-| `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                                  | domain                       |
-| `src/analysis` (P4)   | Health checks                                                 | domain                       |
-| `src/generators` (P3) | Schema → SQL/Prisma/Mermaid                                   | domain                       |
+| Path                  | Responsibility                                                 | May import                   |
+| --------------------- | -------------------------------------------------------------- | ---------------------------- |
+| `src/domain/schema`   | Types, IDs, normalize, validate, fingerprint, selectors        | nothing app-specific         |
+| `src/domain/search`   | Search index and ranking (P2-T07)                              | domain                       |
+| `src/samples`         | E-commerce sample, synthetic generator, `?sample=` parsing     | domain                       |
+| `src/graph`           | `schemaToFlow`, Dagre layout, node metrics, handle IDs         | domain, `@xyflow` types only |
+| `src/stores`          | Zustand slices                                                 | domain, graph                |
+| `src/components`      | React UI (`workspace/`, `canvas/`, `errors/`, `ui/` = shadcn)  | everything above             |
+| `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                                   | domain                       |
+| `src/analysis` (P4)   | Health checks                                                  | domain                       |
+| `src/generators` (P3) | Diagram SVG + raster sizing (P3-T03); SQL/Prisma/Mermaid later | domain, graph (pure)         |
 
 Rules: pure modules have zero React/Next/DOM imports and are unit-tested; parsers never import
 React Flow; canvas components never import parsers. `src/graph` imports only _types_ from
@@ -282,8 +283,8 @@ re-render no `TableNode`.
 | eslint / eslint-config-next                          | 9.x / 16.4.6             | flat config; `next lint` no longer exists                         |
 | prettier / prettier-plugin-tailwindcss               | 3.10.1 / 0.8.1           |                                                                   |
 
-No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until needed: `html-to-image`
-(Phase 3).
+No SQL or Prisma parser dependency (ADR-012, ADR-013). No image-export dependency either: PNG and SVG
+are drawn by our own renderer (ADR-027), so `html-to-image` is not installed.
 
 ## Decision records
 
@@ -806,6 +807,26 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   re-packs using the current modes. Hidden columns show as "visible / total" in the node header.
 - **Found while building:** `sr-only` inputs need a positioned ancestor, or they escape the
   collapsed panel's clipping and cause horizontal overflow at 900/768 px.
+
+### ADR-027 — Image export: own SVG renderer instead of `html-to-image` (2026-11-19, P3-T03)
+
+- **Decision:** `src/generators/diagram-svg.ts` draws the whole diagram as a standalone SVG from the
+  `Schema`, the saved positions, collapse modes and edge routes (pure TS, no DOM). PNG is that SVG
+  rasterized on a canvas (`src/lib/svg-to-png.ts`). `computeDiagramBounds` is the single source of the
+  image size for the dialog, the SVG and the PNG; `rasterSize` lowers the PNG scale to
+  `MAX_SIDE` 16,384 px / `MAX_AREA` 4096² px. Theme colours are resolved from the app's tokens
+  (`src/lib/export-palette.ts`) and baked into the file. Opened from Settings / More ("Export image…").
+- **Context:** the roadmap planned `html-to-image`. A DOM snapshot would miss most of a large schema:
+  above 80 tables the canvas mounts only visible nodes, and zoomed out it draws skeleton rows
+  (ADR-022/023). Node geometry is fixed and fonts are system stacks, so a direct renderer is exact
+  enough and needs no dependency.
+- **Alternatives:** `html-to-image` (new dependency, must disable virtualization and skeletons
+  temporarily, fails on very large DOMs and in Safari `foreignObject`).
+- **Consequences:** the export looks like the canvas but is not pixel-identical (no icons: "PK" / "FK"
+  text; no dot grid, selection or dimming). Rendering the other theme toggles the `dark` class on
+  `<html>` for one synchronous call to read tokens. User strings are XML-escaped and stripped of
+  XML 1.0-invalid characters. GitLab (992 tables): SVG 9.3 MB in 0.2 s; PNG reduced to 0.0675× in
+  1.5 s (the 242,000 px tall layout, QA-018 → P3-T07, limits PNG detail; SVG keeps it).
 
 ## Known limitations (Phase 1)
 
