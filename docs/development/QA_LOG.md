@@ -636,3 +636,10 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Checks:** `npm run check` exit 0 (58 files / 400 tests, build ✔).
 - **Cowork result:** Pending — not independently verified. See
   [handoffs/P2-T10-r12.md](handoffs/P2-T10-r12.md).
+
+## 2026-11-19 — Subagent smoke test: QA-022
+
+- **QA-022 (Low, tooling) — ESLint scanned `out-qa/`, so `npm run check` failed while it existed.**
+  Found by the check-runner smoke test (39 errors, 3,173 warnings from minified QA-hook chunks).
+  Fixed: `out-qa/**` added to the ESLint ignores, `out-qa` to `.prettierignore`, and `out-qa` to
+  the tsconfig `exclude`. Vitest only includes `src/**`, so it needed no change. Status: Fixed.
