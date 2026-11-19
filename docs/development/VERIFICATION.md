@@ -659,3 +659,18 @@ import, issues, search, inspector, neighbourhood, panels, phone, error-regions.
 - **Status: Verified** (Cowork round 13, `3fdd4c9`: 120 / 0 / 20 and 19 / 0 / 1). Two specs were
   added afterwards (QA-020 opacity, zoomed-out rendering): Claude Code ran them only.
 - Revision (QA-023): import preview counts show thousands separators ("9,982 columns").
+
+## BB-P2 — Phase 2 bug-bash
+
+Charter: [plans/bug-bash-p2.md](plans/bug-bash-p2.md). Automated in `tests/e2e/bug-bash.spec.ts`.
+
+- AC-BB-P2-1: A journey through search, import (SQL, Prisma, a 180-table schema), the issues panel,
+  Show table, and 2-hop dimming logs no console errors or warnings in the normal build. _Auto_
+- AC-BB-P2-2: At 390, 768, 900 and 1280 px, light and dark, the page has no horizontal overflow (also
+  with Issues counts and the phone list sheet); resizing across the breakpoints keeps the selection.
+  _Auto_
+- AC-BB-P2-3: Focus is never left on `body` after closing the import dialog (Escape, Cancel),
+  search, settings, the issues panel (Close), or the inspector (Clear selection). _Auto_
+- AC-BB-P2-4 (QA-024): a file just over 5 MiB reads "This file is 5,242,881 bytes; the limit is
+  5.0 MB." _Auto_
+- **Status: Self-checked.** Pending: Cowork.

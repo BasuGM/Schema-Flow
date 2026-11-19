@@ -148,6 +148,14 @@ describe("Import dialog", () => {
     await waitFor(() => expect(status()).toHaveTextContent("binary or compressed"));
   });
 
+  it("says exact bytes when a file just over the limit would round to the limit (QA-024)", async () => {
+    const user = await openDialog();
+    const big = fileOf("edge.sql", "CREATE TABLE x (id int);");
+    Object.defineProperty(big, "size", { value: 5 * 1024 * 1024 + 1 });
+    await upload(user, big);
+    expect(status()).toHaveTextContent("This file is 5,242,881 bytes; the limit is 5.0 MB.");
+  });
+
   it("refuses files over 5 MB without reading them", async () => {
     const user = await openDialog();
     const big = fileOf("huge.sql", "CREATE TABLE x (id int);");

@@ -5,16 +5,18 @@ import { parseSchemaText } from "./parse-schema-text";
 
 const REAL = new URL("../../tests/fixtures/real/", import.meta.url);
 const files = readdirSync(REAL).filter((f) => /\.(sql|prisma)$/.test(f));
-/** Per parse: a hang detector, not a perf budget (GitLab, 2.8 MB, takes ~0.4 s; one run under a loaded machine exceeded 2 s). */
+/** CPU ms per parse: a hang detector, not a perf budget (GitLab, 2.8 MB, takes about 0.4 s). */
 const PARSE_LIMIT_MS = 5000;
 const NASTY = ["'", '"', "`", "$$", "(", ")", ";", "/*", "*/", "/*!", "--", "{", "}", "@@", "\n"];
 
 function expectParses(text: string): void {
-  const start = performance.now();
+  const start = process.cpuUsage();
   let ok: unknown;
   expect(() => (ok = parseSchemaText(text, { now: () => "t" }).result.ok)).not.toThrow();
   expect(typeof ok).toBe("boolean");
-  expect(performance.now() - start, text.slice(0, 80)).toBeLessThan(PARSE_LIMIT_MS);
+  const { user, system } = process.cpuUsage(start);
+  // CPU time, not wall time: parallel test workers can starve a parse for seconds.
+  expect((user + system) / 1000, text.slice(0, 80)).toBeLessThan(PARSE_LIMIT_MS);
 }
 
 /**

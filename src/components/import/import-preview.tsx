@@ -39,6 +39,14 @@ export function countsText(schema: Schema): string {
   return parts.join(" · ");
 }
 
+/** "5.0 MB", or exact bytes when rounding would make a too-large file look equal to the limit. */
+function sizeLabel(bytes: number): string {
+  const rounded = formatBytes(bytes);
+  return rounded === formatBytes(MAX_IMPORT_BYTES) && bytes !== MAX_IMPORT_BYTES
+    ? `${bytes.toLocaleString("en-US")} bytes`
+    : rounded;
+}
+
 export function issuesText(issues: ImportIssue[]): string {
   const { errors, warnings } = countIssues(issues);
   if (issues.length === 0) return "No issues";
@@ -64,7 +72,7 @@ function statusText(state: ImportParseState): string {
     case "parsing":
       return "Parsing…";
     case "too-large":
-      return `This file is ${formatBytes(state.size)}; the limit is ${formatBytes(MAX_IMPORT_BYTES)}.`;
+      return `This file is ${sizeLabel(state.size)}; the limit is ${sizeLabel(MAX_IMPORT_BYTES)}.`;
     case "binary":
       return "This looks like a binary or compressed file.";
     case "done":

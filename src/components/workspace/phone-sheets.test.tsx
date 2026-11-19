@@ -175,6 +175,19 @@ describe("Enter on resize separators", () => {
     expect(useUiStore.getState().issuesPanelOpen).toBe(true);
   });
 
+  it("Close issues button: closes the docked panel and focus moves to Issues (QA-025)", () => {
+    renderWorkspace();
+    act(() => {
+      useSchemaStore.setState({ issues: [{ severity: "warning", message: "Skipped a view." }] });
+      useUiStore.getState().setIssuesPanelOpen(true);
+    });
+    const close = screen.getByTestId("issues-close");
+    act(() => close.focus());
+    fireEvent.click(close);
+    expect(useUiStore.getState().issuesPanelOpen).toBe(false);
+    expect(screen.getByTestId("toolbar-issues")).toHaveFocus();
+  });
+
   it("leaves arrow keys, Home and End to the library (QA-017 regression)", () => {
     renderWorkspace();
     for (const key of ["ArrowLeft", "ArrowRight", "Home", "End"]) {

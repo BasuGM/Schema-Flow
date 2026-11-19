@@ -8,7 +8,7 @@ import { copyText } from "@/lib/copy-text";
 import { cn } from "@/lib/utils";
 import { revealTable } from "@/stores/reveal";
 import { useSchemaStore } from "@/stores/schema-store";
-import { useUiStore } from "@/stores/ui-store";
+import { closeIssuesPanel } from "./close-issues";
 import { IssueRow } from "./issue-row";
 
 /** Rows rendered per step: a garbage file can produce thousands of issues. */
@@ -25,7 +25,6 @@ type CopyState = "idle" | "copied" | "failed";
 export function IssuesPanel({ className }: { className?: string }) {
   const issues = useSchemaStore((s) => s.issues);
   const tables = useSchemaStore((s) => s.schema?.tables);
-  const setOpen = useUiStore((s) => s.setIssuesPanelOpen);
   const [filter, setFilter] = useState<Filter>("all");
   const [limit, setLimit] = useState(ISSUE_BATCH);
   const [copy, setCopy] = useState<CopyState>("idle");
@@ -97,7 +96,7 @@ export function IssuesPanel({ className }: { className?: string }) {
             variant="ghost"
             size="icon-xs"
             aria-label="Close issues"
-            onClick={() => setOpen(false)}
+            onClick={closeIssuesPanel}
             data-testid="issues-close"
           >
             <X aria-hidden />

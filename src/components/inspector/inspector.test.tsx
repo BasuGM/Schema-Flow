@@ -102,6 +102,17 @@ describe("Inspector tabs", () => {
   });
 });
 
+describe("Inspector clear selection (QA-026)", () => {
+  it("keeps focus in the panel (the empty message), not on <body>, after the X button", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    select("public.orders");
+    await user.click(screen.getByTestId("inspector-close"));
+    expect(useUiStore.getState().selectedTableId).toBeNull();
+    await vi.waitFor(() => expect(screen.getByTestId("inspector-empty")).toHaveFocus());
+  });
+});
+
 describe("Inspector columns", () => {
   it("shows type, default, FK target, enum values and comment", () => {
     renderWorkspace();

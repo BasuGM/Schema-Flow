@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { PanelImperativeHandle, PanelSize } from "react-resizable-panels";
 import { CanvasErrorBoundary } from "@/components/canvas/canvas-error-boundary";
+import { closeIssuesPanel } from "@/components/issues/close-issues";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { SchemaCanvas } from "@/components/canvas/schema-canvas";
@@ -52,7 +53,7 @@ export function CanvasArea() {
       </ResizablePanel>
       <ResizableHandle
         aria-label="Resize issues panel"
-        onEnter={closeIssuesFromSeparator}
+        onEnter={closeIssuesPanel}
         className={cn(!docked && "hidden")}
         {...handleProps}
       />
@@ -69,16 +70,6 @@ export function CanvasArea() {
       </ResizablePanel>
     </ResizablePanelGroup>
   );
-}
-
-/**
- * Enter on the issues separator closes the panel (QA-021). The separator only exists while the
- * panel is docked and is hidden once it closes, so focus moves to the toolbar's Issues button,
- * where Enter opens the panel again at its previous size, instead of falling to `<body>`.
- */
-function closeIssuesFromSeparator() {
-  useUiStore.getState().setIssuesPanelOpen(false);
-  document.querySelector<HTMLElement>('[data-testid="toolbar-issues"]')?.focus();
 }
 
 /** The issues panel (docked or sheet) in its own error boundary (ADR-020). */

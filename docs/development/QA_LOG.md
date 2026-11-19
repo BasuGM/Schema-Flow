@@ -5,14 +5,17 @@
 Every QA item that is not Verified. Status: open / fixed – pending QA / verified / deferred → target.
 Update this table when an item changes; the dated log below stays append-only.
 
-| ID     | Found in                      | Description                                                      | Repro (one line)                                                                          | Severity | Status              |
-| ------ | ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------- | ------------------- |
-| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice | Import GitLab `structure.sql`, press Reset view                                           | Medium   | deferred → P3-T07   |
-| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks   | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium   | verified (round 13) |
-| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                     | Select a hub in a packed large layout, pan at zoom 1                                      | Low      | verified (round 13) |
-| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body               | Focus the issues divider, press Enter                                                     | Low      | verified (round 13) |
-| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed              | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low      | verified (round 13) |
-| QA-023 | Cowork round 13 (P2-T10)      | Import counts lack thousands separators ("9982 columns")         | Import GitLab `structure.sql`, read the preview counts                                    | Low      | fixed – pending QA  |
+| ID     | Found in                      | Description                                                      | Repro (one line)                                                                          | Severity      | Status              |
+| ------ | ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------- | ------------------- |
+| QA-018 | Cowork round 12 (P2-T10)      | GitLab layout ~242,000 px tall; Reset view at 0.05 shows a slice | Import GitLab `structure.sql`, press Reset view                                           | Medium        | deferred → P3-T07   |
+| QA-019 | Cowork round 12 (P2-T10)      | Real-input select/deselect cost; harness used synthetic clicks   | `large-schema-perf.mjs` on `neighbourhood-2000`: select/deselect still above 40 ms budget | Medium        | verified (round 13) |
+| QA-020 | Cowork round 12 (P2-T10)      | Pan at zoom 1 with many dimmed edges is slow                     | Select a hub in a packed large layout, pan at zoom 1                                      | Low           | verified (round 13) |
+| QA-021 | Cowork round 12 (P2-T10)      | Enter on "Resize issues panel" drops focus to body               | Focus the issues divider, press Enter                                                     | Low           | verified (round 13) |
+| QA-022 | Subagent smoke test (tooling) | ESLint scanned `out-qa/`, so `npm run check` failed              | Build with QA hooks into `out-qa/`, run `npm run check`                                   | Low           | verified (round 13) |
+| QA-023 | Cowork round 13 (P2-T10)      | Import counts lack thousands separators ("9982 columns")         | Import GitLab `structure.sql`, read the preview counts                                    | Low           | fixed – pending QA  |
+| QA-024 | Claude Code bug-bash (BB-P2)  | A file 1 byte over the limit reads "5.0 MB; the limit is 5.0 MB" | Choose a 5 MiB + 1 byte file                                                              | Low           | fixed – pending QA  |
+| QA-025 | Claude Code bug-bash (BB-P2)  | Close button of the issues panel drops focus to `body`           | Open issues, focus Close, Enter                                                           | Medium (a11y) | fixed – pending QA  |
+| QA-026 | Claude Code bug-bash (BB-P2)  | Inspector "Clear selection" button drops focus to `body`         | Select a table, focus the X, Enter                                                        | Medium (a11y) | fixed – pending QA  |
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -689,3 +692,24 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   under load exceeded 2 s on a 0.4 s parse.
 - **Checks:** `npm run check` exit 0; `npm run e2e` on a served normal build: 123 passed, 0 failed,
   20 skipped.
+
+## 2026-11-19 — BB-P2: Phase 2 bug-bash (Claude Code, exploratory)
+
+- **Found by Claude Code, not independently verified.** Charter and per-row results:
+  [plans/bug-bash-p2.md](plans/bug-bash-p2.md). Rows 1–3 and 6 were explored by script; rows 4, 5
+  and 7 are automated in `tests/e2e/bug-bash.spec.ts` (AC-BB-P2-1…3).
+- **QA-024 (Low) — limit message.** A file a few bytes over 5 MiB read "This file is 5.0 MB; the
+  limit is 5.0 MB." Now shows exact bytes when rounding hides the difference. Unit test.
+- **QA-025 (Medium, a11y) — issues Close button.** Closing the docked issues panel with its Close
+  button left focus on `body`. A shared `closeIssuesPanel()` (also used by the divider's Enter,
+  QA-021) moves focus to the toolbar's Issues button. Unit test and e2e.
+- **QA-026 (Medium, a11y) — inspector X.** "Clear selection" removed itself and dropped focus to
+  `body`. Focus now moves to the inspector's empty message (`tabIndex` −1). Unit test and e2e.
+- **Not defects, recorded:** a cancelled import keeps its draft (by design); an open issues panel
+  stays open after a clean import and shows its empty state (documented in `apply-import.ts`).
+- **Test flake fixed:** the fuzz test's per-parse limit now measures CPU time (`process.cpuUsage`),
+  because a loaded machine (parallel workers) made a 0.4 s parse take over 5 s of wall time.
+- **Backlog after triage:** 5 open (QA-018 deferred; QA-023…026 pending re-verification), so no
+  bug-fix task is added before P3-T01.
+- **Checks:** `npm run check` exit 0 (59 files / 405 tests); `npm run e2e` on a served normal
+  build: 137 passed, 0 failed, 20 skipped; `toolbar-width.mjs` PASS light and dark.

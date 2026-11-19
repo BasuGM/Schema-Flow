@@ -2,12 +2,12 @@
 
 ## Now
 
-- **Task:** Cowork round 13 handled: QA-023 and two new e2e specs (HEAD below). Phase 2 closed.
+- **Task:** BB-P2 (Phase 2 bug-bash): Self-checked, Awaiting Cowork verification. HEAD: see the latest commit.
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** phase-end bug-bash (Phase 2), then P3-T01. Cowork re-checks QA-023 and the two new specs.
-- **Backlog:** QA-018 deferred → P3-T07; QA-023 fixed – pending QA ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Next:** Cowork runs `npm run e2e`, re-checks QA-023…026, and a ≤ 20 min exploration of rows 1 and 4; then P3-T01.
+- **Backlog:** 5 open: QA-018 deferred → P3-T07; QA-023…026 fixed – pending QA ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
-- **Latest handoff:** [handoffs/round-13.md](handoffs/round-13.md).
+- **Latest handoff:** [handoffs/BB-P2.md](handoffs/BB-P2.md).
 
 Status vocabulary (exact): `Not started | In progress | Self-checked | Awaiting Cowork verification |
 Verified | Verified with known issues | Blocked`. `Verified*` is set only after a Cowork report has
@@ -55,6 +55,7 @@ issues accepted at close-out:
 | P2-T09 | Neighbourhood highlighting                | **Verified** (Cowork, `c82ba77`: steps 1–14 pass; AC-P2-T09-1…6; QA-017 fixed, AC-P1-T06-10). Selecting a table dims every table more than 1 or 2 hops away (setting: Off / 1 / 2, default 1; ADR-018), with per-theme dim tokens. Collapsed side panels are inert.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | P2-T10 | Phase 2 hardening                         | **Verified with known issues** (Cowork round 13 at `3fdd4c9`; QA-019…022 verified, QA-018 → P3-T07; `2be3530`, `70bdf99`, `9a53579`, `418c542`, `5a92986` + docs; round 12 fixes `9168b2a`: QA-019, QA-020, QA-021; QA-018 deferred to P3-T07). Real-world fixtures (GitLab `structure.sql`, Sakila, generated mysqldump-180 and Prisma-200) with source-derived counts; partitions folded, MySQL `DELIMITER` and `/*! */`, qualified table names (ADR-019); import busy state; error boundaries per region, app/global error pages and build-time QA hooks (ADR-020); phone table-list sheet and Enter on separators (ADR-021); large-schema frame costs (ADR-022: two of four budgets met). README and Phase 2 docs. |
 | E2E-01 | Playwright e2e suite (tooling)            | **Verified** (Cowork round 13; two specs added after: QA-020 dim opacity, zoomed-out rendering; ADR-024; plan [plans/e2e-suite.md](plans/e2e-suite.md); AC-E2E-01-1…4). Specs in `tests/e2e`; `npm run e2e` against a served build, plus error-region specs with `E2E_QA_HOOKS=1` against `out-qa/`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| BB-P2  | Phase 2 bug-bash (exploratory)            | **Self-checked** (plan [plans/bug-bash-p2.md](plans/bug-bash-p2.md); AC-BB-P2-1…4). 7 charter rows; QA-024…026 found and fixed; `tests/e2e/bug-bash.spec.ts` (console, viewport × theme, focus).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 **Phase 2 overall: Verified with known issues** (Cowork round 13; final handoff
 [handoffs/P2-final.md](handoffs/P2-final.md)). Accepted known issues:

@@ -38,6 +38,7 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
         {close && <div className="flex justify-end px-2 pt-2">{close}</div>}
         <div
           data-testid="inspector-empty"
+          tabIndex={-1}
           className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center"
         >
           <MousePointerClick aria-hidden className="size-5 text-muted-foreground" />
@@ -99,7 +100,7 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
             variant="ghost"
             size="icon-sm"
             aria-label="Clear selection"
-            onClick={() => useUiStore.getState().selectTable(null)}
+            onClick={clearSelectionKeepingFocus}
             data-testid="inspector-close"
           >
             <X aria-hidden />
@@ -132,6 +133,17 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
         </TabsContent>
       </Tabs>
     </aside>
+  );
+}
+
+/**
+ * Clears the selection from the inspector's own button. The button unmounts with the selection, so
+ * focus moves to the empty-state message in the same panel instead of falling to `<body>` (QA-026).
+ */
+function clearSelectionKeepingFocus() {
+  useUiStore.getState().selectTable(null);
+  requestAnimationFrame(() =>
+    document.querySelector<HTMLElement>('[data-testid="inspector-empty"]')?.focus(),
   );
 }
 
