@@ -17,9 +17,11 @@ Now block. Do **not** read `docs/development/handoffs/archive/` unless asked.
 4. New defects get the next `QA-###` (see the Backlog table for the last number), a severity
    (blocker / major / minor / cosmetic, or High / Medium / Low as in the log), a one-line repro, and
    a triage:
-   - **fix now** if High or Medium, if it blocks the next feature, if it is an accessibility
-     blocker, or if the fix is cheap;
-   - otherwise **deferred → target** (a ROADMAP task ID).
+   - **fix now** only if it is **blocking**: High severity, a crash or data loss, it breaks what
+     the next task builds on, or it stops verification;
+   - otherwise (Medium, Low, non-blocking a11y) **deferred → target** (a bug-fix task ID or the
+     phase-end bug-bash). Log it, don't hold the round: the verdict is "Verified with known
+     issues" and the next task starts.
 5. Reply with: verdict, a compact step table, the defects, and **one paste block** for Claude Code
    (start it with `/qa` so the report is handled by the fix-qa-round skill).
 

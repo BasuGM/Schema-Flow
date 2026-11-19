@@ -51,6 +51,9 @@ Workflow skills: implement-plan, fix-qa-round (user-level). Plans go in `docs/de
   6. Commit `<TASK>: <short title>` and push.
 - Fix failures at the root cause; `npm run check` must be green; record actual results.
 - Cowork instructions live in `COWORK.md`; a pasted Cowork report is handled with `/qa`.
+- Bug triage: fix only **blocking** bugs before moving on (High, crash/data loss, breaks the next
+  task, or stops verification). Log the rest in the QA_LOG Backlog as Deferred → target (a bug-fix
+  task or the phase-end bug-bash) and start the next task. Backlog > ~10 → add a bug-fix task.
 
 ## Honesty rule
 
