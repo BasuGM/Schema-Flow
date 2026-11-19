@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
+import { CollapseAllItems } from "./collapse-all-items";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 /**
@@ -75,6 +76,8 @@ export function MoreMenu({
         </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
         <NeighbourhoodRadio testIdPrefix="more" />
+        <DropdownMenuSeparator />
+        <CollapseAllItems testIdPrefix="more" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

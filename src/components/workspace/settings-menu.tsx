@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
+import { CollapseAllItems } from "./collapse-all-items";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 export function SettingsMenu() {
@@ -35,6 +36,8 @@ export function SettingsMenu() {
         </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
         <NeighbourhoodRadio testIdPrefix="settings" />
+        <DropdownMenuSeparator />
+        <CollapseAllItems testIdPrefix="settings" />
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>More settings arrive in later phases</DropdownMenuItem>
       </DropdownMenuContent>

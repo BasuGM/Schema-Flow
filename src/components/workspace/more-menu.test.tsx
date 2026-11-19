@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { beforeEach, describe, expect, it } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useLayoutStore } from "@/stores/layout-store";
+import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
 import { Toolbar } from "./toolbar";
@@ -47,5 +48,24 @@ describe("Toolbar on phones (More menu)", () => {
     await user.click(screen.getByTestId("toolbar-more"));
     await user.click(await screen.findByTestId("more-minimap"));
     expect(useUiStore.getState().showMiniMap).toBe(true);
+  });
+
+  it.each([
+    ["toolbar-more", "more"],
+    ["toolbar-settings", "settings"],
+  ])("%s: All tables sets every table's collapse mode", async (trigger, prefix) => {
+    const user = userEvent.setup();
+    renderToolbar();
+    const { schema, fingerprint } = useSchemaStore.getState();
+    const collapsed = () => useLayoutStore.getState().layouts[fingerprint!]!.collapsed;
+
+    await user.click(screen.getByTestId(trigger));
+    await user.click(await screen.findByTestId(`${prefix}-collapse-all-header`));
+    expect(Object.keys(collapsed())).toHaveLength(schema!.tableOrder.length);
+    expect(new Set(Object.values(collapsed()))).toEqual(new Set(["header"]));
+
+    await user.click(screen.getByTestId(trigger));
+    await user.click(await screen.findByTestId(`${prefix}-collapse-all-full`));
+    expect(collapsed()).toEqual({});
   });
 });
