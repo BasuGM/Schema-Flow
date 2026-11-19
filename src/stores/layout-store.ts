@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type {
+  CollapseMode,
   DiagramLayout,
   LayoutDirection,
   Position,
@@ -20,6 +21,10 @@ interface LayoutState {
   relayout: (schema: Schema, fingerprint: string, direction?: LayoutDirection) => void;
   setPosition: (fingerprint: string, table: TableId, position: Position) => void;
   setViewport: (fingerprint: string, viewport: Viewport) => void;
+  /** One table's collapse mode. Positions stay; expanding can overlap neighbours until Layout. */
+  setCollapse: (fingerprint: string, table: TableId, mode: CollapseMode) => void;
+  /** Every table's collapse mode at once. */
+  setAllCollapse: (schema: Schema, fingerprint: string, mode: CollapseMode) => void;
 }
 
 function computeLayout(
@@ -39,6 +44,14 @@ function computeLayout(
     direction: dir,
     ...(prev?.viewport ? { viewport: prev.viewport } : {}),
   };
+}
+
+/** The layout with `edgeRoutes` replaced; the key is absent when there are none. */
+function withRoutes(layout: DiagramLayout, edgeRoutes: DiagramLayout["edgeRoutes"]): DiagramLayout {
+  const copy: DiagramLayout = { ...layout };
+  if (edgeRoutes) copy.edgeRoutes = edgeRoutes;
+  else delete copy.edgeRoutes;
+  return copy;
 }
 
 export const useLayoutStore = create<LayoutState>()((set, get) => {
@@ -89,6 +102,31 @@ export const useLayoutStore = create<LayoutState>()((set, get) => {
       const layout = get().layouts[fingerprint];
       if (!layout) return;
       set((s) => ({ layouts: { ...s.layouts, [fingerprint]: { ...layout, viewport } } }));
+      save(fingerprint);
+    },
+    setCollapse: (fingerprint, table, mode) => {
+      const layout = get().layouts[fingerprint];
+      if (!layout || (layout.collapsed[table] ?? "full") === mode) return;
+      // "full" is the default, so it is stored as absence and the map stays sparse.
+      const collapsed = { ...layout.collapsed };
+      if (mode === "full") delete collapsed[table];
+      else collapsed[table] = mode;
+      // Row handles move with the mode, so routes that end at this table no longer fit.
+      const at = layout.positions[table];
+      const edgeRoutes = at ? dropRoutesAt(layout.edgeRoutes, at) : layout.edgeRoutes;
+      set((s) => ({
+        layouts: { ...s.layouts, [fingerprint]: withRoutes({ ...layout, collapsed }, edgeRoutes) },
+      }));
+      save(fingerprint);
+    },
+    setAllCollapse: (schema, fingerprint, mode) => {
+      const layout = get().layouts[fingerprint];
+      if (!layout) return;
+      const collapsed: Record<TableId, CollapseMode> = {};
+      if (mode !== "full") for (const id of schema.tableOrder) collapsed[id] = mode;
+      set((s) => ({
+        layouts: { ...s.layouts, [fingerprint]: withRoutes({ ...layout, collapsed }, undefined) },
+      }));
       save(fingerprint);
     },
   };
