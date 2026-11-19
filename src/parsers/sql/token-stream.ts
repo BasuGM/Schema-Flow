@@ -33,6 +33,11 @@ export class TokenStream {
     return this.tokens[this.pos + ahead];
   }
 
+  /** The token before the cursor. */
+  peekBack(): Token | undefined {
+    return this.tokens[this.pos - 1];
+  }
+
   next(): Token | undefined {
     const t = this.tokens[this.pos];
     if (t) this.pos++;

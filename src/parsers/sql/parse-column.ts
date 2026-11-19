@@ -147,13 +147,19 @@ function readType(ts: TokenStream): string {
   return parts.join("");
 }
 
+/** True when the next word is part of a cast type (`::character varying`), not a constraint. */
+function isCastType(ts: TokenStream): boolean {
+  return ts.peekBack()?.text === "::" || ts.peekBack()?.value?.toUpperCase() === "NATIONAL";
+}
+
 /** DEFAULT expression: tokens up to the next constraint keyword or `,`/`)` at depth 0. */
 function readDefaultExpression(ts: TokenStream): string {
   const start = ts.index;
   let first = true;
   while (!ts.done && !ts.isPunct(",") && !ts.isPunct(")")) {
     const t = ts.peek()!;
-    if (!first && t.kind === "word" && CONSTRAINT_START.has(t.value.toUpperCase())) break;
+    if (!first && t.kind === "word" && CONSTRAINT_START.has(t.value.toUpperCase()) && !isCastType(ts))
+      break;
     if (t.kind === "punct" && t.text === "(") ts.readParenthesized();
     else ts.next();
     first = false;

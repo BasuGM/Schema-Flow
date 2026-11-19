@@ -22,6 +22,7 @@ const SAME: CanonicalOption[] = ["types", "defaults"];
 const FIXTURES: [string, SqlDialect][] = [
   ["sql/ecommerce.postgres.sql", "postgresql"],
   ["sql/pgdump.postgres.sql", "postgresql"],
+  ["sql/pg-casts.postgres.sql", "postgresql"],
   ["sql/edge-cases.postgres.sql", "postgresql"],
   ["sql/shop.mysql.sql", "mysql"],
   ["sql/blog.sqlite.sql", "sqlite"],
