@@ -800,3 +800,11 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
   - QA-031, QA-032, QA-033: deferred → BB-P3 (Backlog rows already added).
 - **Status:** Fixed — pending Cowork verification (not independently verified). Cowork re-verifies with the P3-T05 handoff.
 - **Notes (no action):** Prisma → Prisma renames models (`User` → `Users` with `@@map("users")`) per ADR-028. Cast stripping from literal defaults is intentional (`''::character varying` is stored as `''`).
+
+## 2026-11-19 — P3-T05 (Export dialog)
+
+- **Handoff:** [handoffs/P3-T05.md](handoffs/P3-T05.md)
+- **Cowork result:** Pending — not independently verified.
+- **Defects:** none logged. Carries the QA-030 re-verification (fixed 22534f2, "fixed – pending QA").
+- **Checks (Claude Code, self-run):** Two test-side issues in the first e2e run (focus-ring test assumed the first Tab hits a radio; phone test pressed arrows faster than Radix moves focus), both fixed. Full e2e runs also showed a load-time flake (`table-node-orders` not visible, a different spec each run, passes alone).
+- `npm run check` green (80 files, 613 tests); e2e last full run 167 passed, 2 failed (flake, pass alone), 20 skipped; `toolbar-width.mjs` PASS light and dark; `export-perf` on GitLab: SVG 176/123 ms, PNG 1,057 ms, SQL tab 82 ms, JSON tab 63 ms.

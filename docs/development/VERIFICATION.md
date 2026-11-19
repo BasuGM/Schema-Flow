@@ -739,3 +739,14 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 
 - **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green, 77 files / 593 tests; CLI run on 10 fixtures × 6 targets, exit 0; SQLite output executed in `sqlite3` for every fixture). Not independently verified.
 
+## P3-T05 — Export dialog
+
+- AC-P3-T05-1: Export opens from the toolbar button (not on phones), Settings → Export… / Export image…, and the phone More menu; tabs SQL · Prisma · Mermaid · JSON · Image switch by click and arrow keys; Escape and Close return focus to the control it was opened from; without tables the toolbar button is `aria-disabled`, focusable, explained by its tooltip, and does nothing. _Auto_
+- AC-P3-T05-2: Each text tab shows a read-only preview, a line / size line and the warnings (count and list, or "No warnings"); SQL has a dialect choice (default: the schema's source dialect) and Mermaid a columns choice; large output is capped in the preview with a note. _Auto_
+- AC-P3-T05-3: Copy puts the full text on the clipboard and announces "Copied" or "Copy failed…"; Copy and Download are disabled until the text is ready. _Auto_ (clipboard in Chromium; Safari / iOS: _Manual_)
+- AC-P3-T05-4: Downloaded files equal the CLI output for the same sample byte for byte (PostgreSQL / MySQL / SQLite SQL, Prisma, Mermaid all / keys, JSON), named `<schema>.<dialect>.sql`, `.prisma`, `.mmd`, `.json`; the dialog stays open. _Auto_
+- AC-P3-T05-5: The Image tab keeps the P3-T03 behaviour (AC-P3-T03-1…6). Stale output is impossible: a re-import that changes only a default shows the new default, and switching tabs during generation never shows another tab's text. _Auto_
+- AC-P3-T05-6: At 390 px the dialog and page don't overflow, the last tab (Image) is reachable by arrow keys, visible and ringed; `toolbar-width.mjs` still prints PASS; on GitLab the SQL / JSON previews appear well under 1 s. _Auto_ (+ _Manual_ on a real phone)
+- AC-QA-030: no export of `gitlab-structure.postgres.sql` contains `::)` (PostgreSQL, MySQL, SQLite, Prisma); `users.email` shows `DEFAULT ''`. _Auto_ (CLI)
+
+- **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green; `npm run e2e` on a served build; see the handoff). QA-030 fixed in `22534f2`, pending re-verification.

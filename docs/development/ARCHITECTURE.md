@@ -40,6 +40,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-026](#adr-026--collapse-modes-ui-keep-positions-mouse-toggle-keyboard-inspector-2026-11-19-p3-t02)                                  | 2026-11-19 | Collapse modes UI: positions kept, mouse toggle + inspector control, bulk actions     | P3-T02                                                                       |
 | [ADR-027](#adr-027--image-export-own-svg-renderer-instead-of-html-to-image-2026-11-19-p3-t03)                                            | 2026-11-19 | Image export: own SVG renderer, no `html-to-image`                                    | P3-T03                                                                       |
 | [ADR-028](#adr-028--text-generators-sql-prisma-mermaid-json-with-warnings-and-fixed-point-tests-2026-11-19-p3-t04)                       | 2026-11-19 | Text generators (SQL ×3, Prisma, Mermaid, JSON): warnings, mapping, fixed-point tests | P3-T04                                                                       |
+| [ADR-029](#adr-029--one-export-dialog-with-tabs-preview-and-stale-safe-generation-2026-11-19-p3-t05) | 2026-11-19 | One Export dialog: text + image tabs, capped preview, revision-keyed cache, gesture-safe copy / download | P3-T05 |
 
 ## Data flow
 
@@ -123,7 +124,7 @@ flowchart LR
 | `src/components`      | React UI (`workspace/`, `canvas/`, `errors/`, `ui/` = shadcn)                     | everything above             |
 | `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                                                      | domain                       |
 | `src/analysis` (P4)   | Health checks                                                                     | domain                       |
-| `src/generators` (P3) | Diagram SVG + raster sizing (P3-T03); SQL / Prisma / Mermaid / JSON text (P3-T04) | domain, graph (pure)         |
+| `src/generators` (P3) | Diagram SVG + raster sizing (P3-T03); SQL / Prisma / Mermaid / JSON text (P3-T04); Export dialog in `components/export` (P3-T05) | domain, graph (pure)         |
 
 Rules: pure modules have zero React/Next/DOM imports and are unit-tested; parsers never import
 React Flow; canvas components never import parsers. `src/graph` imports only _types_ from
@@ -898,3 +899,22 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   partition bounds are not shown, only the list of partitions.
 - The CREATE TABLE … PARTITION OF column list is not parsed (it repeats the parent's).
 - Separator Enter handling relies on react-resizable-panels checking `defaultPrevented` (v4).
+
+### ADR-029 — One Export dialog with tabs, preview and stale-safe generation (2026-11-19, P3-T05)
+
+- **Decision:** one `ExportDialog` (`components/export`) with tabs SQL · Prisma · Mermaid · JSON · Image, opened from the toolbar
+  Export button, Settings → "Export…" / "Export image…" and the phone More menu (the last tab is remembered for the session in
+  `ui-store.exportTab`). The image tab is the P3-T03 form unchanged (`ExportImagePanel`). Text tabs call `generateSchemaText`
+  (lazy `import()`, ADR-014 style) and show a preview capped at 2,000 lines / 200 KB, the size, the warnings, Copy and Download.
+  Copy and Download always use the full text; downloading keeps the dialog open so several formats can be exported.
+- **Stale safety:** `schema-store.revision` bumps on every load or clear, because the fingerprint hashes only table IDs and column
+  names and a re-import with changed types or defaults would show stale output. Generated text is cached per dialog opening, keyed by
+  revision + target + options, and a request only reports back while its key is still current, so a slow SQL run can't fill the
+  JSON tab.
+- **Gestures:** Copy and Download are disabled until the text is ready and run synchronously in the click handler (Safari and iOS drop
+  the user gesture after an `await`); `copyText` calls `navigator.clipboard.writeText` before any await and falls back to
+  `execCommand` when the Clipboard API is unavailable.
+- **Cross-checking:** `scripts/headless/generate.ts --sample` produces the same schema the app loads, so e2e compares each
+  downloaded file byte for byte with the CLI.
+- **Rejected:** separate dialogs per format (more entry points, no shared options); a Monaco/CodeMirror preview (a dependency for a
+  read-only view); showing the whole text (GitLab JSON is 5 MB, 204,400 lines).

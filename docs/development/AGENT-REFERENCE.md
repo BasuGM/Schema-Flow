@@ -72,10 +72,13 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   without a ROADMAP task ID.
 - Add `data-testid` to key UI (toolbar buttons, `table-list-item-<name>`, `table-node-<name>`,
   inspector root, empty states).
-  Export image (P3-T03): `settings-export-image`, `more-export-image`, `export-image-dialog`,
-  `export-format-{png|svg}`, `export-theme-{current|light|dark}`, `export-scale-{1|2}`,
-  `export-size` / `export-output` (`data-width`, `data-height`), `export-reduced-note`,
-  `export-download`, `export-cancel`, `export-error`.
+  Export dialog (P3-T03, P3-T05): `toolbar-export`, `settings-export`, `settings-export-image`, `more-export`,
+  `more-export-image`, `export-dialog`, `export-tab-{sql|prisma|mermaid|json|image}`; text tabs:
+  `export-dialect-{postgresql|mysql|sqlite}`, `export-mermaid-{all|keys}`, `export-preview`, `export-text-size`,
+  `export-preview-truncated`, `export-warnings`, `export-copy`, `export-copy-status`, `export-download-text`,
+  `export-generating`, `export-close`; image tab: `export-format-{png|svg}`, `export-theme-{current|light|dark}`,
+  `export-scale-{1|2}`, `export-size` / `export-output` (`data-width`, `data-height`), `export-reduced-note`,
+  `export-download`, `export-cancel`; both: `export-error`.
 
 ## Workflow and status vocabulary
 
