@@ -21,7 +21,6 @@ const fixture = readFileSync(
   new URL("../../tests/fixtures/real/gitlab-structure.postgres.sql", import.meta.url),
   "utf8",
 );
-const RUNS = 3;
 const port = 9400 + Math.floor(Math.random() * 400);
 const profile = mkdtempSync(join(tmpdir(), "schemaflow-export-"));
 const chrome = spawn(
