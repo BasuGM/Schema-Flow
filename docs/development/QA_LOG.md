@@ -597,3 +597,42 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Bundle:** +12,494 B raw / +4,897 B gzip initial JS (1,147,345 / 362,838).
 - **Cowork result:** Pending — not independently verified. See
   [handoffs/P2-final.md](handoffs/P2-final.md).
+
+## 2026-11-19 — Cowork round 12: P2-T10 at `40f0d16` (report pasted by the user)
+
+- **Cowork result (pasted):** steps 1–5 PASS (except the issues divider), step 8 functional
+  checks, 9 and 10–17 PASS. Fixture counts independently recounted (own statement split): all four
+  match, 0 dangling relationships; fuzz 1,532 parses, 0 throws, worst 322 ms. Busy label painted at
+  100 ms. Phone sheet light/dark, one-sheet rule, 700→820 docking, `toolbar-width` PASS; Enter on
+  the inspector and table-list dividers PASS. Steps 6–7 **NOT TESTED** (Cowork cannot run
+  `npm install`; asked for a prebuilt `out-qa/`). Cowork harness (cloud, 1 hop vs Off): select hub
+  94 vs 86 ms, deselect 89 vs 53, hub→other 82 vs 55, centring 107 vs 101, pan fitted with hub
+  24–28 vs 27–30 fps. Recommendation: not closed yet.
+- **QA-018 (Medium) — GitLab layout ~230,000 px tall; Reset view at 0.05 shows a slice.**
+  Measured: 3,904 × 242,359 px (a 709-table component with a 248-table rank, plus 131 isolated
+  tables). A packing pass was built and tested (24,696 × 15,892 px, small schemas unchanged), but
+  it puts 1,790–2,000 tables in the fitted view of `neighbourhood-2000`: select / deselect
+  150–330 ms and panning 10–17 fps on the M1. **Deferred to P3-T07 by the user's decision**, to
+  land with a cheap overview renderer (ADR-023). Status: Open (deferred).
+- **QA-019 (Medium) — real-input select/deselect cost; the harness used synthetic clicks.**
+  Fixed in `9168b2a`: the harness clicks through CDP (pressed/released) and reports pointerdown →
+  next frame and the longest task. Profiled: React Flow's pointerdown path is ~15–20 ms of JS; the
+  rest is rendering, proportional to elements on screen. Rows now carry handles only where edges
+  attach, and zoomed-out large schemas render skeleton rows and marker-less edges (fitted view
+  11,854 → 4,189 elements). M1, real input, 1 hop: select 60–95 → 34–53 ms, deselect 59–77 → 58–66
+  ms (one 142 ms outlier in 6 runs), hub→other 50–53 → 31–74 ms. The 40 ms budget is still not
+  met (ADR-023). Status: Fixed (budget not met) — pending re-verification.
+- **QA-020 (Low) — pan at zoom 1 with many dimmed edges is slow.** Fixed in `9168b2a`: edges dim
+  with stroke/fill opacity instead of group opacity, and dim transitions are off while the
+  viewport moves. On the M1 the default layout already ran at 60 fps; in the packed test layout
+  (434 dimmed long edges in view) 6 → 60 fps. Revision to AC-P2-T09-3 noted in VERIFICATION.
+  Status: Fixed — pending re-verification.
+- **QA-021 (Low, a11y) — Enter on "Resize issues panel" drops focus to body.** Fixed in
+  `9168b2a`: Enter closes the panel and moves focus to `toolbar-issues`, where Enter reopens it at
+  its previous size (the separator is hidden with the panel, so focus can't stay on it).
+  Regression test in `phone-sheets.test.tsx`. Status: Fixed — pending re-verification.
+- **Steps 6–7:** QA-hook build of `9168b2a` placed in `out-qa/` (git-ignored); `out/` rebuilt as
+  the normal build. The hook code is in one `out-qa` chunk and in none of `out/`.
+- **Checks:** `npm run check` exit 0 (58 files / 400 tests, build ✔).
+- **Cowork result:** Pending — not independently verified. See
+  [handoffs/P2-T10-r12.md](handoffs/P2-T10-r12.md).

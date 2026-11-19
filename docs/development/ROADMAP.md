@@ -44,7 +44,7 @@ issues accepted at close-out:
 | P2-T07 | Search                                    | **Verified** (Cowork, `ac91200`: steps 1–14 pass; AC-P2-T07-1…9). QA-016 (persistent live region) folded into P2-T08. Own palette (ADR-016, no cmdk): ⌘K / Ctrl+K / `/` or the toolbar button; tables and columns ranked by tier (exact → fuzzy), multi-word and dotted queries, highlights; choosing a column centers on its row and highlights it. Phone toolbar: Layout / Theme / Settings in a More menu.                                                                                                                                                |
 | P2-T08 | Full inspector                            | **Verified** (Cowork, `30260fe`: steps 1–12 pass; AC-P2-T08-1…8, revised AC-P1-T08-5; QA-016 fixed). Columns · Keys · Relations tabs (ADR-017): defaults, comments, enum values, FK links; PK/unique/indexes/checks; references and referenced-by with navigation and one-step Back; 100-row caps; phone overlay sheet. QA-017 (collapsed panels focusable) folded into P2-T09.                                                                                                                                                                              |
 | P2-T09 | Neighbourhood highlighting                | **Verified** (Cowork, `c82ba77`: steps 1–14 pass; AC-P2-T09-1…6; QA-017 fixed, AC-P1-T06-10). Selecting a table dims every table more than 1 or 2 hops away (setting: Off / 1 / 2, default 1; ADR-018), with per-theme dim tokens. Collapsed side panels are inert.                                                                                                                                                                                                                                                                                          |
-| P2-T10 | Phase 2 hardening                         | **Awaiting Cowork verification** (`2be3530`, `70bdf99`, `9a53579`, `418c542`, `5a92986` + docs). Real-world fixtures (GitLab `structure.sql`, Sakila, generated mysqldump-180 and Prisma-200) with source-derived counts; partitions folded, MySQL `DELIMITER` and `/*! */`, qualified table names (ADR-019); import busy state; error boundaries per region, app/global error pages and build-time QA hooks (ADR-020); phone table-list sheet and Enter on separators (ADR-021); large-schema frame costs (ADR-022: two of four budgets met). README and Phase 2 docs. |
+| P2-T10 | Phase 2 hardening                         | **Awaiting Cowork verification** (`2be3530`, `70bdf99`, `9a53579`, `418c542`, `5a92986` + docs; round 12 fixes `9168b2a`: QA-019, QA-020, QA-021; QA-018 deferred to P3-T07). Real-world fixtures (GitLab `structure.sql`, Sakila, generated mysqldump-180 and Prisma-200) with source-derived counts; partitions folded, MySQL `DELIMITER` and `/*! */`, qualified table names (ADR-019); import busy state; error boundaries per region, app/global error pages and build-time QA hooks (ADR-020); phone table-list sheet and Enter on separators (ADR-021); large-schema frame costs (ADR-022: two of four budgets met). README and Phase 2 docs. |
 
 **Phase 2 overall: Awaiting Cowork verification** (P2-T01…T09 Verified; P2-T10 pending; final
 handoff [handoffs/P2-final.md](handoffs/P2-final.md)). Known issues proposed for acceptance at
@@ -52,15 +52,19 @@ close-out:
 
 - Parsing and layout run on the main thread: GitLab's 992 tables take ≈ 3 s behind a busy state;
   a 2,000-table linear FK chain can take over 90 s (possible P3 guard below).
-- Hub select / deselect on a 2,000-table schema: 52–68 ms to the next frame on an M1 (40 ms
-  budget not met; ADR-022).
+- Hub select / deselect on a 2,000-table schema: 34–66 ms from pointerdown to the next frame on an
+  M1 with real input (40 ms budget not met; ADR-022, ADR-023).
+- QA-018: very large, shallow schemas lay out as tall columns; Reset view shows a slice
+  (P3-T07).
 - Views, functions, triggers, expression indexes and EXCLUDE constraints are skipped (reported).
 
 ## Phase 3 — Persistence & export (summary)
 
 P3-T01 Layout persistence (localStorage, keyed by fingerprint) · P3-T02 Per-table collapse modes
 UI · P3-T03 Image export (PNG/SVG via `html-to-image`) · P3-T04 Schema generators (SQL DDL,
-Prisma, Mermaid, JSON) · P3-T05 Export dialog · P3-T06 Session restore.
+Prisma, Mermaid, JSON) · P3-T05 Export dialog · P3-T06 Session restore · P3-T07 Packed layout for
+large, shallow schemas together with a cheap overview renderer (QA-018; a packed 2,000-table
+overview drawn as DOM costs 150–330 ms per click and 10–17 fps panning, ADR-023).
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),

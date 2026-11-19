@@ -612,18 +612,30 @@ gives the commands to recount them. Issues are grouped by kind (names blanked).
 - AC-P2-T10-6: Enter on "Resize table list", "Resize inspector" or "Resize issues panel" collapses
   that panel (content `inert`, toggle `aria-expanded="false"`) and Enter again restores its
   previous width (not the minimum); focus stays on the separator and `aria-valuenow` updates.
-  Arrow keys, Home and End resize as before (AC-P1-T06-10). _Auto_; _Manual_
+  Arrow keys, Home and End resize as before (AC-P1-T06-10). Exception, the issues separator (it is
+  hidden once the panel closes): Enter closes the issues panel and focus moves to
+  `toolbar-issues` (`aria-pressed="false"`), where Enter opens it again at its previous size
+  (QA-021). _Auto_; _Manual_
 - AC-P2-T10-7: Large-schema frame costs, measured with `node scripts/headless/large-schema-perf.mjs`
-  on `neighbourhood-2000` (development machine budgets, 1 hop, worst of 3): worst centring frame
-  ≤ 100 ms **(met: 81 ms)**; panning at the fitted zoom with `hub` selected ≥ 45 fps **(met: 58)**;
-  hub select / deselect first frame ≤ 40 ms **(not met: 68 / 64 ms; Off baseline 54 / 49 ms;
-  ADR-022)**. Other machines compare 1 hop against their own Off baseline. For large schemas
-  below zoom 0.3, column rows show bars instead of text (`data-zoomed-out` on `schema-canvas`);
-  at zoom ≥ 0.3 and for normal-sized schemas they show text as before. _Manual_
+  on `neighbourhood-2000` with **real mouse input** (CDP pressed/released; QA-019) (development
+  machine budgets, 1 hop, worst of 3): worst centring frame ≤ 100 ms **(met: 70–82 ms)**; panning
+  at the fitted zoom with `hub` selected ≥ 45 fps **(met: 59)**; hub select / deselect from
+  pointerdown to the next frame ≤ 40 ms **(not met: 50–53 / 66–142 ms, typical 34–66 ms; Off
+  baseline 47–55 / 58–65 ms; ADR-022, ADR-023)**. Other machines compare 1 hop against their own
+  Off baseline. For large schemas below zoom 0.3, `schema-canvas` has `data-zoomed-out` and each
+  table's rows are one striped block (`skeleton-rows`, no `column-<name>` items), the header shows
+  only the name, and edges have no cardinality markers or `edge-hit-*` target; at zoom ≥ 0.3 and
+  for normal-sized schemas everything renders as before. _Auto_; _Manual_
 - AC-P2-T10-8: README describes the current features, formats and limits (5 MB, parsed never
   executed, stays in the browser). _Manual_
 
 **Revisions to verified behaviour (intentional, P2-T10):**
+
+- AC-P2-T09-3 (dim tokens, round 12, ADR-023): a dimmed edge's `<g>` keeps `data-dimmed="true"` but
+  its computed `opacity` is now 1; the same `--dim-edge` value (0.15 light / 0.25 dark) is applied
+  as `stroke-opacity` and `fill-opacity` on its path and marker text. Tables still use `opacity`.
+- Column handles (round 12): a row has a source handle only if an edge starts there and a target
+  handle only if one arrives there; edges are unchanged.
 
 - AC-P2-T08-7 (phone inspector sheet): Escape inside the sheet now closes it (ADR-021); it used to
   clear the selection and leave the sheet open.

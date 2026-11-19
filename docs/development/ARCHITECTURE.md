@@ -685,6 +685,44 @@ source-mapped CPU profiles and traces of the production build.
   `data-edge-state` and `data-dimmed` stay as verified. Reaching ≤ 40 ms would need a different
   rendering approach for edges (e.g. one canvas layer), which is out of scope.
 
+### ADR-023 — Real-input selection costs, lighter zoomed-out canvas, edge dimming; packed layout deferred (2026-11-19, P2-T10 round 12)
+
+Cowork round 12 reported that the harness clicked with synthetic `click` events, which skip React
+Flow's pointerdown path (QA-019), that panning at zoom 1 past many dimmed edges is slow on a
+software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018).
+
+- **Real input.** `large-schema-perf.mjs` now clicks with CDP `Input.dispatchMouseEvent`
+  (pressed/released) and measures from `pointerdown` to the first frame after `click`, plus the
+  longest task. Profiles of real clicks on the M1: React Flow's pointerdown path (d3-zoom `start`
+  → `onDraggingChange`) is ~15–20 ms of JS; nearly everything else is native style, layerize and
+  paint, which scales with the number of elements on screen.
+- **Fewer elements.** Rows render a handle only where an edge attaches (`edgeEndColumns`: the
+  first column of each relationship end), not two on every row. For large schemas below zoom 0.3
+  (`canvasZoomedOut` in `ui-store`, set by `ZoomDetail`), rows render as one striped block with
+  those handles at the same offsets (`SkeletonRows`, replacing ADR-022's `visibility: hidden`),
+  the header drops its icon and column count, and edges drop their cardinality markers and hover
+  target (sub-pixel there). On `neighbourhood-2000`'s fitted view (149 tables, 674 edges) the
+  canvas goes from 11,854 to 4,189 elements.
+- **Edge dimming** uses `stroke-opacity` / `fill-opacity` on the edge's shapes (same `--dim-edge`
+  tokens) instead of `opacity` on the `<g>`: a group opacity paints each dimmed edge through its
+  own offscreen buffer. In a test layout where 434 long dimmed edges crossed a zoom-1 view this was
+  6 fps at 1 hop and 60 fps after. While the viewport moves (`data-moving`, set on the first
+  transform change, so a plain click doesn't set it) dimming transitions are off. Promoting the
+  viewport to its own layer while moving was tried and rejected (overview panning got slower:
+  Chrome rasterises the whole transformed layer).
+- **Packed layout (QA-018) deferred to P3-T07, by the user's decision.** A packing pass (lay out
+  each connected component, wrap ranks taller than a lane limit, grid isolated tables, shelf-pack
+  towards 16:10) took GitLab from 3,904 × 242,359 px to 24,696 × 15,892 px with no overlaps and
+  left every small schema byte-identical. But a sane aspect ratio puts most tables on screen at
+  low zoom: `neighbourhood-2000` then showed 1,790–2,000 tables in the fitted view, and hub select
+  / deselect cost 150–330 ms with panning at 10–17 fps on the M1, against 34–66 ms and 60 fps on
+  the tall layout. The tall layout's speed comes from showing a 149-table slice. Packing has to
+  land together with a cheap overview renderer (e.g. tables and edges drawn on one canvas below a
+  zoom threshold); the packing code and its tests are kept out of the tree until then.
+- **Not met:** hub select / deselect first frame ≤ 40 ms at 1 hop on the M1 (34–66 ms after, from
+  47–95 ms before with real input). The remaining cost is restyling and repainting the ~650
+  tables and edges whose dimming flips; meeting it needs the same overview renderer.
+
 ## Known limitations (Phase 1)
 
 - Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).
@@ -707,8 +745,12 @@ source-mapped CPU profiles and traces of the production build.
 - Import, parsing and Dagre layout run on the main thread (ADR-014): GitLab's 992-table dump takes
   ≈ 0.4 s to parse and ≈ 2.5 s to lay out on an M1, behind the "Laying out N tables…" state. A
   2,000-table linear FK chain took over 90 s in Cowork's test (ROADMAP, possible P3 guard).
-- On a 2,000-table schema, selecting or deselecting a 499-reference hub takes 52–68 ms to the next
-  frame on an M1 (budget 40 ms not met; ADR-022).
+- On a 2,000-table schema, selecting or deselecting a 499-reference hub takes 34–66 ms from
+  pointerdown to the next frame on an M1 with real mouse input (budget 40 ms not met; ADR-022,
+  ADR-023).
+- Very large, shallow schemas lay out as tall columns (GitLab: 3,904 × 242,359 px), so Reset view
+  at the 0.05 zoom floor shows only a slice (QA-018, deferred to P3-T07 with an overview renderer;
+  ADR-023).
 - Views, functions, triggers, expression indexes and EXCLUDE constraints are skipped (reported);
   partition bounds are not shown, only the list of partitions.
 - The CREATE TABLE … PARTITION OF column list is not parsed (it repeats the parent's).
