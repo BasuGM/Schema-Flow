@@ -2,10 +2,10 @@
 
 ## Now
 
-- **Task:** P3-T05 (Export dialog): Awaiting Cowork verification (ADR-029; AC-P3-T05-1…6) together with the QA-030 re-verification (fixed in 22534f2; P3-T04 stays Awaiting Cowork verification, NOT CLOSED at round 18). P3-T03 Verified (round 17).
+- **Task:** P3-T05 (Export dialog): Verified (Cowork round 19 at bf7f06e, no new defects; ADR-029). P3-T04 Verified (round 19; QA-030 closed). P3-T03 Verified (round 17).
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
 - **Next:** P3-T06 (session restore; plan first). P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
-- **Backlog:** 8 open: QA-018 → P3-T07; QA-027…029 → P3-T08; QA-030 fixed – pending QA; QA-031…033 deferred → BB-P3 ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Backlog:** 7 open: QA-018 → P3-T07; QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
 - **Latest handoff:** [handoffs/P3-T05.md](handoffs/P3-T05.md).
 
@@ -87,9 +87,9 @@ control, node-header toggle, "All tables" actions; modes persist per fingerprint
 
 **P3-T03 Image export: Verified** (Cowork round 17 at `785a41c`, no new defects; ADR-027; AC-P3-T03-1…6). Settings / More → "Export image…": PNG or SVG of the whole diagram, Current / Light / Dark, PNG 1× / 2× (lowered to browser canvas limits). Drawn by our own SVG renderer, not `html-to-image` (the canvas virtualizes large schemas).
 
-**P3-T04 Schema text generators: Awaiting Cowork verification** (ADR-028; AC-P3-T04-1…6). `src/generators` produces SQL DDL (PostgreSQL, MySQL, SQLite, with type mapping and warnings), Prisma (implicit m:n folded), Mermaid `erDiagram` and versioned JSON. No UI; Cowork verifies through `scripts/headless/generate.ts` (command in the handoff); the dialog is P3-T05. QA-030 (Cowork round 18) was fixed in 22534f2 and awaits Cowork re-verification.
+**P3-T04 Schema text generators: Verified** (Cowork round 19; QA-030 fixed and verified; ADR-028; AC-P3-T04-1…6). `src/generators` produces SQL DDL (PostgreSQL, MySQL, SQLite, with type mapping and warnings), Prisma (implicit m:n folded), Mermaid `erDiagram` and versioned JSON. No UI; Cowork verifies through `scripts/headless/generate.ts` (command in the handoff); the dialog is P3-T05. QA-030 (Cowork round 18) was fixed in 22534f2 and verified in round 19.
 
-**P3-T05 Export dialog: Awaiting Cowork verification** (ADR-029; AC-P3-T05-1…6). One Export dialog (toolbar, Settings, More) with SQL, Prisma, Mermaid, JSON and Image tabs: capped preview, warnings, Copy, Download; downloads equal the CLI output byte for byte (`generate.ts --sample`).
+**P3-T05 Export dialog: Verified** (Cowork round 19 at `bf7f06e`, no new defects; ADR-029; AC-P3-T05-1…6). One Export dialog (toolbar, Settings, More) with SQL, Prisma, Mermaid, JSON and Image tabs: capped preview, warnings, Copy, Download; downloads equal the CLI output byte for byte (`generate.ts --sample`).
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),

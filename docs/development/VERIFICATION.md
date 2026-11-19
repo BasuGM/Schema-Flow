@@ -737,7 +737,7 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 - AC-P3-T04-5: `generateJson` is deterministic and versioned (`schemaflow-schema` v1), complete, without `issues`, with arrays in declaration order. _Auto_
 - AC-P3-T04-6: Every user string is escaped for where it lands (SQL literals, SQLite `--` comments, Prisma strings and docs, Mermaid quotes); empty schemas and a table without a key give valid output; all generators handle 1,000 tables well inside the 3 s test budget (6–17 ms). _Auto_
 
-- **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green, 77 files / 593 tests; CLI run on 10 fixtures × 6 targets, exit 0; SQLite output executed in `sqlite3` for every fixture). Not independently verified.
+- **Status: Verified** (Cowork round 19 at `bf7f06e`; QA-030 closed). Claude Code self-checks: `npm run check` green, 77 files / 593 tests; CLI run on 10 fixtures × 6 targets, exit 0; SQLite output executed in `sqlite3` for every fixture.
 
 ## P3-T05 — Export dialog
 
@@ -747,6 +747,6 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 - AC-P3-T05-4: Downloaded files equal the CLI output for the same sample byte for byte (PostgreSQL / MySQL / SQLite SQL, Prisma, Mermaid all / keys, JSON), named `<schema>.<dialect>.sql`, `.prisma`, `.mmd`, `.json`; the dialog stays open. _Auto_
 - AC-P3-T05-5: The Image tab keeps the P3-T03 behaviour (AC-P3-T03-1…6). Stale output is impossible: a re-import that changes only a default shows the new default, and switching tabs during generation never shows another tab's text. _Auto_
 - AC-P3-T05-6: At 390 px the dialog and page don't overflow, the last tab (Image) is reachable by arrow keys, visible and ringed; `toolbar-width.mjs` still prints PASS; on GitLab the SQL / JSON previews appear well under 1 s. _Auto_ (+ _Manual_ on a real phone)
-- AC-QA-030: no export of `gitlab-structure.postgres.sql` contains `::)` (PostgreSQL, MySQL, SQLite, Prisma); `users.email` shows `DEFAULT ''`. _Auto_ (CLI)
+- AC-QA-030: no export of `gitlab-structure.postgres.sql` contains `::)` (PostgreSQL, MySQL, SQLite, Prisma); `users.email` shows `DEFAULT ''`. _Auto_ (CLI) — **verified in Cowork round 19** (`bf7f06e`).
 
-- **Status: Awaiting Cowork verification** (Claude Code: `npm run check` green; `npm run e2e` on a served build; see the handoff). QA-030 fixed in `22534f2`, pending re-verification.
+- **Status: Verified** (Cowork round 19 at `bf7f06e`; not tested: no-tables button in a browser, Safari/iOS copy, real phone). QA-030 fixed in `22534f2`, verified in round 19.

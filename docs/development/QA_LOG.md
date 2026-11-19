@@ -19,7 +19,7 @@ Update this table when an item changes; the dated log below stays append-only.
 | QA-027 | Cowork round 14 (BB-P2)       | Enter on inspector-relation-target shows the target but focus goes to `body`   | Open a table, Relations tab, focus a target, Enter                                        | Medium (a11y) | deferred → P3-T08   |
 | QA-028 | Cowork round 14 (BB-P2)       | Enter on inspector-back returns to the previous table but focus goes to `body` | Follow a relation, focus Back, Enter                                                      | Medium (a11y) | deferred → P3-T08   |
 | QA-029 | Cowork round 14 (BB-P2)       | Import dialog "Choose file…" label shows no focus ring (sr-only input focused) | Open Import, Tab to Choose file…                                                          | Medium (a11y) | deferred → P3-T08   |
-| QA-030 | Cowork round 18 (P3-T04)      | PG defaults with multi-word cast type truncated (`''::character varying` → `''::`), every target emits `DEFAULT (''::)` | `gen gitlab-structure.postgres.sql postgres \| grep -c '::)'` | High | fixed – pending QA (22534f2) |
+| QA-030 | Cowork round 18 (P3-T04)      | PG defaults with multi-word cast type truncated (`''::character varying` → `''::`), every target emits `DEFAULT (''::)` | `gen gitlab-structure.postgres.sql postgres \| grep -c '::)'` | High | verified (round 19) |
 | QA-031 | Cowork round 18 (P3-T04)      | PG `::type` casts and `~` in CHECK/defaults copied into SQLite/MySQL; GitLab→sqlite fails ("unrecognized token ':'"). Suggest: strip simple `::ident[(n)][[]]` casts cross-dialect; drop CHECKs with PG-only operators with a warning | `gen gitlab-structure.postgres.sql sqlite \| sqlite3 :memory:` | Medium | deferred → BB-P3 |
 | QA-032 | Cowork round 18 (P3-T04)      | Mermaid entity name containing `\` fails mmdc parse (replace `\`)              | Generate mermaid for a table named with a backslash, run mmdc                             | Low           | deferred → BB-P3    |
 | QA-033 | Cowork round 18 (P3-T04), pre-existing | MySQL parser fails on backtick identifiers containing ' or \ → 0 tables, 1 import error | CREATE TABLE `we'ird` (id int);                                                  | Low           | deferred → BB-P3    |
@@ -808,3 +808,17 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Defects:** none logged. Carries the QA-030 re-verification (fixed 22534f2, "fixed – pending QA").
 - **Checks (Claude Code, self-run):** Two test-side issues in the first e2e run (focus-ring test assumed the first Tab hits a radio; phone test pressed arrows faster than Radix moves focus), both fixed. Full e2e runs also showed a load-time flake (`table-node-orders` not visible, a different spec each run, passes alone).
 - `npm run check` green (80 files, 613 tests); e2e last full run 167 passed, 2 failed (flake, pass alone), 20 skipped; `toolbar-width.mjs` PASS light and dark; `export-perf` on GitLab: SVG 176/123 ms, PNG 1,057 ms, SQL tab 82 ms, JSON tab 63 ms.
+
+## 2026-11-19 — Cowork round 19 at `bf7f06e`: P3-T04 and P3-T05 Verified
+
+- **Found by:** Cowork round 19 (report pasted by the user).
+- **QA-030:** GitLab → postgres/mysql/sqlite/prisma `::)` count 0; `users.email` `DEFAULT ''`; inspector shows `= ''`; pg-casts defaults valid.
+- **e2e:** 169 passed / 0 failed / 20 skipped (the load flake did not reproduce); `toolbar-width` PASS light and dark.
+- **Sample (P3-T05):** SQL tab default PostgreSQL, "154 lines · 5.3 KB", No warnings; MySQL 7 / SQLite 8 warnings; all 7 downloads byte-identical to `gen --sample`, names correct; Copy == download; dialog stays open; arrows move focus + tab; Escape returns focus to toolbar-export / toolbar-settings / toolbar-more; reopen keeps last tab; Export image… opens Image.
+- **Stale cache:** re-import with a changed default shows the new default; race SQL→JSON on GitLab shows JSON only.
+- **GitLab (cloud):** SQL 59 ms, JSON 75 ms, truncation note; Copy/Download full (20,481 / 204,400 lines).
+- **Phone 390:** More → Export…, 4×ArrowRight → Image tab fully visible with ring, overflow 0.
+- **Defects:** none new.
+- **Not tested:** no-tables button (no UI path; jsdom only), Safari/iOS copy, real phone.
+- **Note:** GitLab → SQLite still fails (`char_length`), part of QA-031, deferred → BB-P3.
+- **Status:** P3-T04 Verified, P3-T05 Verified, QA-030 closed.
