@@ -8,6 +8,7 @@ import { detailCounts, getTableDetails } from "@/domain/schema/table-details";
 import { inspectorGoBack } from "@/stores/reveal";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore, type InspectorTab } from "@/stores/ui-store";
+import { CollapseModeControl } from "./collapse-mode-control";
 import { ColumnsTab } from "./columns-tab";
 import { KeysTab } from "./keys-tab";
 import { RelationsTab } from "./relations-tab";
@@ -110,6 +111,7 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
       {table.comment && (
         <p className="border-b px-4 py-2 text-xs text-muted-foreground">{table.comment}</p>
       )}
+      <CollapseModeControl tableId={table.id} />
       <dl className="grid grid-cols-3 border-b text-center" data-testid="inspector-counts">
         <Stat label="Columns" value={table.columns.length} testId="inspector-column-count" />
         <Stat label="Outgoing" value={details.outgoing.length} testId="inspector-outgoing-count" />

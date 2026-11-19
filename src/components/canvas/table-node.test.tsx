@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { ReactFlow, ReactFlowProvider } from "@xyflow/react";
 import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { columnHandleId } from "@/graph/handles";
 import { NODE_ROW_HEIGHT } from "@/graph/node-metrics";
 import { schemaToFlow } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
+import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
@@ -131,5 +133,53 @@ describe("TableNode", () => {
     renderNode("public.orders", "keys");
     expect(screen.getByTestId("column-user_id")).toBeInTheDocument();
     expect(screen.queryByTestId("column-status")).toBeNull();
+  });
+
+  it("shows a plain count in full mode and 'visible / total' otherwise (aria-labelled)", () => {
+    const { unmount } = renderNode("public.orders");
+    const full = screen.getByTestId("node-column-count");
+    expect(full).toHaveTextContent(/^7$/);
+    expect(full).not.toHaveAttribute("aria-label");
+    unmount();
+    renderNode("public.orders", "keys");
+    const keys = screen.getByTestId("node-column-count");
+    expect(keys).toHaveTextContent(/^\d+ \/ 7$/);
+    const shown = keys.textContent!.split(" / ")[0];
+    expect(keys).toHaveAttribute("aria-label", `${shown} of 7 columns shown`);
+  });
+
+  describe("collapse toggle", () => {
+    const modeOf = () => {
+      const fp = useSchemaStore.getState().fingerprint!;
+      return useLayoutStore.getState().layouts[fp]?.collapsed["public.orders"] ?? "full";
+    };
+
+    beforeEach(() => {
+      const { schema, fingerprint } = useSchemaStore.getState();
+      useLayoutStore.setState({ layouts: {}, version: 0 });
+      useLayoutStore.getState().ensureLayout(schema!, fingerprint!);
+    });
+
+    it.each([
+      ["full", "keys"],
+      ["keys", "header"],
+      ["header", "full"],
+    ] as const)("%s → %s on click, without selecting the table", async (start, next) => {
+      useLayoutStore
+        .getState()
+        .setCollapse(useSchemaStore.getState().fingerprint!, "public.orders", start);
+      renderNode("public.orders", start);
+      const toggle = screen.getByTestId("node-collapse-toggle");
+      expect(toggle).toHaveAttribute("tabindex", "-1");
+      await userEvent.click(toggle);
+      expect(modeOf()).toBe(next);
+      expect(useUiStore.getState().selectedTableId).toBeNull();
+    });
+
+    it("is absent while zoomed out", () => {
+      renderNode("public.orders");
+      act(() => useUiStore.getState().setCanvasZoomedOut(true));
+      expect(screen.queryByTestId("node-collapse-toggle")).toBeNull();
+    });
   });
 });

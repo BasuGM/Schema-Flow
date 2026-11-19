@@ -1,16 +1,36 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Table2 } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Table2 } from "lucide-react";
 import { memo } from "react";
+import type { CollapseMode } from "@/domain/schema/types";
 import { displayTableName } from "@/domain/schema/selectors";
 import { edgeEndColumns, headerHandleId, type EdgeEndColumns } from "@/graph/handles";
 import { NODE_HEADER_HEIGHT, NODE_WIDTH, renderedColumns } from "@/graph/node-metrics";
 import type { TableFlowNode } from "@/graph/types";
 import { cn } from "@/lib/utils";
+import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { ColumnRows } from "./column-rows";
+
+const NEXT_MODE: Record<CollapseMode, CollapseMode> = {
+  full: "keys",
+  keys: "header",
+  header: "full",
+};
+const MODE_LABEL: Record<CollapseMode, string> = {
+  full: "all columns",
+  keys: "keys only",
+  header: "header only",
+};
+const MODE_ICON = { full: ChevronsDownUp, keys: ChevronsUpDown, header: ChevronRight } as const;
+
+/** Cycles the table's collapse mode. Mouse-only; the keyboard path is the inspector control. */
+function cycleMode(tableId: string, mode: CollapseMode) {
+  const fingerprint = useSchemaStore.getState().fingerprint;
+  if (fingerprint) useLayoutStore.getState().setCollapse(fingerprint, tableId, NEXT_MODE[mode]);
+}
 
 const NO_ENDS: EdgeEndColumns = { source: new Set(), target: new Set() };
 
@@ -33,7 +53,10 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
   // Shared, cached per schema: which rows edges attach to (only those rows get handles).
   const ends = useSchemaStore((s) => (s.schema ? edgeEndColumns(s.schema) : NO_ENDS));
   if (!table) return null;
-  const hasRows = renderedColumns(table, data.mode, highlighted).length > 0;
+  const shown = renderedColumns(table, data.mode, highlighted).length;
+  const hasRows = shown > 0;
+  const total = table.columns.length;
+  const ModeIcon = MODE_ICON[data.mode];
 
   return (
     <div
@@ -59,9 +82,29 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
           {title}
         </span>
         {!skeleton && (
-          <span className="ml-auto shrink-0 text-[11px] text-muted-foreground tabular-nums">
-            {table.columns.length}
+          <span
+            className="ml-auto shrink-0 text-[11px] text-muted-foreground tabular-nums"
+            data-testid="node-column-count"
+            {...(data.mode !== "full" && { "aria-label": `${shown} of ${total} columns shown` })}
+          >
+            {data.mode === "full" ? total : `${shown} / ${total}`}
           </span>
+        )}
+        {!skeleton && (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={`Collapse mode: ${MODE_LABEL[data.mode]} (click to change)`}
+            data-testid="node-collapse-toggle"
+            // Not a node drag, a pan or a selection click.
+            className="nodrag nopan -mr-1 shrink-0 rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            onClick={(e) => {
+              e.stopPropagation();
+              cycleMode(table.id, data.mode);
+            }}
+          >
+            <ModeIcon aria-hidden className="size-3.5" />
+          </button>
         )}
         <Handle
           type="source"
