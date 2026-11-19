@@ -29,21 +29,25 @@ Now block. Do **not** read `docs/development/handoffs/archive/` unless asked.
 - Use **Opus** for a feature's first verification, big plan reviews and phase close-outs; use
   **Sonnet** for re-verification.
 
-## Verification tooling
+## Verification tooling (Cowork cloud)
 
-- Stage `out/` (normal build) or `out-qa/` (QA-hook build, `NEXT_PUBLIC_QA_HOOKS=1`) as a tarball
-  and serve it on `:3100`, e.g. `python3 -m http.server 3100 --directory out`, driven by headless
-  Playwright. The suite never starts a server: set `E2E_BASE_URL=http://localhost:3100`.
-- QA-hook build: `E2E_QA_HOOKS=1 E2E_BASE_URL=<out-qa server> npm run e2e -- error-regions.spec.ts`.
-- Harnesses run as `<harness> <url> /tmp/claude-0/chw.sh`. Performance harness:
-  `scripts/headless/large-schema-perf.mjs`; phone toolbar: `scripts/headless/toolbar-width.mjs`
-  (must print PASS in light and dark at 390×844).
-- Use **real input** (mouse and keyboard through Playwright/CDP), not synthetic `click` events; the
-  only synthetic input is the file drop. Compare timings to **Off** (neighbourhood setting Off) on
-  the same machine in the same run; never against numbers from another machine.
+- npm install doesn't work in Cowork's cloud. Run e2e by shimming @playwright/test onto the
+  preinstalled Playwright: in the cloud clone, symlink node_modules/playwright and
+  node_modules/playwright-core to /opt/npm-tools/node_modules/…, add
+  node_modules/@playwright/test/index.js = `module.exports = require('playwright/test')`, then
+  `E2E_BASE_URL=http://localhost:3100/ node node_modules/playwright/cli.js test` (error regions:
+  `E2E_QA_HOOKS=1`, out-qa/ on :3101).
+- Builds: on the Mac, tar out/ and out-qa/ (fresher than src/), stage, delete the tarball; in the
+  cloud, serve with `python3 -m http.server 3100 --directory out` (and 3101 for out-qa).
+- Harnesses: `node scripts/headless/<name>.mjs http://localhost:3100/ /tmp/claude-0/chw.sh`
+  (chw.sh = Playwright's Chromium with --no-sandbox). Real input only; compare timings to Off on
+  the same machine (cloud ≈ 2–3× slower than the M1). Harnesses: `large-schema-perf.mjs`;
+  `toolbar-width.mjs` (must print PASS in light and dark at 390×844).
+- Parser checks: run TS sources with `node --experimental-transform-types` + a resolve hook for
+  `@/` and `.ts`.
+- e2e now covers QA-020 edge stroke/fill-opacity (`neighbourhood.spec.ts`) and zoomed-out
+  rendering (`zoomed-out.spec.ts`).
 - Key selectors (`data-testid`): `toolbar-import`, `toolbar-search`, `toolbar-issues`,
   `toolbar-settings`, `toolbar-more`, `toolbar-theme`, `import-dialog`, `import-textarea`,
   `import-confirm`, `import-status`, `issues-panel`, `table-list-item-<name>`,
   `table-node-<name>`, `inspector-title`, `inspector-columns`, `search-status`.
-- Details of `chw.sh` and the cloud harness setup are not recorded in the repo yet: add them here
-  from the Cowork notes.
