@@ -2,12 +2,12 @@
 
 ## Now
 
-- **Task:** P3-T01 (Layout persistence): Not started. BB-P2 Verified with known issues (Cowork round 14 at `021f867`). HEAD: see the latest commit.
+- **Task:** P3-T01 (Layout persistence): Self-checked, Awaiting Cowork verification. BB-P2 Verified with known issues (Cowork round 14 at `021f867`). HEAD: see the latest commit.
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** plan and build P3-T01; P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
+- **Next:** Cowork verifies P3-T01; then P3-T02. P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) comes before the Phase 3 bug-bash.
 - **Backlog:** 4 open: QA-018 deferred → P3-T07; QA-027…029 deferred → P3-T08 ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
-- **Latest handoff:** [handoffs/BB-P2.md](handoffs/BB-P2.md).
+- **Latest handoff:** [handoffs/P3-T01.md](handoffs/P3-T01.md).
 
 Status vocabulary (exact): `Not started | In progress | Self-checked | Awaiting Cowork verification |
 Verified | Verified with known issues | Blocked`. `Verified*` is set only after a Cowork report has
@@ -30,7 +30,6 @@ been pasted into a session and logged in [QA_LOG.md](QA_LOG.md).
 **Phase 1 overall: Verified with known issues** (Cowork, `c9c49a3`, relayed 2026-11-16). Known
 issues accepted at close-out:
 
-- Layout is not persisted across reloads (P3-T01).
 - Dagre layouts of large, shallow schemas are tall.
 - A composite FK draws as one edge.
 - Edges are not keyboard-focusable; labels need a pointer.
@@ -78,6 +77,10 @@ overview drawn as DOM costs 150–330 ms per click and 10–17 fps panning, ADR-
 Bug-fix task before the Phase 3 bug-bash: QA-027 and QA-028 (inspector focus after relation
 navigation and Back), QA-029 (import file label focus ring), and the AC-BB-P2-3 spec gap (assert exact
 focus targets, unconditionally). Fold into an earlier P3 task if it touches the inspector or import dialog.
+
+**P3-T01 Layout persistence: Self-checked, Awaiting Cowork verification** (ADR-025;
+AC-P3-T01-1…6). Per-fingerprint localStorage keys, LRU 20, debounced saves, safe when storage is
+blocked; neighbourhood depth saved; the viewport still fits on load (restore: P3-T06).
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),

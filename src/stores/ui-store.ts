@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { ColumnId, TableId } from "@/domain/schema/types";
+import { readJson, writeText } from "@/lib/safe-storage";
 
 /**
  * A request for the canvas to center on a table, or on one of its column rows; `nonce` makes
@@ -18,6 +19,24 @@ export interface FocusRequest {
 
 /** Neighbourhood highlighting depth (P2-T09): 0 = off. */
 export type NeighbourhoodDepth = 0 | 1 | 2;
+
+/** Preferences kept across visits (P3-T01). Read after mount, never at store creation. */
+export const PREFS_KEY = "schemaflow:prefs:v1";
+
+const isDepth = (v: unknown): v is NeighbourhoodDepth => v === 0 || v === 1 || v === 2;
+
+/**
+ * Applies saved preferences. Called once from an effect after mount so the server render and the
+ * first client render both use the defaults. An invalid or missing value keeps the default.
+ */
+export function hydratePrefs(): void {
+  const saved = readJson(PREFS_KEY);
+  const depth =
+    typeof saved === "object" && saved !== null
+      ? (saved as Record<string, unknown>).neighbourhoodDepth
+      : undefined;
+  if (isDepth(depth)) useUiStore.getState().setNeighbourhoodDepth(depth);
+}
 
 export type InspectorTab = "columns" | "keys" | "relations";
 
@@ -143,7 +162,11 @@ export const useUiStore = create<UiState>()((set) => ({
     set((s) => (s.inspectorTab === inspectorTab ? s : { inspectorTab })),
   setInspectorBack: (inspectorBack) => set({ inspectorBack }),
   setNeighbourhoodDepth: (neighbourhoodDepth) =>
-    set((s) => (s.neighbourhoodDepth === neighbourhoodDepth ? s : { neighbourhoodDepth })),
+    set((s) => {
+      if (s.neighbourhoodDepth === neighbourhoodDepth) return s;
+      writeText(PREFS_KEY, JSON.stringify({ neighbourhoodDepth }));
+      return { neighbourhoodDepth };
+    }),
   setFocusSet: (focusSet) => set((s) => (s.focusSet === focusSet ? s : { focusSet })),
   setCanvasZoomedOut: (canvasZoomedOut) =>
     set((s) => (s.canvasZoomedOut === canvasZoomedOut ? s : { canvasZoomedOut })),

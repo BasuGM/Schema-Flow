@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { SHEET_QUERY } from "@/components/issues/issues-sheet";
@@ -8,7 +8,7 @@ import { useSearchShortcut } from "@/components/search/use-search-shortcut";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useSchemaStore } from "@/stores/schema-store";
-import { useUiStore } from "@/stores/ui-store";
+import { hydratePrefs, useUiStore } from "@/stores/ui-store";
 import { CanvasArea } from "./canvas-area";
 import { Inspector } from "@/components/inspector/inspector";
 import { TableList } from "./table-list";
@@ -27,6 +27,7 @@ const close = (side: "left" | "right") => () => useUiStore.getState().setPanelOp
 
 export function Workspace() {
   useSampleLoader();
+  useEffect(hydratePrefs, []);
   // Below md both side panels open as overlay sheets: 200–240 px of panel beside the 320 px
   // minimum canvas can't fit (ADR-017 for the inspector, ADR-021 for the table list).
   const sheet = useMediaQuery(SHEET_QUERY);

@@ -674,3 +674,18 @@ Charter: [plans/bug-bash-p2.md](plans/bug-bash-p2.md). Automated in `tests/e2e/b
 - AC-BB-P2-4 (QA-024): a file just over 5 MiB reads "This file is 5,242,881 bytes; the limit is
   5.0 MB." _Auto_
 - **Status: Self-checked.** Pending: Cowork.
+
+## P3-T01 — Layout persistence
+
+Automated in `tests/e2e/persistence.spec.ts` and unit tests (`layout-persistence`,
+`layout-store-persistence`).
+
+- AC-P3-T01-1: A dragged table keeps its position after a reload, without running auto-layout again.
+  _Auto_
+- AC-P3-T01-2: Re-importing the same file after a reload restores its dragged positions. _Auto_
+- AC-P3-T01-3: Layout replaces the saved positions, and the reset survives a reload. _Auto_
+- AC-P3-T01-4: The neighbourhood depth survives a reload; invalid saved values are ignored. _Auto_
+- AC-P3-T01-5: With storage blocked (getter, `getItem` or `setItem` throwing) the app works and the
+  console stays empty. _Auto_
+- AC-P3-T01-6: A schema with a different fingerprint does not inherit saved positions; corrupt or
+  partial data falls back to auto-layout; at most 20 layouts are kept (least recently used out). _Auto_

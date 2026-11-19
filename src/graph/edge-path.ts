@@ -1,4 +1,4 @@
-import type { Position } from "@/domain/schema/types";
+import type { EdgeRoute, Position } from "@/domain/schema/types";
 
 export interface CubicSegment {
   from: Position;
@@ -96,4 +96,16 @@ export function labelOverflowShift({
   // its start visible).
   if (right > paneWidth - marginPx) return Math.max(paneWidth - marginPx - right, marginPx - left);
   return 0;
+}
+
+/** Drops the routes that start or end at `position` (a table there has moved, so they no longer fit). */
+export function dropRoutesAt(
+  routes: Record<string, EdgeRoute> | undefined,
+  position: Position,
+): Record<string, EdgeRoute> | undefined {
+  if (!routes) return routes;
+  const kept = Object.entries(routes).filter(
+    ([, r]) => !samePosition(r.sourceAt, position) && !samePosition(r.targetAt, position),
+  );
+  return kept.length === Object.keys(routes).length ? routes : Object.fromEntries(kept);
 }

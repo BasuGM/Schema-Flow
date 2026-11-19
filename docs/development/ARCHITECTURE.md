@@ -36,6 +36,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-022](#adr-022--large-schema-frame-costs-2026-11-16-p2-t10)                                                                          | 2026-11-16 | Large-schema frame costs                                                          | Profiles of panning and centring on 2,000 tables                             | Not recorded                                                            |
 | [ADR-023](#adr-023--real-input-selection-costs-lighter-zoomed-out-canvas-edge-dimming-packed-layout-deferred-2026-11-19-p2-t10-round-12) | 2026-11-19 | Real-input costs, lighter zoomed-out canvas, edge dimming; packed layout deferred | Synthetic clicks hid pointerdown cost; group opacity was slow                | Packing pass now (fitted view too heavy); hiding edges while moving     |
 | [ADR-024](#adr-024--committed-playwright-e2e-suite-2026-11-19-e2e-01)                                                                    | 2026-11-19 | Committed Playwright e2e suite                                                    | Repeatable, real-input checks for every handoff; dev-only dependency         | Ad-hoc CDP harnesses                                                    |
+| [ADR-025](#adr-025--layout-persistence-per-fingerprint-localstorage-keys-2026-11-19-p3-t01)                                              | 2026-11-19 | Layout persistence in localStorage (per-fingerprint keys, LRU 20)                 | P3-T01                                                                       |
 
 ## Data flow
 
@@ -235,7 +236,7 @@ continue the line, but a line that starts like a member always starts a new one)
 | Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Persisted to localStorage in Phase 3.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Saved to localStorage per fingerprint (ADR-025).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge), `issuesPanelOpen` (ADR-015), `searchOpen`/`highlightedColumn` (ADR-016), `inspectorTab`/`inspectorBack` (ADR-017), `neighbourhoodDepth` (a setting) and the derived `focusSet` (ADR-018). `schema-store` also holds `sourceText` (the imported text, for excerpts). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
 
 Components use narrow selectors; `useShallow` where a selector returns an object/array.
@@ -593,7 +594,7 @@ No SQL or Prisma parser dependency (ADR-012, ADR-013). Not installed until neede
   A hovered or clicked edge is drawn at full opacity while its label shows.
 - **Depth is a setting** (Off / 1 / 2, default 1; Settings and phone More menus): it survives
   selections and new imports; `focusSet` is cleared by `clearSelection` and `resetForNewSchema`.
-  Not persisted until P3-T01.
+  Persisted since P3-T01 (`schemaflow:prefs:v1`, hydrated after mount; ADR-025).
 - **Look:** per-theme tokens `--dim-node` (0.3 light / 0.4 dark), `--dim-edge` (0.15 / 0.25) and
   `--dim-node-hover` (0.7 / 0.75; hover or keyboard focus brightens a dimmed table). A 150 ms fade,
   dropped (`data-instant-dim`) above 300 tables + relationships: hundreds of simultaneous opacity
@@ -771,9 +772,33 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
 - **Reporting:** a compact reporter prints passed/failed counts and one line per failure; the JSON
   reporter writes `e2e-results.json` (git-ignored).
 
+### ADR-025 — Layout persistence: per-fingerprint localStorage keys (2026-11-19, P3-T01)
+
+- **Why:** dragged positions were lost on every reload. `layout-store` already keys a
+  `DiagramLayout` by schema fingerprint, so the saved copy is keyed the same way.
+- **Storage:** one key per fingerprint (`schemaflow:layout:v1:<fingerprint>`), so a drag serialises
+  one layout. Zustand's `persist` middleware was not used: it would write every layout on every
+  change. No new dependency. `src/lib/safe-storage.ts` wraps every access in try/catch (blocked
+  storage, a throwing `localStorage` getter, quota) and never throws; the app works unsaved.
+- **Writes:** debounced (300 ms per fingerprint) and flushed on `pagehide` and when the page becomes
+  hidden. `ensureLayout` loads a saved layout instead of running dagre, and saves a fresh one.
+  Layouts over 1.5 M characters are saved without `edgeRoutes` (GitLab's 992 tables: about 250 KB).
+- **Validation on load:** a stored layout is used only if every table has a finite position, the
+  direction is valid, and routes still match their tables' positions; anything else falls back to
+  auto-layout. Moving a table drops the routes that started or ended at its old spot.
+- **Eviction:** at most 20 layouts, least recently used first; loading counts as a use. On a quota
+  error the oldest other layouts are evicted until the write fits. The usage index is rebuilt from
+  the keys when missing or corrupt.
+- **Viewport:** stored but not restored; the view fits on load (restoring it belongs to P3-T06).
+- **Preferences:** the neighbourhood depth is saved under `schemaflow:prefs:v1` and applied by
+  `hydratePrefs()` in an effect after mount, so server and first client render match.
+- **Limits:** multi-tab is last-write-wins (no `storage` event sync). Adding or removing a table or
+  column changes the fingerprint, so positions do not carry over (partial reuse is out of scope).
+
 ## Known limitations (Phase 1)
 
-- Layout is in memory only: manual positions are lost on reload or "Layout" (persistence: P3-T01).
+- Layout persistence (ADR-025): the viewport is not restored (the view fits on load; session restore is
+  P3-T06). "Layout" deliberately replaces the saved positions.
 - Dagre produces very tall, narrow layouts for large, shallow graphs (e.g. the 200-table synthetic
   sample has few ranks); readable navigation of such schemas relies on the table list + centering.
   Better packing of disconnected components is planned for P4-T05.
