@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SHEET_QUERY } from "@/components/issues/issues-sheet";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
 import { NARROW_QUERY } from "./use-panel-sync";
@@ -157,11 +158,21 @@ describe("Enter on resize separators", () => {
     expect(screen.getByTestId(`panel-content-${side}`)).not.toHaveAttribute("inert");
   });
 
-  it("Resize issues panel: Enter closes the docked issues panel", () => {
+  it("Resize issues panel: Enter closes the docked issues panel and focus moves to Issues (QA-021)", () => {
     renderWorkspace();
-    act(() => useUiStore.getState().setIssuesPanelOpen(true));
+    act(() => {
+      useSchemaStore.setState({ issues: [{ severity: "warning", message: "Skipped a view." }] });
+      useUiStore.getState().setIssuesPanelOpen(true);
+    });
     enter(separator("Resize issues panel"));
     expect(useUiStore.getState().issuesPanelOpen).toBe(false);
+    // The separator is hidden with the panel, so focus can't stay on it; it must not fall to body.
+    const issues = screen.getByTestId("toolbar-issues");
+    expect(issues).toHaveFocus();
+    expect(issues).toHaveAttribute("aria-pressed", "false");
+    // Enter on the focused button (a native button click) opens the panel again.
+    fireEvent.click(issues);
+    expect(useUiStore.getState().issuesPanelOpen).toBe(true);
   });
 
   it("leaves arrow keys, Home and End to the library (QA-017 regression)", () => {

@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# QA-hook build for Cowork (P2-T10 steps 6-7); never committed
+/out-qa/

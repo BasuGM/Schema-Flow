@@ -50,6 +50,9 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
   const outOfFocus = useUiStore(
     (s) => s.focusSet !== null && !(s.focusSet.has(source) && s.focusSet.has(target)),
   );
+  // Overview of a large schema (ADR-023): cardinality markers and the hover target are below a
+  // pixel, so only the line is drawn (~2 elements per edge instead of ~8).
+  const overview = useUiStore((s) => s.canvasZoomedOut);
   // Labels appear only for the edge being hovered or clicked (QA-004): one at a time, so they never
   // pile up over neighbouring tables. Edges of the selected table are highlighted without labels.
   const [hovered, setHovered] = useState(false);
@@ -99,30 +102,34 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
           strokeWidth: STROKE_WIDTH[state],
         }}
       />
-      <path
-        d={path}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={14}
-        pointerEvents="stroke"
-        data-testid={`edge-hit-${id}`}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      />
-      <CardinalityMarker
-        x={sourceX}
-        y={sourceY}
-        position={sourcePosition}
-        text={many ? "N" : "1"}
-        emphasized={emphasized}
-      />
-      <CardinalityMarker
-        x={endX}
-        y={targetY}
-        position={endPosition}
-        text="1"
-        emphasized={emphasized}
-      />
+      {!overview && (
+        <>
+          <path
+            d={path}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={14}
+            pointerEvents="stroke"
+            data-testid={`edge-hit-${id}`}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+          />
+          <CardinalityMarker
+            x={sourceX}
+            y={sourceY}
+            position={sourcePosition}
+            text={many ? "N" : "1"}
+            emphasized={emphasized}
+          />
+          <CardinalityMarker
+            x={endX}
+            y={targetY}
+            position={endPosition}
+            text="1"
+            emphasized={emphasized}
+          />
+        </>
+      )}
       {showLabel && (
         <EdgeLabel
           id={id}

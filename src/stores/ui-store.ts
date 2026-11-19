@@ -64,6 +64,11 @@ interface UiState {
    * Derived by `useFocusSetSync`; `null` = nothing dimmed.
    */
   focusSet: ReadonlySet<TableId> | null;
+  /**
+   * A large schema is zoomed out past readable row text (`ZoomDetail`, ADR-022/023): table nodes
+   * render column rows as skeletons. Set by the canvas only.
+   */
+  canvasZoomedOut: boolean;
   selectTable: (id: TableId | null) => void;
   /** Escape: clear the table selection and any clicked (pinned) edge. */
   clearSelection: () => void;
@@ -76,6 +81,7 @@ interface UiState {
   setInspectorBack: (back: InspectorBack | null) => void;
   setNeighbourhoodDepth: (depth: NeighbourhoodDepth) => void;
   setFocusSet: (set: ReadonlySet<TableId> | null) => void;
+  setCanvasZoomedOut: (zoomedOut: boolean) => void;
   setTableFilter: (filter: string) => void;
   setShowMiniMap: (show: boolean) => void;
   setPanelOpen: (panel: "left" | "right", open: boolean) => void;
@@ -101,6 +107,7 @@ const initial = {
   inspectorBack: null,
   neighbourhoodDepth: 1 as NeighbourhoodDepth,
   focusSet: null,
+  canvasZoomedOut: false,
 } satisfies Partial<UiState>;
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -138,6 +145,8 @@ export const useUiStore = create<UiState>()((set) => ({
   setNeighbourhoodDepth: (neighbourhoodDepth) =>
     set((s) => (s.neighbourhoodDepth === neighbourhoodDepth ? s : { neighbourhoodDepth })),
   setFocusSet: (focusSet) => set((s) => (s.focusSet === focusSet ? s : { focusSet })),
+  setCanvasZoomedOut: (canvasZoomedOut) =>
+    set((s) => (s.canvasZoomedOut === canvasZoomedOut ? s : { canvasZoomedOut })),
   setTableFilter: (tableFilter) => set({ tableFilter }),
   setShowMiniMap: (showMiniMap) => set({ showMiniMap }),
   setPanelOpen: (panel, open) =>

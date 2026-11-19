@@ -178,28 +178,39 @@
 .react-flow__node:focus-visible > .table-node[data-dimmed="true"] {
   opacity: var(--dim-node-hover);
 }
-.relationship-edge {
-  transition: opacity 150ms ease;
+/* Edges dim through stroke and fill opacity on their shapes, not `opacity` on the group: a group
+   opacity paints every dimmed edge through its own offscreen buffer, which made panning past
+   hundreds of long dimmed edges run at 6 fps (ADR-023, QA-020). Same token values. */
+.relationship-edge * {
+  transition:
+    stroke-opacity 150ms ease,
+    fill-opacity 150ms ease;
 }
-.relationship-edge[data-dimmed="true"] {
-  opacity: var(--dim-edge);
+.relationship-edge[data-dimmed="true"] * {
+  stroke-opacity: var(--dim-edge);
+  fill-opacity: var(--dim-edge);
 }
 [data-instant-dim] .table-node,
-[data-instant-dim] .relationship-edge {
+[data-instant-dim] .relationship-edge * {
   transition: none;
 }
-/* Large schemas, zoomed out (ADR-022): row text and icons are sub-pixel, so they are not painted;
-   rows keep their size, handles and tints, and show a light bar. */
-[data-zoomed-out] .table-node li > :not(.react-flow__handle) {
-  visibility: hidden;
+/* No dimming transitions while the viewport moves (ADR-023, QA-020). */
+[data-moving] .table-node,
+[data-moving] .relationship-edge * {
+  transition: none;
 }
-[data-zoomed-out] .table-node li::before {
-  content: "";
-  position: absolute;
-  inset: 35% 40% 35% 12px;
-  border-radius: 2px;
-  background: var(--muted-foreground);
-  opacity: 0.25;
+
+/* Large schemas, zoomed out (ADR-022/023): column rows are replaced by one block with a light bar
+   per row (the stripe height is set inline to the row height). */
+.skeleton-rows {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 35%,
+    color-mix(in oklab, var(--muted-foreground) 25%, transparent) 35% 65%,
+    transparent 65%
+  );
+  background-repeat: repeat-y;
+  background-position-x: 12px;
 }
 
 /* Column handles are invisible attachment points, not drag targets. */

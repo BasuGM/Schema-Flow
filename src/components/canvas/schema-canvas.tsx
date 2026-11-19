@@ -16,7 +16,7 @@ import {
   type Viewport,
 } from "@xyflow/react";
 import { LocateFixed } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { schemaToFlow, type FlowElements } from "@/graph/schema-to-flow";
 import type { RelationshipFlowEdge, TableFlowNode } from "@/graph/types";
@@ -31,6 +31,7 @@ import { ZoomDetail } from "./zoom-detail";
 
 /** Above this many tables, React Flow only renders nodes/edges inside the viewport. */
 export const LARGE_SCHEMA_THRESHOLD = 80;
+
 /**
  * Above this many tables + relationships, dimming switches instantly instead of fading: hundreds of
  * simultaneous opacity transitions cost frames on a zoomed-out large schema (P2-T09).
@@ -150,8 +151,16 @@ function SchemaCanvasInner() {
     [selectTable, clearEdgeSelection],
   );
   const onPaneClick = useCallback(() => selectTable(null), [selectTable]);
+  // `data-moving` while the viewport actually moves (a plain click emits no move): CSS turns off
+  // dimming transitions, so a pan never repaints fading tables and edges (ADR-023, QA-020).
+  const rootRef = useRef<HTMLDivElement>(null);
+  const onMove = useCallback(() => {
+    const root = rootRef.current;
+    if (root && !root.dataset.moving) root.dataset.moving = "true";
+  }, []);
   const onMoveEnd = useCallback(
     (_e: unknown, viewport: Viewport) => {
+      if (rootRef.current) delete rootRef.current.dataset.moving;
       if (fingerprint) setViewport(fingerprint, viewport);
     },
     [fingerprint, setViewport],
@@ -173,6 +182,7 @@ function SchemaCanvasInner() {
 
   return (
     <div
+      ref={rootRef}
       data-testid="schema-canvas"
       data-instant-dim={base.nodes.length + base.edges.length > DIM_TRANSITION_LIMIT || undefined}
       className="h-full w-full bg-canvas"
@@ -187,6 +197,7 @@ function SchemaCanvasInner() {
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onMove={onMove}
         onMoveEnd={onMoveEnd}
         onKeyDown={onKeyDown}
         nodesConnectable={false}

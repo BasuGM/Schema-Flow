@@ -3,6 +3,7 @@ import { ReactFlow, ReactFlowProvider } from "@xyflow/react";
 import { act, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { columnHandleId } from "@/graph/handles";
+import { NODE_ROW_HEIGHT } from "@/graph/node-metrics";
 import { schemaToFlow } from "@/graph/schema-to-flow";
 import type { TableFlowNode } from "@/graph/types";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -68,17 +69,47 @@ describe("TableNode", () => {
     ).toBeNull();
   });
 
-  it("renders a source and target handle for every column", () => {
-    const { container } = renderNode("public.order_items");
-    for (const col of ["order_id", "line_no", "product_id", "quantity", "unit_price_cents"]) {
-      const columnId = `public.order_items.${col}`;
-      expect(
-        container.querySelector(`[data-handleid="${columnHandleId(columnId, "source")}"]`),
-      ).not.toBeNull();
-      expect(
-        container.querySelector(`[data-handleid="${columnHandleId(columnId, "target")}"]`),
-      ).not.toBeNull();
+  it("renders a handle wherever an edge attaches, and none on other rows (ADR-023)", () => {
+    const schema = useSchemaStore.getState().schema!;
+    const { edges } = schemaToFlow(schema, { positions: {}, collapsed: {} });
+    for (const tableId of ["public.order_items", "public.orders"]) {
+      const { container, unmount } = renderNode(tableId);
+      const ends = edges.flatMap((e) => [
+        ...(e.source === tableId ? [e.sourceHandle] : []),
+        ...(e.target === tableId ? [e.targetHandle] : []),
+      ]);
+      expect(ends.length).toBeGreaterThan(0);
+      for (const handle of ends)
+        expect(container.querySelector(`[data-handleid="${handle}"]`), handle!).not.toBeNull();
+      unmount();
     }
+    const { container } = renderNode("public.order_items");
+    const quantity = "public.order_items.quantity";
+    expect(
+      container.querySelector(`[data-handleid="${columnHandleId(quantity, "source")}"]`),
+    ).toBeNull();
+    expect(
+      container.querySelector(`[data-handleid="${columnHandleId(quantity, "target")}"]`),
+    ).toBeNull();
+  });
+
+  it("renders skeleton rows when a large schema is zoomed out, keeping height and edge handles", () => {
+    const { container } = renderNode("public.order_items");
+    const handles = [...container.querySelectorAll("[data-handleid]")].map((h) =>
+      h.getAttribute("data-handleid"),
+    );
+    act(() => useUiStore.getState().setCanvasZoomedOut(true));
+    const node = screen.getByTestId("table-node-order_items");
+    expect(within(node).queryByTestId("column-quantity")).toBeNull();
+    const block = within(node).getByTestId("skeleton-rows").firstElementChild as HTMLElement;
+    expect(block.style.height).toBe(`${5 * NODE_ROW_HEIGHT}px`);
+    expect(
+      [...container.querySelectorAll("[data-handleid]")].map((h) =>
+        h.getAttribute("data-handleid"),
+      ),
+    ).toEqual(handles);
+    act(() => useUiStore.getState().setCanvasZoomedOut(false));
+    expect(within(node).getByTestId("column-quantity")).toBeInTheDocument();
   });
 
   it("reflects selection from the UI store", () => {

@@ -1,8 +1,10 @@
 // Large-schema frame costs (P2-T10): imports tests/fixtures/large/neighbourhood-2000.postgres.sql
 // (2,000 tables; `hub` is referenced by 499 of them) and measures, 3 runs each, with neighbourhood
 // highlighting Off and at 1 hop (the default):
-//   - select `hub` on the canvas, deselect (empty canvas), and switch from `hub` to another table:
-//     click → next frame, and the worst frame in the following 800 ms;
+//   - select `hub` on the canvas, deselect (empty canvas), and switch from `hub` to another table,
+//     with real mouse input (CDP Input.dispatchMouseEvent pressed/released, so React Flow's
+//     pointerdown path runs; QA-019): pointerdown → the first frame after the click, the worst
+//     frame in the following 800 ms, and the longest task;
 //   - select a table from the list, which centres it (zoom 0.05 → 1): the worst frame;
 //   - pan for ~90 frames over the content at the fitted zoom and at zoom 1, with nothing and with
 //     `hub` selected: frames per second and the worst frame.
@@ -114,23 +116,70 @@ const frames = (action, ms = 800) =>
     };
     requestAnimationFrame(loop);
   })`);
-const clickNode = (tableId) =>
-  `document.querySelector('.react-flow__node[data-id="${tableId}"]').dispatchEvent(new MouseEvent('click', { bubbles: true }))`;
-const clickPane = `document.querySelector('.react-flow__pane').dispatchEvent(new MouseEvent('click', { bubbles: true }))`;
+/** A point inside the node's header (the node may be only a few pixels wide when zoomed out). */
+const nodePoint = (tableId) => `(() => {
+  const el = document.querySelector('.react-flow__node[data-id="${tableId}"]');
+  const r = el.getBoundingClientRect();
+  const p = [r.left + r.width / 2, r.top + Math.min(r.height / 2, Math.max(1, r.height * 0.05))];
+  return el.contains(document.elementFromPoint(p[0], p[1])) ? p : null;
+})()`;
+/** A point on the empty canvas. */
+const panePoint = `(() => {
+  const pane = document.querySelector('.react-flow__pane').getBoundingClientRect();
+  for (let y = pane.top + 20; y < pane.bottom - 20; y += 23)
+    for (let x = pane.left + 20; x < pane.right - 20; x += 23) {
+      const el = document.elementFromPoint(x, y);
+      if (el && el.classList.contains('react-flow__pane')) return [x, y];
+    }
+  return null;
+})()`;
+/**
+ * Real click at the point `where` evaluates to: arms a probe (pointerdown time, click time, rAF
+ * timestamps, long tasks), then sends pressed/released through CDP like a real mouse.
+ */
+async function realInput(where, ms = 800) {
+  const point = await evaluate(where);
+  if (!point) throw new Error(`No clickable point for ${where.slice(0, 80)}`);
+  await evaluate(`(() => {
+    const probe = (window.__probe = { down: 0, click: 0, frames: [], tasks: [], on: true });
+    addEventListener('pointerdown', () => { probe.down ||= performance.now(); }, { capture: true, once: true });
+    addEventListener('click', () => { probe.click ||= performance.now(); }, { capture: true, once: true });
+    const observer = new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) probe.tasks.push(e.duration);
+    });
+    observer.observe({ type: 'longtask' });
+    probe.observer = observer;
+    const loop = (t) => { probe.frames.push(performance.now()); if (probe.on) requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  })()`);
+  await mouse("mousePressed", point[0], point[1], 1);
+  await mouse("mouseReleased", point[0], point[1]);
+  await sleep(ms);
+  return evaluate(`(() => {
+    const p = window.__probe; p.on = false; p.observer.disconnect();
+    const after = p.frames.filter((t) => t > p.down);
+    const next = after.find((t) => t > p.click) ?? after.at(-1);
+    let worst = 0;
+    for (let i = 1; i < after.length; i++) worst = Math.max(worst, after[i] - after[i - 1]);
+    worst = Math.max(worst, (after[0] ?? p.down) - p.down);
+    return { first: Math.round(next - p.down), worst: Math.round(worst), task: Math.round(Math.max(0, ...p.tasks)) };
+  })()`);
+}
 const escape = `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`;
 const selectedTable = () =>
   evaluate(`document.querySelector('.table-node[data-selected="true"]')?.dataset.testid ?? null`);
 /** Measures `action` from a known selection state and checks the state it leads to. */
 async function measured(name, depth, action, expected, ms) {
-  const result = await frames(action, ms);
+  const result = typeof action === "function" ? await action() : await frames(action, ms);
   const now = await selectedTable();
   if (now !== expected) throw new Error(`${name}: expected ${expected}, got ${now}`);
   record(depth, name, result);
   await sleep(300);
 }
+/** A rendered table other than `hub` that is far enough on screen to click. */
 const otherNode = () =>
   evaluate(
-    `[...document.querySelectorAll('.react-flow__node')].map((n) => n.dataset.id).find((id) => id !== 'public.hub')`,
+    `[...document.querySelectorAll('.react-flow__node')].find((n) => { if (n.dataset.id === 'public.hub') return false; const r = n.getBoundingClientRect(); const c = document.querySelector('.react-flow__pane').getBoundingClientRect(); return r.left > c.left + 8 && r.right < c.right - 8 && r.top > c.top + 8 && r.bottom < c.bottom - 8 && n.contains(document.elementFromPoint(r.left + r.width / 2, r.top + Math.max(1, r.height * 0.05))); })?.dataset.id`,
   );
 
 /** Drags the empty canvas back and forth (so it stays over the content) for ~90 frames. */
@@ -233,19 +282,20 @@ for (const depth of [0, 1]) {
   for (let run = 0; run < RUNS; run++) {
     await fit();
     await frames(escape);
-    await measured("select hub", depth, clickNode("public.hub"), "table-node-hub");
-    await measured("deselect", depth, clickPane, null);
-    await frames(clickNode("public.hub"));
+    const hub = () => realInput(nodePoint("public.hub"));
+    await measured("select hub", depth, hub, "table-node-hub");
+    await measured("deselect", depth, () => realInput(panePoint), null);
+    await hub();
     const other = await otherNode();
     await measured(
       "hub → other",
       depth,
-      clickNode(other),
+      () => realInput(nodePoint(other)),
       `table-node-${other.replace("public.", "")}`,
     );
     await frames(escape);
     record(depth, "pan, fitted, nothing selected", await pan());
-    await frames(clickNode("public.hub"));
+    await hub();
     record(depth, "pan, fitted, hub selected", await pan());
     await frames(escape);
     await evaluate(`${q("table-list-item-t_1500")}.scrollIntoView({ block: 'center' })`);
@@ -269,7 +319,7 @@ const fmt = (runs) =>
     .map((r) =>
       r.fps !== undefined
         ? `${r.fps} fps (worst ${r.worst} ms)`
-        : `${r.first} ms (worst ${r.worst} ms)`,
+        : `${r.first} ms (worst ${r.worst} ms${r.task !== undefined ? `, task ${r.task} ms` : ""})`,
     )
     .join(" · ");
 console.log("\n| Measurement | Off | 1 hop |\n|---|---|---|");
