@@ -750,3 +750,15 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 - AC-QA-030: no export of `gitlab-structure.postgres.sql` contains `::)` (PostgreSQL, MySQL, SQLite, Prisma); `users.email` shows `DEFAULT ''`. _Auto_ (CLI) — **verified in Cowork round 19** (`bf7f06e`).
 
 - **Status: Verified** (Cowork round 19 at `bf7f06e`; not tested: no-tables button in a browser, Safari/iOS copy, real phone). QA-030 fixed in `22534f2`, verified in round 19.
+
+## P3-T06 — Session restore
+
+- AC-P3-T06-1: After importing a file or pasting SQL / Prisma and reloading `/`, the same schema is shown (name, table count, issues; an import with errors opens the issues panel as it did) behind a "Restoring <name>…" status that is gone afterwards. Focus is not moved. _Auto_
+- AC-P3-T06-2: The pan and zoom are restored within 1 px; a new import, Layout and Reset view still fit the view. _Auto_
+- AC-P3-T06-3: The selected table (highlighted) and the inspector tab come back on desktop; on phones the table is selected but no sheet covers the canvas. _Auto_
+- AC-P3-T06-4: `?sample=…` shows that sample and leaves the saved session untouched; no session, a corrupt record, a record with no tables and unavailable IndexedDB (throws, or never answers: 2 s) all show the sample without console errors, and import still works. _Auto_
+- AC-P3-T06-5: Settings → Clear saved data… asks first (Escape cancels, focus returns to Settings); Confirm removes the record, selection, layouts and preferences, shows the sample, announces "Saved data cleared", and a reload shows the sample. Clearing within the 300 ms selection debounce leaves no `schemaflow:session-ui:v1` key and no record; another open tab stops saving. _Auto_
+- AC-P3-T06-6: At 390 px More → Clear saved data… works without horizontal overflow; `toolbar-width.mjs` still prints PASS. _Auto_ + script
+- AC-P3-T06-7: The stored record is inspectable: IndexedDB `schemaflow` → `session` → `current` has exactly `v`, `text`, `format`, `name`, `savedAt`; localStorage has `schemaflow:session-ui:v1`, `schemaflow:layout:v1:*`, `schemaflow:layout-index:v1`, `schemaflow:prefs:v1`. _Auto_
+
+- **Status: Awaiting Cowork verification.** Pending — not independently verified.

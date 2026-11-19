@@ -822,3 +822,11 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **Not tested:** no-tables button (no UI path; jsdom only), Safari/iOS copy, real phone.
 - **Note:** GitLab → SQLite still fails (`char_length`), part of QA-031, deferred → BB-P3.
 - **Status:** P3-T04 Verified, P3-T05 Verified, QA-030 closed.
+
+## 2026-11-19 — P3-T06 (Session restore)
+
+- **Built:** IndexedDB session (last import's source text, re-parsed on load), saved selection (`schemaflow:session-ui:v1`), one-shot viewport restore, "Clear saved data…" with cross-tab stop (ADR-030).
+- **Found while building (fixed):** React Flow ignores `defaultViewport` under an outer `ReactFlowProvider`, so a restore fitted the view; the viewport is now applied in `onInit`. A restored record that parses to zero tables falls back to the sample.
+- **e2e flake (not a defect):** in one full run 3 tests timed out under load (`import.spec` edge-cases file, two `inspector.spec` beforeEach); both files pass on rerun.
+- **Status:** Awaiting Cowork verification. Pending — not independently verified.
+

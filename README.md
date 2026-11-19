@@ -21,6 +21,8 @@ SQL is parsed as text, never executed, and schema data is never sent anywhere.
   to see its columns, keys and relations in the inspector, follow foreign keys, and dim everything
   outside its 1- or 2-hop neighbourhood.
 - **Search** tables and columns (⌘K / Ctrl+K or `/`) and jump to the result.
+- **Pick up where you left off.** A reload restores the last schema you imported, the pan and zoom and the selected table.
+  `?sample=…` URLs always show that sample.
 - Light and dark themes, keyboard navigation, and a phone layout with the panels as sheets.
 - Tested on real schemas: GitLab's `structure.sql` (992 tables after folding partitions),
   Sakila, and generated 180-table `mysqldump` and 200-model Prisma files
@@ -28,6 +30,13 @@ SQL is parsed as text, never executed, and schema data is never sent anywhere.
 
 Large schemas are laid out on the main thread: GitLab's 992 tables take about 3 s on an M1
 (the Import button shows "Laying out N tables…" meanwhile).
+
+## Local data
+
+Nothing is uploaded. To restore your work, SchemaFlow keeps on this device only: the text of your last import (IndexedDB), table
+positions, collapse modes and pan/zoom per schema, the selected table, and preferences (localStorage). Settings → **Clear saved
+data…** (More on phones) removes all of it. If your browser has `BroadcastChannel`, other open tabs stop saving after a clear;
+without it, a tab that was already open can write its state back.
 
 ## Getting started
 

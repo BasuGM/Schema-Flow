@@ -79,6 +79,8 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   `export-generating`, `export-close`; image tab: `export-format-{png|svg}`, `export-theme-{current|light|dark}`,
   `export-scale-{1|2}`, `export-size` / `export-output` (`data-width`, `data-height`), `export-reduced-note`,
   `export-download`, `export-cancel`; both: `export-error`.
+  Session restore (P3-T06): `canvas-restoring`, `settings-clear-data`, `more-clear-data`, `clear-data-dialog`,
+  `clear-data-confirm`, `clear-data-cancel`, `clear-data-status`.
 
 ## Workflow and status vocabulary
 

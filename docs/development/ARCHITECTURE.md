@@ -41,6 +41,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-027](#adr-027--image-export-own-svg-renderer-instead-of-html-to-image-2026-11-19-p3-t03)                                            | 2026-11-19 | Image export: own SVG renderer, no `html-to-image`                                    | P3-T03                                                                       |
 | [ADR-028](#adr-028--text-generators-sql-prisma-mermaid-json-with-warnings-and-fixed-point-tests-2026-11-19-p3-t04)                       | 2026-11-19 | Text generators (SQL ×3, Prisma, Mermaid, JSON): warnings, mapping, fixed-point tests | P3-T04                                                                       |
 | [ADR-029](#adr-029--one-export-dialog-with-tabs-preview-and-stale-safe-generation-2026-11-19-p3-t05) | 2026-11-19 | One Export dialog: text + image tabs, capped preview, revision-keyed cache, gesture-safe copy / download | P3-T05 |
+| [ADR-030](#adr-030--session-restore-indexeddb-source-text-re-parsed-on-load-2026-11-19-p3-t06) | 2026-11-19 | Session restore: last import in IndexedDB, re-parsed on load; `?sample=` wins; one-shot viewport; Clear saved data | P3-T06 |
 
 ## Data flow
 
@@ -239,7 +240,7 @@ continue the line, but a line that starts like a member always starts a new one)
 
 | Store          | Holds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `schema-store` | `schema`, `fingerprint`, `issues`; `loadSchema()`; `restoring` (a saved session is being re-parsed, ADR-030)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `layout-store` | `DiagramLayout` per fingerprint (positions, collapsed, viewport, direction), `version` counter bumped on re-layout. Saved to localStorage per fingerprint (ADR-025).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `ui-store`     | `selectedTableId`, `tableFilter`, `showMiniMap`, `leftPanelOpen`/`rightPanelOpen`, `focusRequest` (`{ tableId, nonce }`, consumed by the canvas to center a table), `clearRequest` (counter bumped by `clearSelection()` on Escape, which is a `document` keydown listener; the canvas unpins a clicked edge), `issuesPanelOpen` (ADR-015), `searchOpen`/`highlightedColumn` (ADR-016), `inspectorTab`/`inspectorBack` (ADR-017), `neighbourhoodDepth` (a setting) and the derived `focusSet` (ADR-018). `schema-store` also holds `sourceText` (the imported text, for excerpts). Theme preference is owned by `next-themes` (localStorage, class on `<html>`). |
 
@@ -793,7 +794,7 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
 - **Eviction:** at most 20 layouts, least recently used first; loading counts as a use. On a quota
   error the oldest other layouts are evicted until the write fits. The usage index is rebuilt from
   the keys when missing or corrupt.
-- **Viewport:** stored but not restored; the view fits on load (restoring it belongs to P3-T06).
+- **Viewport:** stored per layout; restored only by a session restore (ADR-030), otherwise the view fits on load.
 - **Preferences:** the neighbourhood depth is saved under `schemaflow:prefs:v1` and applied by
   `hydratePrefs()` in an effect after mount, so server and first client render match.
 - **Limits:** multi-tab is last-write-wins (no `storage` event sync). Adding or removing a table or
@@ -866,10 +867,43 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   Prisma cannot express CHECK constraints or nullable lists; expression indexes are skipped (as in the
   parsers). 1,000 synthetic tables: 6–17 ms per generator.
 
+### ADR-030 — Session restore: IndexedDB source text, re-parsed on load (2026-11-19, P3-T06)
+
+- **Decision:** a reload brings back the last *imported* schema (file or paste), its pan and zoom, and the selected table with its
+  inspector tab. The import's source text is saved in IndexedDB and re-parsed through the lazy parsers (ADR-014) behind a
+  "Restoring <name>…" status (`schema-store.restoring`), so issues and source excerpts come back and parser fixes apply.
+- **Where things live:** IndexedDB database `schemaflow`, store `session`, key `current` = `{ v: 1, text, format, name, savedAt }`
+  (`src/lib/session-db.ts`, hand-written, no dependency; every call resolves, with a 2 s timeout). `format` is the resolved
+  dialect or `prisma`, so a restore never re-detects differently. localStorage: `schemaflow:layout:v1:<fingerprint>` (positions,
+  collapse modes, **viewport**; ADR-025), `schemaflow:layout-index:v1`, `schemaflow:prefs:v1`, and `schemaflow:session-ui:v1` =
+  `{ fingerprint, selectedTableId, inspectorTab }` (debounced 300 ms, flushed on `pagehide`, only while an import is loaded, applied
+  only when the fingerprint matches).
+- **Precedence:** `?sample=…` loads that sample and neither reads nor changes the session. Plain `/` restores. Fallback to the default
+  sample (and the record is deleted when it is corrupt or has no tables): no record, no IndexedDB, a read slower than 2 s, an invalid
+  record, a parse with no tables. A restore that finishes after anything else was loaded is dropped (`schema-store.revision`).
+- **In-app samples:** the app has no sample loader besides `?sample=` and the default sample, so nothing in the UI replaces the
+  session with a sample. The one in-app way to the sample is Clear saved data, which deletes the session.
+- **Viewport:** `layout-store.pendingViewport` is a one-shot set only by a restore. The canvas applies it in React Flow's `onInit`
+  (the provider is created before the schema loads, so the `defaultViewport` prop is ignored), skips `fitView`, and
+  `useCanvasCommands` skips the first re-fit. Imports, samples, Layout and Reset view still fit.
+- **Phones (< md):** the selection is restored and the node highlighted; panels start collapsed below 900 px, so no sheet covers
+  the canvas. The inspector tab is stored in `ui-store` and shows when the user opens the inspector.
+- **Restore is quiet:** `applyRestoredSchema` follows the import's issues-panel rule but saves nothing, announces nothing and never
+  moves focus (selecting does not center the canvas).
+- **Clear saved data…** (Settings and More, confirm dialog): removes the session, selection, layouts, layout index and preferences,
+  resets the in-memory layouts, loads the sample and announces "Saved data cleared". It is final: `save-gate` counts clears, pending
+  debounced saves are cancelled, a session put still in flight deletes itself, and other tabs are told on
+  `BroadcastChannel("schemaflow")` to stop saving until their next import. Without `BroadcastChannel` another open tab can still write
+  its state back (last write wins, as in ADR-025).
+- **Privacy:** the text never leaves the browser; it now stays on the device until cleared. The README says so.
+- **Rejected:** storing the parsed `Schema` (instant restore, but versioned migrations and stale parser output); localStorage
+  (a 5 MB import would compete with 20 saved layouts for the ~5 MB quota); an opt-in toggle (the user chose on-by-default plus Clear).
+- **Cost:** GitLab (992 tables) restores in about the time of an import (≈ 3 s) behind the status.
+
 ## Known limitations (Phase 1)
 
-- Layout persistence (ADR-025): the viewport is not restored (the view fits on load; session restore is
-  P3-T06). "Layout" deliberately replaces the saved positions.
+- Layout persistence (ADR-025): "Layout" deliberately replaces the saved positions. A saved viewport is used
+  only by a session restore (ADR-030); every import, sample and Layout fits the view.
 - Dagre produces very tall, narrow layouts for large, shallow graphs (e.g. the 200-table synthetic
   sample has few ranks); readable navigation of such schemas relies on the table list + centering.
   Better packing of disconnected components is planned for P4-T05.
