@@ -44,6 +44,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-030](#adr-030--session-restore-indexeddb-source-text-re-parsed-on-load-2026-11-19-p3-t06) | 2026-11-19 | Session restore: last import in IndexedDB, re-parsed on load; `?sample=` wins; one-shot viewport; Clear saved data | P3-T06 |
 | [ADR-031](#adr-031--packed-layout-300-table-design-target-no-canvas-overview-2026-11-20-p3-t07) | 2026-11-20 | Packed layout for elongated large schemas; ~300-table design target; no canvas overview | Tall GitLab layout (242,000 px) is unusable; overview renderer dropped by scope decision | Canvas overview renderer (designed, not built) |
 | [ADR-032](#adr-032--focus-anchor-after-in-inspector-navigation-2026-11-20-p3-t08) | 2026-11-20 | Focus moves to the inspector title after Relations/Back navigation | QA-027/028: the activated button unmounts, focus fell to `body` | Focusing the store action (DOM in stores) |
+| [ADR-033](#adr-033--postgresql-expressions-in-mysql-and-sqlite-exports-2026-11-20-bb-p3) | 2026-11-20 | CHECKs and defaults from PostgreSQL are rewritten for MySQL/SQLite when safe, otherwise left out with one warning | QA-031: GitLab → SQLite failed on `char_length`, `::` casts, `~` | Copying verbatim and warning only; a full SQL expression translator |
 
 ## Data flow
 
@@ -973,3 +974,11 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
 - **Why:** the control unmounts with the selection change (tab keyed by table; Back disappears), so focus fell to `<body>` (QA-027/028). The title persists and names the new table.
 - **Scope:** component handlers only; `src/stores/reveal.ts` stays DOM-free so search and the table list don't steal focus. The container is captured at click time and falls back to the connected inspector.
 - **Mouse:** same path; `:focus-visible` stays false after a pointer click, so no stray ring.
+
+### ADR-033 — PostgreSQL expressions in MySQL and SQLite exports (2026-11-20, BB-P3)
+
+- **Decision:** when a PostgreSQL-source schema is exported to MySQL or SQLite, CHECK expressions and non-literal defaults go through `portableExpression` (`src/generators/sql/portable-expr.ts`, pure). It scans the text outside `'…'` strings (`''` escapes), `"…"` identifiers and `$tag$…$tag$` bodies, strips `::type` casts (multi-word types, `(n)`, `[]`), maps `char_length` ↔ `length` per target, re-quotes identifiers and string backslashes for MySQL, and accepts only a whitelist of functions (`length`, `char_length`, `lower`, `upper`, `abs`, `coalesce`, `nullif`, `substr`, `substring`, `trim`, `ltrim`, `rtrim`, `replace`, `round`) and plain operators.
+- **Uncertain means left out:** anything else (`~`, `ANY(ARRAY[…])`, `ILIKE`, `jsonb_*`, `num_nonnulls`, `E'…'`, comments, `||` for MySQL where it is OR, unterminated literals) drops the CHECK or default and adds one warning per kind: "N CHECK constraints use PostgreSQL-only syntax and were left out (e.g. table.name)." A half-rewritten expression is never emitted.
+- **Faithful exports are untouched:** same-dialect output is byte-identical to before (SHA-256 guard in `faithful-output.test.ts`).
+- **Why not translate more:** a real translator is out of scope (SchemaFlow reads schemas; exports are a convenience). Leaving a constraint out with a count is safer than a wrong one.
+- **Also in BB-P3:** shelf packing stacks short components in columns beside a tall one (QA-034; never taller or wider than before); `CANVAS_MIN_ZOOM` 0.02 so Reset view fits GitLab (QA-035); panel ids no longer collide with `data-testid="inspector"` (QA-036).
