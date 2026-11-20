@@ -104,6 +104,7 @@ describe("generated fixtures are up to date (fixed seeds, byte for byte)", () =>
       "tests/fixtures/large/neighbourhood-2000.postgres.sql",
     ],
     ["scripts/fixtures/search-2000.mjs", "tests/fixtures/large/search-2000.postgres.sql"],
+    ["scripts/fixtures/gen-saas-300.mjs", "tests/fixtures/synthetic/saas-300.postgres.sql"],
   ])("%s regenerates %s", (script, fixture) => {
     const output = execFileSync(process.execPath, [new URL(script, ROOT).pathname, "--stdout"], {
       maxBuffer: 16 * 1024 * 1024,
