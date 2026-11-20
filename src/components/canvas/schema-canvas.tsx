@@ -29,7 +29,7 @@ import { RelationshipEdge } from "./relationship-edge";
 import { TableNode } from "./table-node";
 import { useCanvasCommands } from "./use-canvas-commands";
 import { useFocusSetSync } from "./use-focus-set-sync";
-import { ZoomDetail } from "./zoom-detail";
+import { CANVAS_MIN_ZOOM, ZoomDetail } from "./zoom-detail";
 
 /** Above this many tables, React Flow only renders nodes/edges inside the viewport. */
 export const LARGE_SCHEMA_THRESHOLD = 80;
@@ -229,7 +229,7 @@ function SchemaCanvasInner() {
         edgesFocusable={false}
         deleteKeyCode={null}
         onlyRenderVisibleElements={large}
-        minZoom={0.05}
+        minZoom={CANVAS_MIN_ZOOM}
         maxZoom={2}
         fitView={!openingViewport}
         fitViewOptions={FIT_VIEW_OPTIONS}

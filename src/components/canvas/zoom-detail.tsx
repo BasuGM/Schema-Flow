@@ -6,6 +6,11 @@ import { useUiStore } from "@/stores/ui-store";
 
 /** Below this zoom a table's 12 px row text is under ~4 px on screen: unreadable anyway. */
 export const ROW_DETAIL_MIN_ZOOM = 0.3;
+/**
+ * Lowest canvas zoom. Reset view must be able to fit the biggest packed layout we expect (GitLab,
+ * 992 tables, about 20,900 × 14,700 px, needs 0.03 in a 718 × 752 pane) without being clamped (QA-035).
+ */
+export const CANVAS_MIN_ZOOM = 0.02;
 
 /**
  * Level of detail for large schemas (P2-T10, ADR-022/023): below `ROW_DETAIL_MIN_ZOOM` the canvas

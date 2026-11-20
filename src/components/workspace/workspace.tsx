@@ -70,7 +70,7 @@ export function Workspace() {
       <div className="relative min-h-0 flex-1">
         <ResizablePanelGroup orientation="horizontal" className="h-full">
           <ResizablePanel
-            id="tables"
+            id="tables-panel"
             panelRef={left.panelRef}
             onResize={left.onResize}
             defaultSize={260}
@@ -84,12 +84,12 @@ export function Workspace() {
             </InertPanel>
           </ResizablePanel>
           <ResizableHandle aria-label="Resize table list" onEnter={toggle("left")} />
-          <ResizablePanel id="canvas" minSize={320}>
+          <ResizablePanel id="canvas-panel" minSize={320}>
             <CanvasArea />
           </ResizablePanel>
           <ResizableHandle aria-label="Resize inspector" onEnter={toggle("right")} />
           <ResizablePanel
-            id="inspector"
+            id="inspector-panel"
             panelRef={right.panelRef}
             onResize={right.onResize}
             defaultSize={300}

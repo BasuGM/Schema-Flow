@@ -163,6 +163,13 @@ describe("Collapsed side panels are inert (QA-017)", () => {
     expect(content).not.toHaveAttribute("inert");
   });
 
+  it("QA-036: exactly one element carries data-testid=inspector", () => {
+    renderWorkspace();
+    act(() => useUiStore.getState().selectTable("public.orders"));
+    expect(screen.getAllByTestId("inspector")).toHaveLength(1);
+    expect(screen.getByTestId("inspector").tagName).toBe("ASIDE");
+  });
+
   it("moves focus from a collapsing panel to its toolbar toggle", () => {
     renderWorkspace();
     act(() => useUiStore.getState().selectTable("public.orders"));
