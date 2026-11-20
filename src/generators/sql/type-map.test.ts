@@ -9,6 +9,9 @@ const map = (raw: string, from: SqlDialect, to: SqlDialect, prisma = false) =>
 describe("mapType", () => {
   it("maps common types across the three dialects", () => {
     expect(map("timestamptz", "postgresql", "mysql")).toEqual({ sql: "datetime", exact: false });
+    // The precision sits inside the name (`timestamp(6) without time zone`); SQLite rejects it as is.
+    expect(map("timestamp(6) without time zone", "postgresql", "sqlite").sql).toBe("datetime");
+    expect(map("timestamp(6) with time zone", "postgresql", "mysql").sql).toBe("datetime");
     expect(map("timestamptz", "postgresql", "postgresql")).toEqual({
       sql: "timestamp with time zone",
       exact: true,

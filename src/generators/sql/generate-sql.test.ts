@@ -194,8 +194,13 @@ describe("cross-dialect traps", () => {
   });
 
   it("wraps expression defaults in parentheses where the target needs them", () => {
-    expect(sql(checked, "mysql").text).toContain("DEFAULT (lower('A') || 'b')");
     expect(sql(checked, "sqlite").text).toContain("DEFAULT (lower('A') || 'b')");
+    // `||` is logical OR in MySQL, so that default is left out and reported (QA-031).
+    const mysql = sql(checked, "mysql");
+    expect(mysql.text).not.toContain("lower('A')");
+    expect(mysql.warnings).toContain(
+      "1 column default uses PostgreSQL-only syntax and was left out (e.g. items.label).",
+    );
   });
 
   it("SQLite: schema prefixes are dropped, clashing tables and index names stay unique", () => {

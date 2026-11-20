@@ -196,7 +196,10 @@ export function mapType(
   const MODIFIER = /\s+(unsigned|signed|zerofill)\b/gi;
   const modifier = /\s(unsigned|signed|zerofill)\b/i.test(dt.raw);
   const type = modifier ? parseDataType(dt.raw.replace(MODIFIER, "")) : dt;
-  const base = type.base.toLowerCase().trim();
+  let base = type.base.toLowerCase().trim();
+  // `timestamp(6) without time zone`: the precision sits inside the name, so the parsed base misses
+  // the table; look the name up without it (the precision is dropped, as for other targets).
+  if (!FAMILY[base]) base = base.replace(/\s*\(\s*\d+\s*\)/g, "");
   const family = (isPrisma ? PRISMA_OVERRIDES[base] : undefined) ?? FAMILY[base];
   // A type we do not know, with quoted parameters (`SET('a', 'b')`), would be invalid anywhere else.
   if (!family)

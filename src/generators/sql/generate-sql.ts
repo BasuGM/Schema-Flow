@@ -11,8 +11,9 @@ import type {
 import { sqlLineComment, sqlString } from "../text/escape";
 import { createWarnings, type GeneratedText } from "../text/types";
 import { renderColumn } from "./column-sql";
-import { createIdent, createTally, type SqlContext } from "./context";
+import { createIdent, createLeftOut, createTally, type SqlContext } from "./context";
 import { createNameRegistry } from "./names";
+import { portableExpression } from "./portable-expr";
 
 export interface SqlOptions {
   dialect: SqlDialect;
@@ -79,6 +80,7 @@ function createContext(
     faithful: from === to && !isPrisma,
     warnings,
     tally: createTally(),
+    leftOut: createLeftOut(),
     names: createNameRegistry(to),
     copied: new Set(),
     keyColumns,
@@ -207,7 +209,16 @@ function build(
       lines.push(`${constraint(u.name, scope)}UNIQUE (${cols(u.columnIds)})`);
     }
     for (const c of t.checkConstraints) {
-      lines.push(`${constraint(c.name, null)}CHECK (${c.expression})`);
+      let expression = c.expression;
+      if (!ctx.faithful && ctx.from === "postgresql" && to !== "postgresql") {
+        const portable = portableExpression(expression, to);
+        if (!portable.ok) {
+          ctx.leftOut.checks.push(`${t.name}.${c.name ?? "(unnamed)"}`);
+          continue;
+        }
+        expression = portable.sql;
+      }
+      lines.push(`${constraint(c.name, null)}CHECK (${expression})`);
       if (!ctx.faithful) ctx.copied.add(t.id);
     }
     for (const expr of checks) lines.push(`CHECK (${expr})`);
@@ -269,6 +280,7 @@ function build(
   if (comments.length > 0) sections.push(comments.join("\n"));
 
   tally.flush(warnings);
+  ctx.leftOut.flush(warnings);
   for (const id of ctx.copied) {
     const t = schema.tables[id];
     warnings.add(

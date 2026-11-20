@@ -95,8 +95,9 @@ export function renderColumn(ctx: SqlContext, table: Table, col: Column): Render
   if (!inlinePrimaryKey && !col.nullable) parts.push("NOT NULL");
 
   if (col.default && !autoincrement) {
-    const rendered = renderDefault(col.default, to, ctx.faithful);
-    if (rendered) {
+    const rendered = renderDefault(col.default, to, ctx.faithful, ctx.from);
+    if (rendered?.unportable) ctx.leftOut.defaults.push(`${table.name}.${col.name}`);
+    else if (rendered) {
       parts.push(`DEFAULT ${rendered.sql}`);
       if (rendered.copied && col.default.kind !== "literal") ctx.copied.add(table.id);
     } else tally.add("Defaults without a SQL equivalent (Prisma cuid()) were dropped.");

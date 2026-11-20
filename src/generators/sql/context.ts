@@ -17,6 +17,23 @@ export function createTally() {
 }
 export type Tally = ReturnType<typeof createTally>;
 
+/** PostgreSQL-only CHECKs and defaults left out of a MySQL / SQLite export (QA-031, ADR-033). */
+export function createLeftOut() {
+  const checks: string[] = [];
+  const defaults: string[] = [];
+  const line = (n: number, noun: string, example: string) =>
+    `${n} ${noun}${n === 1 ? " uses" : "s use"} PostgreSQL-only syntax and ${n === 1 ? "was" : "were"} left out (e.g. ${example}).`;
+  return {
+    checks,
+    defaults,
+    flush(warnings: Warnings) {
+      if (checks.length) warnings.add(line(checks.length, "CHECK constraint", checks[0]!));
+      if (defaults.length) warnings.add(line(defaults.length, "column default", defaults[0]!));
+    },
+  };
+}
+export type LeftOut = ReturnType<typeof createLeftOut>;
+
 /** Everything the SQL renderers share for one export. */
 export interface SqlContext {
   schema: Schema;
@@ -29,6 +46,7 @@ export interface SqlContext {
   faithful: boolean;
   warnings: Warnings;
   tally: Tally;
+  leftOut: LeftOut;
   names: NameRegistry;
   /** Tables whose CHECKs or defaults were copied as written across dialects. */
   copied: Set<TableId>;
