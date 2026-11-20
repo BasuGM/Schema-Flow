@@ -784,3 +784,18 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 - AC-P3-T08-1 at 390×844, step (d): Repeat (a) in the inspector sheet → title focused with the ring, text `users`. _Auto_ (`tests/e2e/bug-bash.spec.ts`).
 - AC-P3-T08-4, step (e): Import dialog, Tab to "Choose file…" → ring on the label; mouse click → no ring. _Auto_ (`import-dialog.test.tsx`, `tests/e2e/bug-bash.spec.ts`).
 - AC-P3-T08-5: `bug-bash.spec.ts` row 4 asserts exact focus targets with no conditional branches. _Auto_ (`tests/e2e/bug-bash.spec.ts`).
+
+## BB-P3 — Phase 3 bug-bash
+
+Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.spec.ts` and unit tests.
+
+- AC-BB-P3-1 (QA-031): every SQL fixture's SQLite output runs in SQLite (`node:sqlite`); MySQL and SQLite outputs re-import with the same table count and no errors; no `::` or `~` outside strings; same-dialect output unchanged (hashes). _Auto_
+- AC-BB-P3-2 (QA-032): Mermaid entity names never contain `\`. _Auto_
+- AC-BB-P3-3 (QA-033): backtick table names with `'` or `\` import as MySQL, 1 table, 0 errors; stray backticks in PostgreSQL text do not change the dialect. _Auto_
+- AC-BB-P3-4 (QA-034): GitLab packed is below 15,500 px tall with no overlaps; saas-300 and mysqldump-180 are no bigger than before. _Auto_
+- AC-BB-P3-5 (QA-035): Reset view fits GitLab at 718 × 752 above the minimum zoom; Cowork also checks it at 1280 wide with both panels open. _Auto + Cowork_
+- AC-BB-P3-6 (QA-036): exactly one `data-testid="inspector"`. _Auto_
+- AC-BB-P3-7: saas-300 import, search, inspect, export and reload work with an empty console. _Auto_
+- AC-BB-P3-8: Export (Enter, arrow-key tabs, Escape) and Clear saved data (Cancel) return focus. _Auto_
+- AC-BB-P3-9: Export and Clear dialogs at 390 and 1280 px, light and dark: no overflow, empty console. _Auto_
+- **Status: Awaiting Cowork verification.**
