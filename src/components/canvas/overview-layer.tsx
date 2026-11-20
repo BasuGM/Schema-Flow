@@ -13,31 +13,41 @@ const MINIMAP = { width: 200, height: 150 };
 
 interface Paths {
   body: Path2D;
-  bodyDim: Path2D;
   header: Path2D;
-  headerDim: Path2D;
   edge: Path2D;
-  edgeDim: Path2D;
 }
 
-/** World-space paths, batched by style so a frame is a handful of fills and strokes. */
-function buildPaths(geometry: DiagramGeometry, focus: ReadonlySet<string> | null): Paths {
-  const paths: Paths = {
-    body: new Path2D(),
-    bodyDim: new Path2D(),
-    header: new Path2D(),
-    headerDim: new Path2D(),
-    edge: new Path2D(),
-    edgeDim: new Path2D(),
-  };
+/** Everything, built once per layout: parsing 3,000 edge paths on every selection is too slow. */
+interface Cache {
+  all: Paths;
+  edgePaths: Map<string, Path2D>;
+}
+
+function buildCache(geometry: DiagramGeometry): Cache {
+  const all: Paths = { body: new Path2D(), header: new Path2D(), edge: new Path2D() };
   for (const t of geometry.tables) {
-    const dim = focus !== null && !focus.has(t.id);
-    (dim ? paths.bodyDim : paths.body).rect(t.x, t.y, t.w, t.h);
-    (dim ? paths.headerDim : paths.header).rect(t.x, t.y, t.w, Math.min(HEADER_HEIGHT, t.h));
+    all.body.rect(t.x, t.y, t.w, t.h);
+    all.header.rect(t.x, t.y, t.w, Math.min(HEADER_HEIGHT, t.h));
+  }
+  const edgePaths = new Map<string, Path2D>();
+  for (const e of geometry.edges) {
+    const path = new Path2D(e.d);
+    edgePaths.set(e.id, path);
+    all.edge.addPath(path);
+  }
+  return { all, edgePaths };
+}
+
+/** The tables and edges inside the focus set (small next to the whole diagram). */
+function buildFocused(geometry: DiagramGeometry, cache: Cache, focus: ReadonlySet<string>): Paths {
+  const paths: Paths = { body: new Path2D(), header: new Path2D(), edge: new Path2D() };
+  for (const t of geometry.tables) {
+    if (!focus.has(t.id)) continue;
+    paths.body.rect(t.x, t.y, t.w, t.h);
+    paths.header.rect(t.x, t.y, t.w, Math.min(HEADER_HEIGHT, t.h));
   }
   for (const e of geometry.edges) {
-    const dim = focus !== null && !(focus.has(e.from) && focus.has(e.to));
-    (dim ? paths.edgeDim : paths.edge).addPath(new Path2D(e.d));
+    if (focus.has(e.from) && focus.has(e.to)) paths.edge.addPath(cache.edgePaths.get(e.id)!);
   }
   return paths;
 }
@@ -57,7 +67,12 @@ export function OverviewLayer({ geometry }: { geometry: DiagramGeometry }) {
   const { resolvedTheme } = useTheme();
   const dark = resolvedTheme === "dark";
 
-  const paths = useMemo(() => buildPaths(geometry, focusSet), [geometry, focusSet]);
+  const cache = useMemo(() => buildCache(geometry), [geometry]);
+  const focused = useMemo(
+    () => (focusSet ? buildFocused(geometry, cache, focusSet) : null),
+    [geometry, cache, focusSet],
+  );
+  const paths = cache.all;
   const palette = useMemo(() => {
     try {
       return resolveExportPalette(dark ? "dark" : "light");
@@ -91,23 +106,24 @@ export function OverviewLayer({ geometry }: { geometry: DiagramGeometry }) {
     ctx.lineWidth = 1 / zoom;
     ctx.lineJoin = "round";
 
-    ctx.strokeStyle = palette.edge;
-    ctx.globalAlpha = dimEdge;
-    ctx.stroke(paths.edgeDim);
-    ctx.globalAlpha = 1;
-    ctx.stroke(paths.edge);
-
-    for (const [dim, body, header] of [
-      [true, paths.bodyDim, paths.headerDim],
-      [false, paths.body, paths.header],
-    ] as const) {
-      ctx.globalAlpha = dim ? dimNode : 1;
+    // With a focus set everything is drawn dimmed first and the focused part on top.
+    const layers: [Paths, number, number][] = focused
+      ? [
+          [cache.all, dimNode, dimEdge],
+          [focused, 1, 1],
+        ]
+      : [[cache.all, 1, 1]];
+    for (const [layer, nodeAlpha, edgeAlpha] of layers) {
+      ctx.globalAlpha = edgeAlpha;
+      ctx.strokeStyle = palette.edge;
+      ctx.stroke(layer.edge);
+      ctx.globalAlpha = nodeAlpha;
       ctx.fillStyle = palette.card;
-      ctx.fill(body);
+      ctx.fill(layer.body);
       ctx.fillStyle = palette.muted;
-      ctx.fill(header);
+      ctx.fill(layer.header);
       ctx.strokeStyle = palette.border;
-      ctx.stroke(body);
+      ctx.stroke(layer.body);
     }
     ctx.globalAlpha = 1;
     if (selected) {
@@ -119,7 +135,7 @@ export function OverviewLayer({ geometry }: { geometry: DiagramGeometry }) {
     canvas.dataset.edgesDrawn = String(geometry.edges.length);
     canvas.dataset.selectedId = selected?.id ?? "";
     canvas.dataset.selectedHeight = selected ? String(selected.h) : "";
-  }, [flow, paths, palette, selected, geometry, dimNode, dimEdge]);
+  }, [flow, cache, focused, palette, selected, geometry, dimNode, dimEdge]);
 
   // Redraw when the viewport or canvas size changes (coalesced to one draw per frame) and
   // whenever the drawing inputs change.
@@ -197,12 +213,8 @@ function OverviewMiniMap({
       ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * originX, dpr * originY);
       ctx.fillStyle = palette.muted;
       ctx.fill(paths.header);
-      ctx.fill(paths.headerDim);
       ctx.fillStyle = palette.border;
       ctx.fill(paths.body);
-      ctx.globalAlpha = 0.5;
-      ctx.fill(paths.bodyDim);
-      ctx.globalAlpha = 1;
       const [tx, ty, zoom] = flow.getState().transform;
       const { width, height } = flow.getState();
       ctx.strokeStyle = palette.fk;

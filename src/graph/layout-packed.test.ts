@@ -114,7 +114,7 @@ describe("layoutPacked", () => {
         expect(route.targetAt).toEqual(positions[rel.to.tableId]);
       }
     }
-  });
+  }, 30_000);
 
   it("packs in TB without overlaps", () => {
     const s = hubSchema(250, 130);

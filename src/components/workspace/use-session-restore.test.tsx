@@ -111,7 +111,11 @@ describe("useSessionRestore", () => {
   });
 
   it("falls back to the sample and deletes a record with no tables", async () => {
-    backend.data.set(SESSION_RECORD_KEY, { ...record, text: "not a schema at all", format: "prisma" });
+    backend.data.set(SESSION_RECORD_KEY, {
+      ...record,
+      text: "not a schema at all",
+      format: "prisma",
+    });
     renderHook(() => useSessionRestore());
     await waitFor(() => expect(schemaName()).toBe(createEcommerceSchema().name));
     await waitFor(() => expect(backend.data.has(SESSION_RECORD_KEY)).toBe(false));

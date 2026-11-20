@@ -3,6 +3,7 @@
 import {
   Background,
   BackgroundVariant,
+  ControlButton,
   Controls,
   MiniMap,
   Panel,
@@ -18,7 +19,7 @@ import {
   useReactFlow,
   type Viewport,
 } from "@xyflow/react";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, Maximize } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import type { DiagramLayout, Schema, Viewport as SavedViewport } from "@/domain/schema/types";
@@ -132,16 +133,18 @@ function SchemaCanvasInner() {
   // `overview`: the zoomed-out view is drawn on one canvas and the DOM nodes are hidden (view-only:
   // it is derived below and never reaches the layout store, the saved layout or exports).
   const [overview, setOverview] = useState(false);
+  const [decidedFor, setDecidedFor] = useState<string | null>(null);
   if (syncedBase !== base) {
     setSyncedBase(base);
     setNodes(base.nodes);
     setEdges(base.edges);
+    // Only a different diagram re-decides from the fit zoom; a collapse change or re-layout of
+    // the same one keeps the current state (Reset view decides for a re-layout).
     const layout = fingerprint ? useLayoutStore.getState().layouts[fingerprint] : undefined;
-    setOverview(
-      schema && layout
-        ? initialOverview(schema, layout, useLayoutStore.getState().pendingViewport)
-        : false,
-    );
+    if (schema && layout && fingerprint !== decidedFor) {
+      setDecidedFor(fingerprint);
+      setOverview(initialOverview(schema, layout, useLayoutStore.getState().pendingViewport));
+    }
   }
   const shownNodes = useMemo(
     () => (overview ? nodes.map((n) => (n.hidden ? n : { ...n, hidden: true })) : nodes),
@@ -284,10 +287,14 @@ function SchemaCanvasInner() {
   const [openingViewport, setOpeningViewport] = useState<Viewport | null | undefined>(undefined);
   if (schema && openingViewport === undefined)
     setOpeningViewport(useLayoutStore.getState().pendingViewport);
+  // Zoom-driven overview changes only count once the opening viewport has been applied.
+  const [armed, setArmed] = useState(false);
   const onInit = useCallback(
     (instance: ReactFlowInstance<TableFlowNode, RelationshipFlowEdge>) => {
+      const arm = () => requestAnimationFrame(() => setArmed(true));
       if (openingViewport) {
         void instance.setViewport(openingViewport);
+        arm();
         return;
       }
       const target = overviewFit?.fit(toFitPadding(fitPadding(issuesSheetOpen())));
@@ -295,6 +302,7 @@ function SchemaCanvasInner() {
         overviewFit.decide(target.zoom);
         void instance.setViewport(target);
       }
+      arm();
     },
     [openingViewport, overviewFit],
   );
@@ -345,7 +353,7 @@ function SchemaCanvasInner() {
         edgesFocusable={false}
         deleteKeyCode={null}
         onlyRenderVisibleElements={large}
-        minZoom={0.05}
+        minZoom={0.02}
         maxZoom={2}
         fitView={!openingViewport && !eligible}
         fitViewOptions={FIT_VIEW_OPTIONS}
@@ -356,15 +364,22 @@ function SchemaCanvasInner() {
           enabled={large}
           tables={tableCount}
           overview={overview}
+          armed={armed}
           onOverviewChange={changeOverview}
         />
         {overview && geometry && <OverviewLayer geometry={geometry} />}
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--canvas-dot)" />
-        <Controls
-          showInteractive={false}
-          position="bottom-left"
-          fitViewOptions={FIT_VIEW_OPTIONS}
-        />
+        <Controls showInteractive={false} position="bottom-left" showFitView={false}>
+          {/* React Flow's own button skips hidden nodes (the overview) and would centre on nothing. */}
+          <ControlButton
+            onClick={resetView}
+            title="fit view"
+            aria-label="fit view"
+            className="react-flow__controls-fitview"
+          >
+            <Maximize aria-hidden />
+          </ControlButton>
+        </Controls>
         {showMiniMap && !overview && (
           <MiniMap
             data-testid="canvas-minimap"

@@ -23,6 +23,7 @@ function Canvas({
             enabled={enabled}
             tables={tables}
             overview={false}
+            armed
             onOverviewChange={onOverview}
           />
         </ReactFlow>

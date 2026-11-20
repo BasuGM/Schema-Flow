@@ -20,11 +20,14 @@ export function ZoomDetail({
   enabled,
   tables,
   overview,
+  armed,
   onOverviewChange,
 }: {
   enabled: boolean;
   tables: number;
   overview: boolean;
+  /** False until the opening viewport is applied: React Flow's default zoom 1 must not count. */
+  armed: boolean;
   onOverviewChange: (overview: boolean) => void;
 }) {
   const flow = useStoreApi();
@@ -36,13 +39,13 @@ export function ZoomDetail({
   // counts, so React Flow's initial default viewport never flips the state before the real one.
   useEffect(() => {
     return flow.subscribe((s, prev) => {
-      if (s.transform === prev.transform) return;
+      if (!armed || s.transform === prev.transform) return;
       const next = nextOverviewState(current.current, s.transform[2], tables);
       if (next === current.current) return;
       current.current = next;
       onOverviewChange(next);
     });
-  }, [flow, tables, onOverviewChange]);
+  }, [flow, tables, armed, onOverviewChange]);
 
   const zoomedOut = useStore((s) => s.transform[2] < ROW_DETAIL_MIN_ZOOM);
   const domNode = useStore((s) => s.domNode);

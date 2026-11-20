@@ -9,6 +9,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { checkLoad, cleanupOnExit } from "./perf-guard.mjs";
 
 const url = process.argv[2] ?? "http://localhost:3000/";
 const chromePath =
@@ -19,6 +20,7 @@ const fixture = readFileSync(
 );
 const port = 9400 + Math.floor(Math.random() * 400);
 const profile = mkdtempSync(join(tmpdir(), "schemaflow-toolbar-"));
+checkLoad();
 const chrome = spawn(
   chromePath,
   [
@@ -32,6 +34,7 @@ const chrome = spawn(
   { stdio: "ignore" },
 );
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+cleanupOnExit(() => chrome.kill());
 const done = (code) => {
   chrome.kill();
   // Chrome may still be writing its profile for a moment after the kill.

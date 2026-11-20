@@ -6,12 +6,15 @@
 // Usage (needs a running server, e.g. `npm run start`): node scripts/headless/restore-perf.mjs [url]
 import { chromium } from "@playwright/test";
 import { fileURLToPath } from "node:url";
+import { checkLoad, cleanupOnExit } from "./perf-guard.mjs";
 
 const url = process.argv[2] ?? "http://localhost:3000/";
 const fixture = fileURLToPath(
   new URL("../../tests/fixtures/real/gitlab-structure.postgres.sql", import.meta.url),
 );
+checkLoad();
 const browser = await chromium.launch();
+cleanupOnExit(() => void browser.close());
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await page.goto(url);
@@ -44,9 +47,14 @@ try {
   for (let run = 1; run <= 3; run++) {
     const start = Date.now();
     await page.goto(url);
-    await page.locator('[data-testid^="table-node-"]').first().waitFor({ timeout: 60_000 });
+    await page
+      .locator('[data-testid="canvas-overview"], [data-testid^="table-node-"]')
+      .first()
+      .waitFor({ timeout: 60_000 });
     await page.getByTestId("canvas-restoring").waitFor({ state: "detached" });
-    console.log(`restore ${run}: ${Date.now() - start} ms (reload → first table node on screen)`);
+    console.log(
+      `restore ${run}: ${Date.now() - start} ms (reload → first table node, or the overview canvas, on screen)`,
+    );
   }
   console.log(`tables: ${await page.getByTestId("toolbar-schema-name").textContent()}`);
 } catch (error) {

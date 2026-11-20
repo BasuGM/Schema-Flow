@@ -12,6 +12,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { checkLoad, cleanupOnExit } from "./perf-guard.mjs";
 
 const url = process.argv[2] ?? "http://localhost:3000/";
 const chromePath =
@@ -23,6 +24,7 @@ const fixture = readFileSync(
 const RUNS = 3;
 const port = 9400 + Math.floor(Math.random() * 400);
 const profile = mkdtempSync(join(tmpdir(), "schemaflow-collapse-"));
+checkLoad();
 const chrome = spawn(
   chromePath,
   [
@@ -36,6 +38,7 @@ const chrome = spawn(
   { stdio: "ignore" },
 );
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+cleanupOnExit(() => chrome.kill());
 const done = (code) => {
   chrome.kill();
   setTimeout(() => {
@@ -127,6 +130,8 @@ async function measuredClick(testid, ms = 1500) {
 
 async function importFixture() {
   await send("Page.navigate", { url });
+  // A background tab may not run requestAnimationFrame, which the import's busy state waits for.
+  await send("Page.bringToFront");
   for (let k = 0; k < 60; k++) {
     await sleep(250);
     if (await evaluate(`!!${q("toolbar-import")}`)) break;
@@ -146,13 +151,15 @@ async function importFixture() {
     await sleep(500);
     if (
       await evaluate(
-        `!${q("import-dialog")} && document.querySelectorAll('.react-flow__node').length > 0`,
+        `!${q("import-dialog")} && (document.querySelectorAll('.react-flow__node').length > 0 && !/E-commerce/.test(document.querySelector('[data-testid="toolbar-schema-name"]')?.textContent ?? '')) || !!document.querySelector('[data-testid="canvas-overview"]')`,
       )
     )
       break;
   }
   await sleep(1500);
-  return evaluate(`document.querySelectorAll('.react-flow__node').length > 0`);
+  return evaluate(
+    `(document.querySelectorAll('.react-flow__node').length > 0 && !/E-commerce/.test(document.querySelector('[data-testid="toolbar-schema-name"]')?.textContent ?? '')) || !!document.querySelector('[data-testid="canvas-overview"]')`,
+  );
 }
 
 await send("Runtime.enable");

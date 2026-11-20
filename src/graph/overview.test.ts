@@ -27,9 +27,9 @@ describe("fitViewport", () => {
     expect(v.zoom).toBeCloseTo(700 / 10000);
     expect(v.x).toBeCloseTo(150);
   });
-  it("caps at 1 and floors at 0.05", () => {
+  it("caps at 1 and floors at 0.02", () => {
     expect(fitZoom({ x: 0, y: 0, width: 100, height: 100 }, size, 0.15)).toBe(1);
-    expect(fitZoom({ x: 0, y: 0, width: 1e6, height: 10 }, size, 0.15)).toBe(0.05);
+    expect(fitZoom({ x: 0, y: 0, width: 1e6, height: 10 }, size, 0.15)).toBe(0.02);
   });
   it("accepts per-side padding", () => {
     const v = fitViewport({ x: 0, y: 0, width: 100, height: 100 }, size, {

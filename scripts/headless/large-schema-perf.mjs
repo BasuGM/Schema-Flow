@@ -8,6 +8,11 @@
 //   - select a table from the list, which centres it (zoom 0.05 → 1): the worst frame;
 //   - pan for ~90 frames over the content at the fitted zoom and at zoom 1, with nothing and with
 //     `hub` selected: frames per second and the worst frame.
+// Since P3-T07 the fitted view of a 2,000-table schema is the canvas overview (no DOM tables), so
+// at the fitted zoom the harness clicks the drawn tables (screen points from the saved layout and
+// the viewport) and reads the selection from `data-selected-id` on `canvas-overview`. It also
+// reports the packed bounds, the fitted zoom, and the overview → DOM transition (zooming in past
+// 0.32 with the wheel: flip of `data-overview` → first mounted table; informational, target ≤ 100 ms).
 // Budgets (development machine, M1 8 GB, at 1 hop): first frame ≤ 40 ms for hub select/deselect,
 // worst centring frame ≤ 100 ms, ≥ 45 fps panning at the fitted zoom with `hub` selected. Other
 // machines should compare 1 hop against the Off baseline measured on the same machine.
@@ -20,6 +25,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { checkLoad, cleanupOnExit } from "./perf-guard.mjs";
 
 const url = process.argv[2] ?? "http://localhost:3000/";
 const chromePath =
@@ -31,6 +37,7 @@ const fixture = readFileSync(
 const RUNS = 3;
 const port = 9400 + Math.floor(Math.random() * 400);
 const profile = mkdtempSync(join(tmpdir(), "schemaflow-perf-"));
+checkLoad();
 const chrome = spawn(
   chromePath,
   [
@@ -44,6 +51,7 @@ const chrome = spawn(
   { stdio: "ignore" },
 );
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+cleanupOnExit(() => chrome.kill());
 const done = (code) => {
   chrome.kill();
   setTimeout(() => {
@@ -116,8 +124,26 @@ const frames = (action, ms = 800) =>
     };
     requestAnimationFrame(loop);
   })`);
+/** In-page: where a table is on screen while the overview is drawn (from the saved layout). */
+const OVERVIEW_POINT = (tableId, dy) => `(() => {
+  let best = null;
+  for (const key of Object.keys(localStorage)) {
+    if (!key.includes('layout:v1:')) continue;
+    const l = JSON.parse(localStorage.getItem(key));
+    if (!best || Object.keys(l.positions).length > Object.keys(best.positions).length) best = l;
+  }
+  const p = best && best.positions[${JSON.stringify(tableId)}];
+  if (!p) return null;
+  const m = new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform);
+  const r = document.querySelector('.react-flow__pane').getBoundingClientRect();
+  const x = r.left + p.x * m.a + m.e + 140 * m.a;
+  const y = r.top + p.y * m.a + m.f + ${dy} * m.a;
+  return x > r.left + 4 && x < r.right - 4 && y > r.top + 4 && y < r.bottom - 4 ? [x, y] : null;
+})()`;
+const isOverview = `document.querySelector('[data-testid="schema-canvas"]')?.dataset.overview === 'true'`;
 /** A point inside the node's header (the node may be only a few pixels wide when zoomed out). */
 const nodePoint = (tableId) => `(() => {
+  if (${isOverview}) return ${OVERVIEW_POINT(tableId, 30)};
   const el = document.querySelector('.react-flow__node[data-id="${tableId}"]');
   const r = el.getBoundingClientRect();
   const p = [r.left + r.width / 2, r.top + Math.min(r.height / 2, Math.max(1, r.height * 0.05))];
@@ -125,6 +151,17 @@ const nodePoint = (tableId) => `(() => {
 })()`;
 /** A point on the empty canvas. */
 const panePoint = `(() => {
+  if (${isOverview}) {
+    const canvas = document.querySelector('[data-testid="canvas-overview"]');
+    const box = canvas.getBoundingClientRect();
+    const ctx = canvas.getContext('2d');
+    const dpr = canvas.width / box.width;
+    for (let y = box.top + 20; y < box.bottom - 20; y += 23)
+      for (let x = box.left + 20; x < box.right - 20; x += 23)
+        if (ctx.getImageData(Math.round((x - box.left) * dpr), Math.round((y - box.top) * dpr), 1, 1).data[3] === 0)
+          return [x, y];
+    return null;
+  }
   const pane = document.querySelector('.react-flow__pane').getBoundingClientRect();
   for (let y = pane.top + 20; y < pane.bottom - 20; y += 23)
     for (let x = pane.left + 20; x < pane.right - 20; x += 23) {
@@ -139,7 +176,15 @@ const panePoint = `(() => {
  */
 async function realInput(where, ms = 800) {
   const point = await evaluate(where);
-  if (!point) throw new Error(`No clickable point for ${where.slice(0, 80)}`);
+  if (!point) {
+    const raw = await send("Runtime.evaluate", {
+      expression: `JSON.stringify({ ov: document.querySelector('[data-testid="schema-canvas"]')?.dataset.overview, nodes: document.querySelectorAll('.react-flow__node').length, t: getComputedStyle(document.querySelector('.react-flow__viewport')).transform })`,
+      returnByValue: true,
+    });
+    throw new Error(
+      `No clickable point for ${where.slice(0, 80)}: ${JSON.stringify(raw.result).slice(0, 300)}`,
+    );
+  }
   await evaluate(`(() => {
     const probe = (window.__probe = { down: 0, click: 0, frames: [], tasks: [], on: true });
     addEventListener('pointerdown', () => { probe.down ||= performance.now(); }, { capture: true, once: true });
@@ -167,7 +212,11 @@ async function realInput(where, ms = 800) {
 }
 const escape = `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`;
 const selectedTable = () =>
-  evaluate(`document.querySelector('.table-node[data-selected="true"]')?.dataset.testid ?? null`);
+  evaluate(`(() => {
+    const drawn = document.querySelector('[data-testid="canvas-overview"]');
+    if (drawn) return drawn.dataset.selectedId ? 'table-node-' + drawn.dataset.selectedId.replace('public.', '') : null;
+    return document.querySelector('.table-node[data-selected="true"]')?.dataset.testid ?? null;
+  })()`);
 /** Measures `action` from a known selection state and checks the state it leads to. */
 async function measured(name, depth, action, expected, ms) {
   const result = typeof action === "function" ? await action() : await frames(action, ms);
@@ -177,22 +226,35 @@ async function measured(name, depth, action, expected, ms) {
   await sleep(300);
 }
 /** A rendered table other than `hub` that is far enough on screen to click. */
-const otherNode = () =>
-  evaluate(
+const otherNode = async () => {
+  if (await evaluate(isOverview)) {
+    // Any other table that is on screen, preferring ones a click can hit (tens of pixels apart).
+    const ids = await evaluate(`(() => {
+      let best = null;
+      for (const key of Object.keys(localStorage)) {
+        if (!key.includes('layout:v1:')) continue;
+        const l = JSON.parse(localStorage.getItem(key));
+        if (!best || Object.keys(l.positions).length > Object.keys(best.positions).length) best = l;
+      }
+      return Object.keys(best.positions).filter((id) => id !== 'public.hub' && ${OVERVIEW_POINT("__ID__", 30).replace('"__ID__"', "id")}).slice(0, 40);
+    })()`);
+    for (const candidate of ids) {
+      await realInput(nodePoint(candidate), 200);
+      if ((await selectedTable()) === `table-node-${candidate.replace("public.", "")}`) {
+        await frames(escape);
+        return candidate;
+      }
+    }
+    throw new Error("No clickable overview table found");
+  }
+  return evaluate(
     `[...document.querySelectorAll('.react-flow__node')].find((n) => { if (n.dataset.id === 'public.hub') return false; const r = n.getBoundingClientRect(); const c = document.querySelector('.react-flow__pane').getBoundingClientRect(); return r.left > c.left + 8 && r.right < c.right - 8 && r.top > c.top + 8 && r.bottom < c.bottom - 8 && n.contains(document.elementFromPoint(r.left + r.width / 2, r.top + Math.max(1, r.height * 0.05))); })?.dataset.id`,
   );
+};
 
 /** Drags the empty canvas back and forth (so it stays over the content) for ~90 frames. */
 async function pan() {
-  const start = await evaluate(`(() => {
-    const pane = document.querySelector('.react-flow__pane').getBoundingClientRect();
-    for (let y = pane.top + 20; y < pane.bottom - 20; y += 23)
-      for (let x = pane.left + 20; x < pane.right - 20; x += 23) {
-        const el = document.elementFromPoint(x, y);
-        if (el && el.classList.contains('react-flow__pane')) return [x, y];
-      }
-    return null;
-  })()`);
+  const start = await evaluate(panePoint);
   if (!start) return { fps: 0, worst: 0 };
   await evaluate(
     `window.__gaps = []; window.__last = performance.now(); window.__rec = true; (function loop() { const now = performance.now(); window.__gaps.push(now - window.__last); window.__last = now; if (window.__rec) requestAnimationFrame(loop); })()`,
@@ -239,13 +301,15 @@ async function importFixture() {
     await sleep(500);
     if (
       await evaluate(
-        `!${q("import-dialog")} && document.querySelectorAll('.react-flow__node').length > 0`,
+        `!${q("import-dialog")} && (document.querySelectorAll('.react-flow__node').length > 0 || !!${q("canvas-overview")})`,
       )
     )
       break;
   }
   await sleep(1500);
-  return evaluate(`document.querySelectorAll('.react-flow__node').length > 20`);
+  return evaluate(
+    `document.querySelectorAll('.react-flow__node').length > 20 || !!${q("canvas-overview")}`,
+  );
 }
 
 const fit = async () => {
@@ -269,7 +333,25 @@ if (!imported) {
   await new Promise(() => {});
 }
 const rendered = await evaluate(
-  `({ nodes: document.querySelectorAll('.react-flow__node').length, edges: document.querySelectorAll('.react-flow__edge').length })`,
+  `(() => {
+    let best = null;
+    for (const key of Object.keys(localStorage)) {
+      if (!key.includes('layout:v1:')) continue;
+      const l = JSON.parse(localStorage.getItem(key));
+      if (!best || Object.keys(l.positions).length > Object.keys(best.positions).length) best = l;
+    }
+    const xs = Object.values(best?.positions ?? {}).map((p) => p.x);
+    const ys = Object.values(best?.positions ?? {}).map((p) => p.y);
+    const m = new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform);
+    return {
+      overview: document.querySelector('[data-testid="schema-canvas"]')?.dataset.overview,
+      tablesDrawn: ${q("canvas-overview")}?.dataset.tablesDrawn,
+      nodes: document.querySelectorAll('.react-flow__node').length,
+      edges: document.querySelectorAll('.react-flow__edge').length,
+      extent: [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)],
+      fittedZoom: Math.round(m.a * 1000) / 1000,
+    };
+  })()`,
 );
 console.log(
   `Imported neighbourhood-2000; rendered at the fitted zoom: ${JSON.stringify(rendered)}`,
@@ -311,7 +393,52 @@ for (const depth of [0, 1]) {
     await frames(`${q("table-list-item-hub")}.click()`, 1200);
     record(depth, "pan, zoom 1, hub selected", await pan());
     await frames(escape);
+    await fit();
+    if (await evaluate(isOverview))
+      record(
+        depth,
+        "overview → DOM (zoom in past 0.32; first = to a mounted table)",
+        await transition(),
+      );
   }
+}
+
+/** Zooms in with the wheel until the overview ends; ms from `data-overview` flipping to a mounted table. */
+async function transition() {
+  await evaluate(`(() => {
+    const root = document.querySelector('[data-testid="schema-canvas"]');
+    const t = (window.__tr = { flip: 0, done: 0, worst: 0 });
+    new MutationObserver(() => {
+      if (root.dataset.overview !== 'false' || t.flip) return;
+      t.flip = performance.now();
+      let last = t.flip;
+      const loop = () => {
+        const now = performance.now();
+        t.worst = Math.max(t.worst, now - last);
+        last = now;
+        if (!t.done && document.querySelectorAll('.react-flow__node').length > 0) t.done = now;
+        if (now - t.flip < 700) requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }).observe(root, { attributes: true, attributeFilter: ['data-overview'] });
+  })()`);
+  const pane = await evaluate(
+    `(() => { const r = document.querySelector('.react-flow__pane').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`,
+  );
+  for (let i = 0; i < 80 && (await evaluate(isOverview)); i++) {
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseWheel",
+      x: pane[0],
+      y: pane[1],
+      deltaX: 0,
+      deltaY: -240,
+    });
+    await sleep(60);
+  }
+  await sleep(600);
+  return evaluate(
+    `({ first: Math.round(window.__tr.done - window.__tr.flip), worst: Math.round(window.__tr.worst) })`,
+  );
 }
 
 const fmt = (runs) =>

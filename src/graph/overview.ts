@@ -5,7 +5,8 @@ export const OVERVIEW_TABLES = 300;
 /** Enter the overview below this zoom, leave it above OVERVIEW_LEAVE_ZOOM (hysteresis band). */
 export const OVERVIEW_ENTER_ZOOM = 0.28;
 export const OVERVIEW_LEAVE_ZOOM = 0.32;
-export const FIT_MIN_ZOOM = 0.05;
+/** Packed GitLab (20,000 px wide) needs ~0.03 to fit a laptop canvas. */
+export const FIT_MIN_ZOOM = 0.02;
 export const FIT_MAX_ZOOM = 1;
 
 /** Whether the overview is active after the zoom changed to `zoom`. Inside the band: unchanged. */
