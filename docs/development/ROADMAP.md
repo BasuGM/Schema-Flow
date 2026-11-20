@@ -2,7 +2,7 @@
 
 ## Now
 
-- **Task:** P3-T06 (Session restore): Awaiting Cowork verification (ADR-030). P3-T05 Verified (round 19; ADR-029). P3-T04 Verified (round 19; QA-030 closed).
+- **Task:** P3-T06 (Session restore): Verified (Cowork round 20 at `ad32775`; ADR-030). P3-T05 Verified (round 19; ADR-029). P3-T04 Verified (round 19; QA-030 closed).
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
 - **Next:** P3-T07 (packed layout, QA-018; plan first), then P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) before the Phase 3 bug-bash.
 - **Backlog:** 7 open: QA-018 → P3-T07; QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
@@ -91,7 +91,7 @@ control, node-header toggle, "All tables" actions; modes persist per fingerprint
 
 **P3-T05 Export dialog: Verified** (Cowork round 19 at `bf7f06e`, no new defects; ADR-029; AC-P3-T05-1…6). One Export dialog (toolbar, Settings, More) with SQL, Prisma, Mermaid, JSON and Image tabs: capped preview, warnings, Copy, Download; downloads equal the CLI output byte for byte (`generate.ts --sample`).
 
-**P3-T06 Session restore: Awaiting Cowork verification** (ADR-030; AC-P3-T06-1…7; plan [plans/p3-t06.md](plans/p3-t06.md)). A reload restores the last imported schema (IndexedDB source text, re-parsed), its pan and zoom, and the selected table with its inspector tab; `?sample=` URLs win. Settings / More → "Clear saved data…" removes everything stored and is final across tabs. GitLab restores in about 3 s.
+**P3-T06 Session restore: Verified** (Cowork round 20 at `ad32775`, no new defects; ADR-030; AC-P3-T06-1…7; plan [plans/p3-t06.md](plans/p3-t06.md)). A reload restores the last imported schema (IndexedDB source text, re-parsed), its pan and zoom, and the selected table with its inspector tab; `?sample=` URLs win. Settings / More → "Clear saved data…" removes everything stored and is final across tabs. GitLab restores in about 3 s.
 
 **Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),

@@ -830,3 +830,14 @@ Defect format: `QA-###` · severity (blocker/major/minor/cosmetic) · repro · s
 - **e2e flake (not a defect):** in one full run 3 tests timed out under load (`import.spec` edge-cases file, two `inspector.spec` beforeEach); both files pass on rerun.
 - **Status:** Awaiting Cowork verification. Pending — not independently verified.
 
+## 2026-11-20 — Cowork round 20 at `ad32775`: P3-T06 Verified
+
+- **Found by:** Cowork round 20 (report pasted by the user).
+- **Defects:** none new. No Backlog rows change.
+- **e2e:** 181 passed / 0 failed / 20 skipped; `toolbar-width` PASS light and dark.
+- **Restore perf (GitLab):** 2.0–2.2 s from reload to first table node.
+- **Exploratory:** all PASS.
+- **Informational (no change needed):** Clear during a GitLab restore runs only after parsing ends (about 11.7 s in cloud).
+- **Not tested:** Safari/iOS, real phone.
+- **Status:** P3-T06 Verified (AC-P3-T06-1…7).
+
