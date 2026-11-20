@@ -49,7 +49,12 @@ export function prismaDocComment(text: string): string {
  * labels): `"` becomes `'`, newlines and control characters collapse to single spaces.
  */
 export function mermaidString(value: string): string {
-  return value.replace(CONTROL, " ").replace(/"/g, "'").replace(/\s+/g, " ").trim();
+  return value
+    .replace(CONTROL, " ")
+    .replace(/"/g, "'")
+    .replace(/\\/g, "/")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** A plain Prisma `//` comment (not a `///` doc comment, which the importer reads as documentation). */

@@ -16,6 +16,13 @@ describe("detectFormat", () => {
       dialect: "postgresql",
     });
     expect(detectFormat("CREATE TABLE `a` (id int) ENGINE=InnoDB;").dialect).toBe("mysql");
+    // QA-033: backtick names holding a quote or a backslash are still MySQL.
+    expect(detectFormat("CREATE TABLE `we'ird` (id int);").dialect).toBe("mysql");
+    expect(detectFormat("CREATE TABLE `back\\slash` (id int);").dialect).toBe("mysql");
+    // ... but a stray backtick in a PostgreSQL comment or string is not evidence.
+    expect(
+      detectFormat("-- use `a b` here\nCREATE TABLE t (x text DEFAULT 'a `b c` d');").dialect,
+    ).toBe("postgresql");
     expect(detectFormat("CREATE TABLE a (id INTEGER PRIMARY KEY AUTOINCREMENT);").dialect).toBe(
       "sqlite",
     );

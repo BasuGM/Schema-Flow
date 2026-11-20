@@ -2,19 +2,20 @@
 // prints the chosen export to stdout. Warnings and import issues go to stderr. Exit code: 0 ok,
 // 1 the file could not be read or parsed into a schema, 2 usage.
 //
-// Run with plain Node (≥ 22.18, TypeScript type stripping is built in; no dependency). The small
+// Run with plain Node (≥ 22.18; `--experimental-transform-types` is needed because the sources use
+// TypeScript parameter properties, which plain type stripping rejects; no dependency). The small
 // resolve hook maps the project's `@/…` alias and extensionless imports to `src/`:
 //
-//   node --import ./scripts/headless/alias-hook.mjs scripts/headless/generate.ts \
-//     <fixture-path> <postgres|mysql|sqlite|prisma|mermaid|mermaid-keys|json>
+//   node --experimental-transform-types --no-warnings --import ./scripts/headless/alias-hook.mjs \
+//     scripts/headless/generate.ts <fixture-path> <postgres|mysql|sqlite|prisma|mermaid|mermaid-keys|json>
 //
 // The built-in sample the app loads can be used instead of a file, so a download from the app can be
 // compared byte for byte (P3-T05): `--sample` is the e-commerce sample, and
 // `--sample="sample=synthetic&tables=50&seed=7"` mirrors the app's `?sample=…` URL.
 //
 // Example (run the SQLite output in sqlite3):
-//   node --import ./scripts/headless/alias-hook.mjs scripts/headless/generate.ts \
-//     tests/fixtures/sql/ecommerce.postgres.sql sqlite 2>/dev/null | sqlite3 :memory: ".tables"
+//   node --experimental-transform-types --no-warnings --import ./scripts/headless/alias-hook.mjs \
+//     scripts/headless/generate.ts tests/fixtures/sql/ecommerce.postgres.sql sqlite 2>/dev/null | sqlite3 :memory: ".tables"
 import { readFileSync } from "node:fs";
 import { generateSchemaText, type GeneratorTarget } from "@/generators";
 import { decodeSchemaFile, parseSchemaText } from "@/parsers";

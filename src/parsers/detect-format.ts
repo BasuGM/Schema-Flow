@@ -23,7 +23,16 @@ export function detectFormat(text: string): DetectedFormat {
   return { format: "sql", dialect: detectSqlDialect(text) };
 }
 
+/**
+ * A backtick-quoted table name holding any character (`we'ird`, `back\slash`) right after a table
+ * keyword. Anywhere else a backtick is only evidence when the name is a plain word, because
+ * PostgreSQL dumps carry stray backticks in comments and strings (GitLab) (QA-033).
+ */
+const BACKTICK_TABLE =
+  /\b(?:CREATE\s+(?:TEMPORARY\s+)?TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER\s+TABLE|REFERENCES|DROP\s+TABLE(?:\s+IF\s+EXISTS)?)\s+`[^`\r\n]+`/i;
+
 export function detectSqlDialect(text: string): SqlDialect {
+  if (BACKTICK_TABLE.test(text)) return "mysql";
   if (/`\w+`|\bENGINE\s*=|\bAUTO_INCREMENT\b|\bUNSIGNED\b/i.test(text)) return "mysql";
   if (/\bAUTOINCREMENT\b|\bPRAGMA\b|\bWITHOUT\s+ROWID\b/i.test(text)) return "sqlite";
   return "postgresql";

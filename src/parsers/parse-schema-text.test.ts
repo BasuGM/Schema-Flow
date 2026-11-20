@@ -52,4 +52,19 @@ describe("parseSchemaText", () => {
     });
     expect(parseSchemaText(" \n ").result.issues[0]?.message).toBe("The input is empty.");
   });
+
+  it("QA-033: backtick names with a quote or a backslash import as MySQL", () => {
+    for (const name of ["we'ird", "back\\slash"]) {
+      const { format, result } = parseSchemaText(`CREATE TABLE \`${name}\` (id int);`, {
+        now: NOW,
+      });
+      expect(format, name).toBe("sql");
+      expect(result.schema?.source.dialect, name).toBe("mysql");
+      expect(Object.keys(result.schema?.tables ?? {}), name).toHaveLength(1);
+      expect(
+        result.issues.filter((x) => x.severity === "error"),
+        name,
+      ).toEqual([]);
+    }
+  });
 });

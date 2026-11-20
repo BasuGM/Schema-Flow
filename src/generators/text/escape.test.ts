@@ -51,6 +51,9 @@ describe("mermaidString", () => {
     const m = mermaidString(HOSTILE);
     expect(m).not.toMatch(/["\r\n]/);
     expect(mermaidString('  a "b"\n c ')).toBe("a 'b' c");
+    // QA-032: mmdc rejects a backslash in a quoted entity name.
+    expect(mermaidString("back\\slash")).toBe("back/slash");
+    expect(mermaidString(HOSTILE)).not.toContain("\\");
   });
 });
 
