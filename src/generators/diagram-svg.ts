@@ -1,16 +1,15 @@
 import { displayTableName } from "@/domain/schema/selectors";
 import type { Column, Position, Schema, Table } from "@/domain/schema/types";
-import { edgePath, samePosition } from "@/graph/edge-path";
 import {
   NODE_HEADER_HEIGHT,
   NODE_PADDING_Y,
   NODE_ROW_HEIGHT,
   NODE_WIDTH,
   estimateNodeHeight,
-  rowCenterOffset,
   visibleColumns,
 } from "@/graph/node-metrics";
-import { computeDiagramBounds, type ExportLayout } from "./diagram-bounds";
+import type { ExportLayout } from "./diagram-bounds";
+import { diagramGeometry } from "./diagram-geometry";
 import {
   MONO_STACK,
   SANS_STACK,
@@ -198,35 +197,17 @@ export function renderDiagramSvg({
   palette,
   measure = approxMeasure,
 }: DiagramSvgInput): DiagramSvg {
-  const bounds = computeDiagramBounds(schema, layout);
-  const { positions, minX, minY, width, height } = bounds;
+  const geometry = diagramGeometry(schema, layout);
+  const { positions, minX, minY, width, height } = geometry.bounds;
   const modeOf = (id: string) => layout.collapsed[id] ?? "full";
 
   const edges: string[] = [];
-  for (const rel of Object.values(schema.relationships)) {
-    const fromTable = schema.tables[rel.from.tableId];
-    const toTable = schema.tables[rel.to.tableId];
-    const fromAt = positions[rel.from.tableId];
-    const toAt = positions[rel.to.tableId];
-    if (!fromTable || !toTable || !fromAt || !toAt) continue;
-    const offset = (table: Table, columnId: string | undefined) =>
-      (columnId ? rowCenterOffset(visibleColumns(table, modeOf(table.id)), columnId) : null) ??
-      NODE_HEADER_HEIGHT / 2;
-    const selfReference = rel.from.tableId === rel.to.tableId;
-    const sourceX = fromAt.x;
-    const sourceY = fromAt.y + offset(fromTable, rel.from.columnIds[0]);
-    const targetX = selfReference ? sourceX : toAt.x + NODE_WIDTH;
-    const targetY = toAt.y + offset(toTable, rel.to.columnIds[0]);
-    const stored = layout.edgeRoutes?.[rel.id];
-    const route =
-      stored && samePosition(fromAt, stored.sourceAt) && samePosition(toAt, stored.targetAt)
-        ? stored
-        : null;
-    const d = edgePath(selfReference, sourceX, sourceY, targetX, targetY, route);
-    const many = rel.cardinality !== "one-to-one";
+  for (const edge of geometry.edges) {
+    const { sourceX, sourceY, targetX, targetY, selfReference, d } = edge;
+    const many = edge.many;
     const targetMarkerX = selfReference ? sourceX - MARKER_OFFSET : targetX + MARKER_OFFSET;
     edges.push(
-      `<g data-relationship-id="${xmlText(rel.id)}">`,
+      `<g data-relationship-id="${xmlText(edge.id)}">`,
       `<path d="${d}" fill="none" stroke="${xmlText(palette.edge)}" stroke-width="1.25"/>`,
       text(
         sourceX - MARKER_OFFSET,

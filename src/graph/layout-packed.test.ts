@@ -105,14 +105,14 @@ describe("layoutPacked", () => {
     expect(after.width).toBeGreaterThan(before.width * 3);
   });
 
-  it("keeps routes only where their ends still match the positions", () => {
-    const s = hubSchema(250, 130);
-    const { positions, edgeRoutes } = layoutPacked(s);
-    for (const route of Object.values(edgeRoutes)) {
-      const at = [route.sourceAt, route.targetAt];
-      expect(
-        at.every((p) => Object.values(positions).some((q) => q.x === p.x && q.y === p.y)),
-      ).toBe(true);
+  it("keeps a route only when it still starts and ends at its tables", () => {
+    for (const s of [hubSchema(250, 130), generateSyntheticSchema({ tables: 400, seed: 5 })]) {
+      const { positions, edgeRoutes } = layoutPacked(s);
+      for (const [id, route] of Object.entries(edgeRoutes)) {
+        const rel = s.relationships[id]!;
+        expect(route.sourceAt).toEqual(positions[rel.from.tableId]);
+        expect(route.targetAt).toEqual(positions[rel.to.tableId]);
+      }
     }
   });
 
