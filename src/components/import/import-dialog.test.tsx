@@ -66,6 +66,14 @@ describe("Import dialog", () => {
     expect(confirm()).toBeDisabled();
   });
 
+  it("shows the Choose file… label's focus ring when the hidden input is keyboard-focused (QA-029)", async () => {
+    await openDialog();
+    // jsdom can't evaluate :has(:focus-visible); the computed ring is checked in e2e (bug-bash).
+    const label = screen.getByTestId("import-file-input").closest("label");
+    expect(label?.className).toContain("has-focus-visible:ring-3");
+    expect(label?.className).toContain("has-focus-visible:ring-ring/50");
+  });
+
   it("previews pasted SQL and replaces the diagram on import, then resets", async () => {
     const user = await openDialog();
     paste(fixture("sql/shop.mysql.sql"));

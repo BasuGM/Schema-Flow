@@ -81,7 +81,8 @@ export function ImportSource({
 
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" asChild>
-          <label>
+          {/* Focus sits on the sr-only input, so the label mirrors the Button's own focus ring (QA-029). */}
+          <label className="has-focus-visible:border-ring has-focus-visible:ring-3 has-focus-visible:ring-ring/50">
             <Upload aria-hidden />
             Choose file…
             {/* No `accept`: dumps come as .sql, .ddl, .psql, .txt or without an extension. */}

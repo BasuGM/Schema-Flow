@@ -10,6 +10,7 @@ import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore, type InspectorTab } from "@/stores/ui-store";
 import { CollapseModeControl } from "./collapse-mode-control";
 import { ColumnsTab } from "./columns-tab";
+import { focusInInspector } from "./focus-inspector";
 import { KeysTab } from "./keys-tab";
 import { RelationsTab } from "./relations-tab";
 
@@ -61,7 +62,11 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
       {back && backName && (
         <button
           type="button"
-          onClick={inspectorGoBack}
+          onClick={(e) => {
+            const button = e.currentTarget;
+            inspectorGoBack();
+            focusInInspector(button, "inspector-title");
+          }}
           className="flex items-center gap-1 border-b px-4 py-1.5 text-left text-xs text-brand outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
           data-testid="inspector-back"
         >
@@ -71,7 +76,11 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
       )}
       <div className="flex items-start gap-2 border-b px-4 py-3">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold" data-testid="inspector-title">
+          <h2
+            tabIndex={-1}
+            className="truncate rounded-sm text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid="inspector-title"
+          >
             {table.name}
           </h2>
           {details.showSchema && (
@@ -101,7 +110,11 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
             variant="ghost"
             size="icon-sm"
             aria-label="Clear selection"
-            onClick={clearSelectionKeepingFocus}
+            onClick={(e) => {
+              const button = e.currentTarget;
+              useUiStore.getState().selectTable(null);
+              focusInInspector(button, "inspector-empty");
+            }}
             data-testid="inspector-close"
           >
             <X aria-hidden />
@@ -135,17 +148,6 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
         </TabsContent>
       </Tabs>
     </aside>
-  );
-}
-
-/**
- * Clears the selection from the inspector's own button. The button unmounts with the selection, so
- * focus moves to the empty-state message in the same panel instead of falling to `<body>` (QA-026).
- */
-function clearSelectionKeepingFocus() {
-  useUiStore.getState().selectTable(null);
-  requestAnimationFrame(() =>
-    document.querySelector<HTMLElement>('[data-testid="inspector-empty"]')?.focus(),
   );
 }
 

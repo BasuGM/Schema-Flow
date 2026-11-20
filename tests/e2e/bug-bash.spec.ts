@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { clickTable, importFixture, openSample, tableNode } from "./support/app";
 
 // BB-P2 (docs/development/plans/bug-bash-p2.md): the automated rows. Row 4 (focus is never lost to
@@ -25,12 +25,17 @@ function watchConsole(page: Page): string[] {
 const overflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
-/** The element with focus is a real control, not the document body. */
-async function expectFocusKept(page: Page, what: string): Promise<void> {
-  await expect
-    .poll(() => page.evaluate(() => document.activeElement?.tagName ?? "none"), { message: what })
-    .not.toBe("BODY");
+/** Presses Tab (real keyboard input) until `target` has focus; fails after `max` presses. */
+async function tabTo(page: Page, target: Locator, max = 30): Promise<void> {
+  for (let i = 0; i < max; i++) {
+    await page.keyboard.press("Tab");
+    if (await target.evaluate((el) => el === document.activeElement)) return;
+  }
+  throw new Error(`Tab did not reach the target in ${max} presses`);
 }
+
+const title = (page: Page) => page.getByTestId("inspector-title");
+const titleHasRing = (page: Page) => title(page).evaluate((el) => el.matches(":focus-visible"));
 
 async function setTheme(page: Page, theme: "light" | "dark"): Promise<void> {
   const desktop = page.getByTestId("toolbar-theme");
@@ -127,7 +132,6 @@ test.describe("row 4: focus is never lost to the body", () => {
       if (close === "Escape") await page.keyboard.press("Escape");
       else await page.getByTestId("import-cancel").click();
       await expect(page.getByTestId("import-dialog")).toBeHidden();
-      await expectFocusKept(page, `after ${close}`);
       await expect(page.getByTestId("toolbar-import")).toBeFocused();
     }
   });
@@ -138,11 +142,11 @@ test.describe("row 4: focus is never lost to the body", () => {
     await expect(page.getByTestId("search-dialog")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("search-dialog")).toBeHidden();
-    await expectFocusKept(page, "after search");
+    await expect(page.getByTestId("toolbar-search")).toBeFocused();
     await page.getByTestId("toolbar-settings").focus();
     await page.keyboard.press("Enter");
     await page.keyboard.press("Escape");
-    await expectFocusKept(page, "after settings");
+    await expect(page.getByTestId("toolbar-settings")).toBeFocused();
   });
 
   test("AC-BB-P2-3: closing the issues panel by its close button returns focus", async ({
@@ -153,21 +157,100 @@ test.describe("row 4: focus is never lost to the body", () => {
     await page.getByTestId("issues-close").focus();
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("issues-panel")).toBeHidden();
-    await expectFocusKept(page, "after closing issues");
+    await expect(page.getByTestId("toolbar-issues")).toBeFocused();
   });
 
   test("AC-BB-P2-3: Show table from an issue and the inspector close button keep focus", async ({
     page,
   }) => {
     await importFixture(page, "sql/edge-cases.postgres.sql");
-    await page.getByTestId("issue-show-table").first().focus();
+    const show = page.getByTestId("issue-show-table").first();
+    await show.focus();
     await page.keyboard.press("Enter");
-    await expectFocusKept(page, "after Show table");
+    await expect(show).toBeFocused();
     const close = page.getByTestId("inspector-close");
-    if (await close.isVisible()) {
-      await close.focus();
-      await page.keyboard.press("Enter");
-      await expectFocusKept(page, "after closing the inspector");
-    }
+    await expect(close).toBeVisible();
+    await close.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("inspector-empty")).toBeFocused();
+  });
+
+  test("AC-P3-T08-1/2: Enter on a relation target and on Back moves focus to the inspector title", async ({
+    page,
+  }) => {
+    await clickTable(page, "orders");
+    await page.getByTestId("inspector-tab-relations").click();
+    const target = page
+      .getByTestId("inspector-outgoing")
+      .getByRole("button", { name: "Show table users" });
+    await tabTo(page, target);
+    await page.keyboard.press("Enter");
+    await expect(title(page)).toBeFocused();
+    await expect(title(page)).toContainText("users");
+    await expect(page.getByTestId("inspector-tab-relations")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(await titleHasRing(page)).toBe(true);
+
+    await page.keyboard.press("Shift+Tab"); // Back sits just before the title
+    await expect(page.getByTestId("inspector-back")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(title(page)).toBeFocused();
+    await expect(title(page)).toContainText("orders");
+    expect(await titleHasRing(page)).toBe(true);
+  });
+
+  test("AC-P3-T08-3: a mouse click on a relation target or Back focuses the title without a ring", async ({
+    page,
+  }) => {
+    await clickTable(page, "orders");
+    await page.getByTestId("inspector-tab-relations").click();
+    await page
+      .getByTestId("inspector-outgoing")
+      .getByRole("button", { name: "Show table users" })
+      .click();
+    await expect(title(page)).toBeFocused();
+    expect(await titleHasRing(page)).toBe(false);
+    await page.getByTestId("inspector-back").click();
+    await expect(title(page)).toBeFocused();
+    await expect(title(page)).toContainText("orders");
+    expect(await titleHasRing(page)).toBe(false);
+  });
+
+  test("AC-P3-T08-1: Enter on a relation target in the phone sheet moves focus to the title", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await clickTable(page, "orders");
+    await page.getByTestId("toolbar-toggle-right").click();
+    await expect(page.getByTestId("inspector-sheet")).toBeVisible();
+    await page.getByTestId("inspector-tab-relations").click();
+    const target = page
+      .getByTestId("inspector-outgoing")
+      .getByRole("button", { name: "Show table users" });
+    await tabTo(page, target);
+    await page.keyboard.press("Enter");
+    await expect(title(page)).toBeFocused();
+    await expect(title(page)).toContainText("users");
+  });
+
+  test("AC-P3-T08-4: Choose file… shows a focus ring for keyboard focus only", async ({ page }) => {
+    await page.getByTestId("toolbar-import").click();
+    await expect(page.getByTestId("import-dialog")).toBeVisible();
+    const input = page.getByTestId("import-file-input");
+    const label = page.locator("label", { has: input });
+    const shadow = () => label.evaluate((el) => getComputedStyle(el).boxShadow);
+    await page.getByTestId("import-textarea").focus();
+    await tabTo(page, input);
+    // The Button animates its ring in (transition), so poll.
+    await expect.poll(shadow).not.toBe("none");
+
+    await page.getByTestId("import-textarea").click();
+    await expect.poll(shadow).toBe("none");
+    const chooser = page.waitForEvent("filechooser");
+    await label.click();
+    await chooser; // dismissed: never answered
+    await expect.poll(shadow).toBe("none");
   });
 });

@@ -14,6 +14,7 @@ import { parseSchemaText } from "@/parsers";
 import { createEcommerceSchema } from "@/samples/ecommerce";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
+import { focusInInspector } from "./focus-inspector";
 import { Inspector } from "./inspector";
 
 /**
@@ -110,6 +111,50 @@ describe("Inspector clear selection (QA-026)", () => {
     await user.click(screen.getByTestId("inspector-close"));
     expect(useUiStore.getState().selectedTableId).toBeNull();
     await vi.waitFor(() => expect(screen.getByTestId("inspector-empty")).toHaveFocus());
+  });
+});
+
+describe("Inspector focus after relation navigation (QA-027, QA-028, ADR-032)", () => {
+  it("moves focus to the title on a relation target and on Back, not <body>", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    select("public.orders");
+    await user.click(tab("relations"));
+    await user.click(
+      within(screen.getByTestId("inspector-outgoing")).getByRole("button", {
+        name: "Show table users",
+      }),
+    );
+    await vi.waitFor(() => expect(screen.getByTestId("inspector-title")).toHaveFocus());
+    expect(screen.getByTestId("inspector-title")).toHaveTextContent("users");
+    expect(tab("relations")).toHaveAttribute("aria-selected", "true");
+
+    act(() => screen.getByTestId("inspector-back").focus());
+    await user.keyboard("{Enter}");
+    await vi.waitFor(() => expect(screen.getByTestId("inspector-title")).toHaveFocus());
+    expect(screen.getByTestId("inspector-title")).toHaveTextContent("orders");
+  });
+});
+
+describe("focusInInspector", () => {
+  it("falls back to the connected inspector when the container was replaced", async () => {
+    const stale = document.createElement("div");
+    stale.setAttribute("data-testid", "inspector");
+    const button = document.createElement("button");
+    stale.append(button);
+    document.body.append(stale);
+    const live = document.createElement("aside");
+    live.setAttribute("data-testid", "inspector");
+    const target = document.createElement("h2");
+    target.tabIndex = -1;
+    target.setAttribute("data-testid", "inspector-title");
+    live.append(target);
+    document.body.append(live);
+
+    focusInInspector(button, "inspector-title");
+    stale.remove();
+    await vi.waitFor(() => expect(target).toHaveFocus());
+    live.remove();
   });
 });
 

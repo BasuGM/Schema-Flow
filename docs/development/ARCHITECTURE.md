@@ -43,6 +43,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-029](#adr-029--one-export-dialog-with-tabs-preview-and-stale-safe-generation-2026-11-19-p3-t05) | 2026-11-19 | One Export dialog: text + image tabs, capped preview, revision-keyed cache, gesture-safe copy / download | P3-T05 |
 | [ADR-030](#adr-030--session-restore-indexeddb-source-text-re-parsed-on-load-2026-11-19-p3-t06) | 2026-11-19 | Session restore: last import in IndexedDB, re-parsed on load; `?sample=` wins; one-shot viewport; Clear saved data | P3-T06 |
 | [ADR-031](#adr-031--packed-layout-300-table-design-target-no-canvas-overview-2026-11-20-p3-t07) | 2026-11-20 | Packed layout for elongated large schemas; ~300-table design target; no canvas overview | Tall GitLab layout (242,000 px) is unusable; overview renderer dropped by scope decision | Canvas overview renderer (designed, not built) |
+| [ADR-032](#adr-032--focus-anchor-after-in-inspector-navigation-2026-11-20-p3-t08) | 2026-11-20 | Focus moves to the inspector title after Relations/Back navigation | QA-027/028: the activated button unmounts, focus fell to `body` | Focusing the store action (DOM in stores) |
 
 ## Data flow
 
@@ -965,3 +966,10 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   downloaded file byte for byte with the CLI.
 - **Rejected:** separate dialogs per format (more entry points, no shared options); a Monaco/CodeMirror preview (a dependency for a
   read-only view); showing the whole text (GitLab JSON is 5 MB, 204,400 lines).
+
+### ADR-032 — Focus anchor after in-inspector navigation (2026-11-20, P3-T08)
+
+- **Decision:** after a relation target or Back is activated, focus moves to the inspector title (`tabIndex={-1}`) via `focusInInspector`; the clear-selection X reuses it (target: the empty message).
+- **Why:** the control unmounts with the selection change (tab keyed by table; Back disappears), so focus fell to `<body>` (QA-027/028). The title persists and names the new table.
+- **Scope:** component handlers only; `src/stores/reveal.ts` stays DOM-free so search and the table list don't steal focus. The container is captured at click time and falls back to the connected inspector.
+- **Mouse:** same path; `:focus-visible` stays false after a pointer click, so no stray ring.

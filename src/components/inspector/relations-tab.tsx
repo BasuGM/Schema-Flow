@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ColumnName, RelationDetails, TableDetails } from "@/domain/schema/table-details";
 import { navigateToRelated } from "@/stores/reveal";
 import { PAGE_SIZE } from "./columns-tab";
+import { focusInInspector } from "./focus-inspector";
 import { Section } from "./keys-tab";
 import { ShowMore } from "./show-more";
 
@@ -57,7 +58,11 @@ function RelationRow({ relation: r, kind }: { relation: RelationDetails; kind: s
   const target = (
     <button
       type="button"
-      onClick={() => navigateToRelated(r.other.tableId, otherColumn?.id)}
+      onClick={(e) => {
+        const button = e.currentTarget;
+        navigateToRelated(r.other.tableId, otherColumn?.id);
+        focusInInspector(button, "inspector-title");
+      }}
       aria-label={`Show table ${r.other.table}`}
       className="rounded-sm font-medium text-brand underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
       data-testid="inspector-relation-target"
