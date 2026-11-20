@@ -89,11 +89,7 @@ describe("selection record", () => {
       SESSION_UI_KEY,
       JSON.stringify({ fingerprint: "f", selectedTableId: "t", inspectorTab: "keys" }),
     );
-    expect(loadSessionUi()).toEqual({
-      fingerprint: "f",
-      selectedTableId: "t",
-      inspectorTab: "keys",
-    });
+    expect(loadSessionUi()).toEqual({ fingerprint: "f", selectedTableId: "t", inspectorTab: "keys" });
     localStorage.setItem(
       SESSION_UI_KEY,
       JSON.stringify({ fingerprint: "f", selectedTableId: 3, inspectorTab: "keys" }),

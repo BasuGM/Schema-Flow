@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { computeDiagramBounds, rasterSize } from "@/generators";
 import { layoutPacked } from "@/graph/layout-packed";
 import { schemaToFlow } from "@/graph/schema-to-flow";
 import { parseSchemaText } from "./parse-schema-text";
@@ -38,6 +39,17 @@ describe("GitLab structure.sql on the main thread", () => {
     const h = Math.max(...ys) - Math.min(...ys);
     console.info(`GitLab packed extent ≈ ${w} × ${h} px (tables' top-left corners)`);
     expect(Math.max(w, h) / Math.min(w, h)).toBeLessThan(3);
+    // The export uses the packed positions: a roughly square image instead of a 3,900 × 242,000
+    // strip, so the PNG keeps a useful scale (P3-T07, QA-018).
+    const bounds = computeDiagramBounds(schema, { ...layout, collapsed: {} });
+    const png = rasterSize(bounds.width, bounds.height, 1);
+    console.info(
+      `GitLab export: ${bounds.width} × ${bounds.height} px, PNG ${png.pxWidth} × ${png.pxHeight} (scale ${png.scale})`,
+    );
+    expect(
+      Math.max(bounds.width, bounds.height) / Math.min(bounds.width, bounds.height),
+    ).toBeLessThan(3);
+    expect(png.scale).toBeGreaterThan(0.15);
     expect(parseMs).toBeLessThan(1200);
     expect(layoutMs).toBeLessThan(7500);
     expect(flowMs).toBeLessThan(100);

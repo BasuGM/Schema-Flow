@@ -17,6 +17,9 @@ Workflow skills: implement-plan, fix-qa-round (user-level). Plans go in `docs/de
   from `check`; needs a served build); production check, perf sample,
   performance budgets and the phone toolbar regression (`scripts/headless/toolbar-width.mjs`
   must print PASS at 390×844) are in the reference.
+- Perf and e2e runs: run `scripts/cleanup.sh` first and check `uptime` (1-min load < 4); never run
+  two browsers at once; measure only a production build served on a free port (`next dev` on :3000
+  gives dev-mode numbers). The perf scripts refuse to run when the load exceeds the core count.
 
 ## Architecture boundaries
 

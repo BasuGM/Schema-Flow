@@ -3,7 +3,6 @@
 import {
   Background,
   BackgroundVariant,
-  ControlButton,
   Controls,
   MiniMap,
   Panel,
@@ -13,33 +12,22 @@ import {
   applyNodeChanges,
   type EdgeChange,
   type NodeChange,
-  useStoreApi,
   type OnNodeDrag,
   type ReactFlowInstance,
-  useReactFlow,
   type Viewport,
 } from "@xyflow/react";
-import { LocateFixed, Maximize } from "lucide-react";
+import { LocateFixed } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import type { DiagramLayout, Schema, Viewport as SavedViewport } from "@/domain/schema/types";
-import { diagramGeometry, hitTable, tablesBox } from "@/generators/diagram-geometry";
-import { OVERVIEW_TABLES, fitViewport, nextOverviewState } from "@/graph/overview";
 import { schemaToFlow, type FlowElements } from "@/graph/schema-to-flow";
 import type { RelationshipFlowEdge, TableFlowNode } from "@/graph/types";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
-import { OverviewLayer } from "./overview-layer";
+import { LargeSchemaNotice } from "./large-schema-notice";
 import { RelationshipEdge } from "./relationship-edge";
 import { TableNode } from "./table-node";
-import {
-  fitPadding,
-  issuesSheetOpen,
-  toFitPadding,
-  useCanvasCommands,
-  type OverviewFit,
-} from "./use-canvas-commands";
+import { useCanvasCommands } from "./use-canvas-commands";
 import { useFocusSetSync } from "./use-focus-set-sync";
 import { ZoomDetail } from "./zoom-detail";
 
@@ -57,43 +45,11 @@ const edgeTypes = { relationship: RelationshipEdge };
 const EMPTY: FlowElements = { nodes: [], edges: [] };
 const FIT_VIEW_OPTIONS = { padding: 0.15, maxZoom: 1 };
 
-/** Focus must never fall back to BODY when the nodes it sits on are hidden by the overview (R4). */
-function moveFocusToPane(root: HTMLElement | null) {
-  const active = document.activeElement;
-  if (!root || !(active instanceof HTMLElement)) return;
-  if (!active.closest(".react-flow__node, .react-flow__edge")) return;
-  const pane = root.querySelector<HTMLElement>(".react-flow__pane");
-  if (!pane) return;
-  pane.tabIndex = -1;
-  pane.focus({ preventScroll: true });
-}
-
 /** Unpins any clicked edge; returns the same array when nothing was selected (no re-render). */
 function deselectEdges(edges: RelationshipFlowEdge[]): RelationshipFlowEdge[] {
   return edges.some((e) => e.selected)
     ? edges.map((e) => (e.selected ? { ...e, selected: false } : e))
     : edges;
-}
-
-/**
- * Whether the overview will be active once the view is fitted (or restored), decided before React
- * Flow first receives the nodes, so a large schema never mounts its tables just to hide them (R1).
- */
-function initialOverview(
-  schema: Schema,
-  layout: DiagramLayout,
-  pending: SavedViewport | null,
-): boolean {
-  const tables = schema.tableOrder.length;
-  if (tables < OVERVIEW_TABLES) return false;
-  const zoom =
-    pending?.zoom ??
-    fitViewport(
-      tablesBox(diagramGeometry(schema, layout).tables),
-      { width: window.innerWidth, height: window.innerHeight },
-      0.15,
-    ).zoom;
-  return nextOverviewState(false, zoom, tables);
 }
 
 export function SchemaCanvas() {
@@ -130,30 +86,11 @@ function SchemaCanvasInner() {
   // Edges are local state too so React Flow can apply edge selection (click to pin a label).
   const [edges, setEdges] = useState<RelationshipFlowEdge[]>(base.edges);
   const [syncedBase, setSyncedBase] = useState(base);
-  // `overview`: the zoomed-out view is drawn on one canvas and the DOM nodes are hidden (view-only:
-  // it is derived below and never reaches the layout store, the saved layout or exports).
-  const [overview, setOverview] = useState(false);
-  const [decidedFor, setDecidedFor] = useState<string | null>(null);
   if (syncedBase !== base) {
     setSyncedBase(base);
     setNodes(base.nodes);
     setEdges(base.edges);
-    // Only a different diagram re-decides from the fit zoom; a collapse change or re-layout of
-    // the same one keeps the current state (Reset view decides for a re-layout).
-    const layout = fingerprint ? useLayoutStore.getState().layouts[fingerprint] : undefined;
-    if (schema && layout && fingerprint !== decidedFor) {
-      setDecidedFor(fingerprint);
-      setOverview(initialOverview(schema, layout, useLayoutStore.getState().pendingViewport));
-    }
   }
-  const shownNodes = useMemo(
-    () => (overview ? nodes.map((n) => (n.hidden ? n : { ...n, hidden: true })) : nodes),
-    [nodes, overview],
-  );
-  const shownEdges = useMemo(
-    () => (overview ? edges.map((e) => (e.hidden ? e : { ...e, hidden: true })) : edges),
-    [edges, overview],
-  );
 
   // Selecting a table (canvas, list or keyboard) or pressing Escape clears a clicked edge and its
   // pinned label.
@@ -215,59 +152,10 @@ function SchemaCanvasInner() {
     },
     [selectTable, clearEdgeSelection],
   );
+  const onPaneClick = useCallback(() => selectTable(null), [selectTable]);
   // `data-moving` while the viewport actually moves (a plain click emits no move): CSS turns off
   // dimming transitions, so a pan never repaints fading tables and edges (ADR-023, QA-020).
   const rootRef = useRef<HTMLDivElement>(null);
-  const flow = useStoreApi();
-  const { screenToFlowPosition } = useReactFlow();
-  const tableCount = base.nodes.length;
-  const eligible = tableCount >= OVERVIEW_TABLES;
-  const overviewNow = useRef(overview);
-  const changeOverview = useCallback((next: boolean) => {
-    if (next) moveFocusToPane(rootRef.current);
-    overviewNow.current = next;
-    setOverview(next);
-  }, []);
-  useEffect(() => {
-    overviewNow.current = overview;
-  }, [overview]);
-  // Geometry of the current layout, for fitting and drawing the overview (read when needed:
-  // dragging does not change `version`).
-  const geometry = useMemo(() => {
-    const layout = fingerprint ? useLayoutStore.getState().layouts[fingerprint] : undefined;
-    return overview && schema && layout ? diagramGeometry(schema, layout) : null;
-    // `collapsed` and `version` are intentional triggers, like for `base`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overview, schema, fingerprint, collapsed, version]);
-  const overviewFit = useMemo<OverviewFit | null>(() => {
-    if (!eligible) return null;
-    return {
-      fit: (padding) => {
-        const layout = fingerprint ? useLayoutStore.getState().layouts[fingerprint] : undefined;
-        const { width, height } = flow.getState();
-        if (!schema || !layout || !width || !height) return null;
-        return fitViewport(
-          tablesBox(diagramGeometry(schema, layout).tables),
-          { width, height },
-          padding,
-        );
-      },
-      decide: (zoom) => changeOverview(nextOverviewState(overviewNow.current, zoom, tableCount)),
-    };
-  }, [eligible, schema, fingerprint, flow, changeOverview, tableCount]);
-  const onPaneClick = useCallback(
-    (event: React.MouseEvent) => {
-      if (overviewNow.current && geometry) {
-        const at = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-        const id = hitTable(geometry.tables, at);
-        if (id) clearEdgeSelection();
-        selectTable(id);
-        return;
-      }
-      selectTable(null);
-    },
-    [geometry, screenToFlowPosition, selectTable, clearEdgeSelection],
-  );
   const onMove = useCallback(() => {
     const root = rootRef.current;
     if (root && !root.dataset.moving) root.dataset.moving = "true";
@@ -287,29 +175,18 @@ function SchemaCanvasInner() {
   const [openingViewport, setOpeningViewport] = useState<Viewport | null | undefined>(undefined);
   if (schema && openingViewport === undefined)
     setOpeningViewport(useLayoutStore.getState().pendingViewport);
-  // Zoom-driven overview changes only count once the opening viewport has been applied.
-  const [armed, setArmed] = useState(false);
   const onInit = useCallback(
     (instance: ReactFlowInstance<TableFlowNode, RelationshipFlowEdge>) => {
-      const arm = () => requestAnimationFrame(() => setArmed(true));
-      if (openingViewport) {
-        void instance.setViewport(openingViewport);
-        arm();
-        return;
-      }
-      const target = overviewFit?.fit(toFitPadding(fitPadding(issuesSheetOpen())));
-      if (overviewFit && target) {
-        overviewFit.decide(target.zoom);
-        void instance.setViewport(target);
-      }
-      arm();
+      if (openingViewport) void instance.setViewport(openingViewport);
     },
-    [openingViewport, overviewFit],
+    [openingViewport],
   );
   const restoring = useSchemaStore((s) => s.restoring);
+  // The note is dismissed per diagram; a different schema shows it again.
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 
   const large = base.nodes.length > LARGE_SCHEMA_THRESHOLD;
-  const { resetView } = useCanvasCommands(base, large, overviewFit);
+  const { resetView } = useCanvasCommands(base, large);
 
   if (!schema) {
     return (
@@ -332,13 +209,12 @@ function SchemaCanvasInner() {
     <div
       ref={rootRef}
       data-testid="schema-canvas"
-      data-overview={overview ? "true" : "false"}
       data-instant-dim={base.nodes.length + base.edges.length > DIM_TRANSITION_LIMIT || undefined}
       className="h-full w-full bg-canvas"
     >
       <ReactFlow<TableFlowNode, RelationshipFlowEdge>
-        nodes={shownNodes}
-        edges={shownEdges}
+        nodes={nodes}
+        edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
@@ -353,34 +229,21 @@ function SchemaCanvasInner() {
         edgesFocusable={false}
         deleteKeyCode={null}
         onlyRenderVisibleElements={large}
-        minZoom={0.02}
+        minZoom={0.05}
         maxZoom={2}
-        fitView={!openingViewport && !eligible}
+        fitView={!openingViewport}
         fitViewOptions={FIT_VIEW_OPTIONS}
         onInit={onInit}
         aria-label="Schema diagram"
       >
-        <ZoomDetail
-          enabled={large}
-          tables={tableCount}
-          overview={overview}
-          armed={armed}
-          onOverviewChange={changeOverview}
-        />
-        {overview && geometry && <OverviewLayer geometry={geometry} />}
+        <ZoomDetail enabled={large} />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--canvas-dot)" />
-        <Controls showInteractive={false} position="bottom-left" showFitView={false}>
-          {/* React Flow's own button skips hidden nodes (the overview) and would centre on nothing. */}
-          <ControlButton
-            onClick={resetView}
-            title="fit view"
-            aria-label="fit view"
-            className="react-flow__controls-fitview"
-          >
-            <Maximize aria-hidden />
-          </ControlButton>
-        </Controls>
-        {showMiniMap && !overview && (
+        <Controls
+          showInteractive={false}
+          position="bottom-left"
+          fitViewOptions={FIT_VIEW_OPTIONS}
+        />
+        {showMiniMap && (
           <MiniMap
             data-testid="canvas-minimap"
             pannable
@@ -389,6 +252,14 @@ function SchemaCanvasInner() {
             nodeStrokeWidth={2}
             ariaLabel="Diagram overview"
           />
+        )}
+        {fingerprint !== dismissedFor && (
+          <Panel position="top-left">
+            <LargeSchemaNotice
+              tables={base.nodes.length}
+              onDismiss={() => setDismissedFor(fingerprint)}
+            />
+          </Panel>
         )}
         <Panel position="top-right">
           <Button

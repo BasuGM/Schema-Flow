@@ -34,7 +34,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-020](#adr-020--error-boundaries-per-region-app-level-error-pages-build-time-qa-hooks-2026-11-16-p2-t10)                             | 2026-11-16 | Error boundary per region; app error pages; build-time QA hooks                       | A render error must not take down the app; hooks stay out of `out/`          | Not recorded                                                            |
 | [ADR-021](#adr-021--phone-table-list-sheet-enter-on-resize-separators-2026-11-16-p2-t10)                                                 | 2026-11-16 | Phone table-list sheet; Enter on resize separators                                    | A 200 px list cannot fit beside the minimum canvas at 390 px                 | 0 px side panel                                                         |
 | [ADR-022](#adr-022--large-schema-frame-costs-2026-11-16-p2-t10)                                                                          | 2026-11-16 | Large-schema frame costs                                                              | Profiles of panning and centring on 2,000 tables                             | Not recorded                                                            |
-| [ADR-023](#adr-023--real-input-selection-costs-lighter-zoomed-out-canvas-edge-dimming-packed-layout-deferred-2026-11-19-p2-t10-round-12) | 2026-11-19 | Real-input costs, lighter zoomed-out canvas, edge dimming; packed layout deferred     | Synthetic clicks hid pointerdown cost; group opacity was slow                | Packing pass now (fitted view too heavy); hiding edges while moving     |
+| [ADR-023](#adr-023--real-input-selection-costs-lighter-zoomed-out-canvas-edge-dimming-packed-layout-deferred-2026-11-19-p2-t10-round-12) | 2026-11-19 | Superseded by ADR-031. Real-input costs, lighter zoomed-out canvas, edge dimming; packed layout deferred     | Synthetic clicks hid pointerdown cost; group opacity was slow                | Packing pass now (fitted view too heavy); hiding edges while moving     |
 | [ADR-024](#adr-024--committed-playwright-e2e-suite-2026-11-19-e2e-01)                                                                    | 2026-11-19 | Committed Playwright e2e suite                                                        | Repeatable, real-input checks for every handoff; dev-only dependency         | Ad-hoc CDP harnesses                                                    |
 | [ADR-025](#adr-025--layout-persistence-per-fingerprint-localstorage-keys-2026-11-19-p3-t01)                                              | 2026-11-19 | Layout persistence in localStorage (per-fingerprint keys, LRU 20)                     | P3-T01                                                                       |
 | [ADR-026](#adr-026--collapse-modes-ui-keep-positions-mouse-toggle-keyboard-inspector-2026-11-19-p3-t02)                                  | 2026-11-19 | Collapse modes UI: positions kept, mouse toggle + inspector control, bulk actions     | P3-T02                                                                       |
@@ -42,6 +42,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-028](#adr-028--text-generators-sql-prisma-mermaid-json-with-warnings-and-fixed-point-tests-2026-11-19-p3-t04)                       | 2026-11-19 | Text generators (SQL ×3, Prisma, Mermaid, JSON): warnings, mapping, fixed-point tests | P3-T04                                                                       |
 | [ADR-029](#adr-029--one-export-dialog-with-tabs-preview-and-stale-safe-generation-2026-11-19-p3-t05) | 2026-11-19 | One Export dialog: text + image tabs, capped preview, revision-keyed cache, gesture-safe copy / download | P3-T05 |
 | [ADR-030](#adr-030--session-restore-indexeddb-source-text-re-parsed-on-load-2026-11-19-p3-t06) | 2026-11-19 | Session restore: last import in IndexedDB, re-parsed on load; `?sample=` wins; one-shot viewport; Clear saved data | P3-T06 |
+| [ADR-031](#adr-031--packed-layout-300-table-design-target-no-canvas-overview-2026-11-20-p3-t07) | 2026-11-20 | Packed layout for elongated large schemas; ~300-table design target; no canvas overview | Tall GitLab layout (242,000 px) is unusable; overview renderer dropped by scope decision | Canvas overview renderer (designed, not built) |
 
 ## Data flow
 
@@ -725,6 +726,8 @@ source-mapped CPU profiles and traces of the production build.
 
 ### ADR-023 — Real-input selection costs, lighter zoomed-out canvas, edge dimming; packed layout deferred (2026-11-19, P2-T10 round 12)
 
+- **Status:** superseded by ADR-031 (2026-11-20). Text kept as the record of the decision.
+
 Cowork round 12 reported that the harness clicked with synthetic `click` events, which skip React
 Flow's pointerdown path (QA-019), that panning at zoom 1 past many dimmed edges is slow on a
 software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018).
@@ -900,13 +903,21 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
   (a 5 MB import would compete with 20 saved layouts for the ~5 MB quota); an opt-in toggle (the user chose on-by-default plus Clear).
 - **Cost:** GitLab (992 tables) restores in about the time of an import (≈ 3 s) behind the status.
 
+### ADR-031 — Packed layout; ~300-table design target; no canvas overview (2026-11-20, P3-T07)
+
+- **Decision:** `layoutPacked` (`src/graph/layout-packed.ts`) runs Dagre first. If the schema has at least 50 tables and its layout is more elongated than 4:1, it lays out each connected component with Dagre (LR wraps tall ranks into lanes of max(3000, √(area/1.6)) px), grids isolated tables and shelf-packs the blocks toward 16:10 with 96 px gaps. Otherwise the Dagre layout is returned unchanged, so small schemas are byte-identical. Routes are kept only for unwrapped components. Packing applies to fresh layouts and the Layout button. Saved layouts still win on reload and restore (no storage key bump).
+- **Target:** SchemaFlow is designed for schemas of up to about 300 tables. Larger schemas open with a dismissible one-line notice (`large-schema-notice`, shown above `DESIGN_TABLE_LIMIT` = 300) and no speed promise.
+- **Supersedes ADR-023's packing condition:** ADR-023 deferred packing until a cheap canvas overview renderer existed. That overview was designed and prototyped but not built. On 2026-11-20 the user cut its scope, so ADR-023 is superseded and the overview's speed budgets are dropped.
+- **Consequences:** GitLab (992 tables) lays out at 3,904 × 242,359 px → about 20,480 × 17,688 px (aspect ~1.16) in ~3–4.6 s (budget 7.5 s). Its export is 20,872 × 17,908 px; the PNG is 4,421 × 3,793 at scale 0.2118 (was ~0.07). A packed GitLab fitted view mounts many DOM tables and is slow by design. The fitted zoom for a 20,480 px wide diagram (~0.03–0.04) is below the unchanged 0.05 minimum, so Reset view may show it clipped (known limitation). Export draws the packed positions only; viewport and layout version do not reach the image.
+- **Rejected:** a canvas overview renderer (one `<canvas>` below zoom 0.3, with hysteresis and hidden-before-mount). Its code is in git history at `509ea54` and `ca06fee`, not in the tree.
+
 ## Known limitations (Phase 1)
 
 - Layout persistence (ADR-025): "Layout" deliberately replaces the saved positions. A saved viewport is used
   only by a session restore (ADR-030); every import, sample and Layout fits the view.
 - Dagre produces very tall, narrow layouts for large, shallow graphs (e.g. the 200-table synthetic
   sample has few ranks); readable navigation of such schemas relies on the table list + centering.
-  Better packing of disconnected components is planned for P4-T05.
+  P3-T07 packs such layouts (ADR-031).
 - Composite FKs are drawn as a single edge anchored at the first column pair (ADR-007).
 - Long-edge routes are dropped for edges whose end table was dragged, and don't account for
   intermediate tables that were dragged (ADR-010).
@@ -926,9 +937,11 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
 - On a 2,000-table schema, selecting or deselecting a 499-reference hub takes 34–66 ms from
   pointerdown to the next frame on an M1 with real mouse input (budget 40 ms not met; ADR-022,
   ADR-023).
-- Very large, shallow schemas lay out as tall columns (GitLab: 3,904 × 242,359 px), so Reset view
-  at the 0.05 zoom floor shows only a slice (QA-018, deferred to P3-T07 with an overview renderer;
-  ADR-023).
+- Very large, shallow schemas used to lay out as tall columns (GitLab: 3,904 × 242,359 px). Packing
+  (P3-T07, ADR-031) brings GitLab to about 1.2:1 (QA-018, fixed – pending QA). Reset view on GitLab
+  may still show the diagram clipped at the 0.05 zoom minimum (ADR-031).
+- Large schemas (> 300 tables) are slow by design: panning and selecting may be slow, and a notice
+  says so (ADR-031). A packed GitLab fitted view mounts many DOM tables.
 - Views, functions, triggers, expression indexes and EXCLUDE constraints are skipped (reported);
   partition bounds are not shown, only the list of partitions.
 - The CREATE TABLE … PARTITION OF column list is not parsed (it repeats the parent's).

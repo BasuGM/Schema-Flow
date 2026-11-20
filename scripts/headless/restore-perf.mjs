@@ -47,14 +47,9 @@ try {
   for (let run = 1; run <= 3; run++) {
     const start = Date.now();
     await page.goto(url);
-    await page
-      .locator('[data-testid="canvas-overview"], [data-testid^="table-node-"]')
-      .first()
-      .waitFor({ timeout: 60_000 });
+    await page.locator('[data-testid^="table-node-"]').first().waitFor({ timeout: 60_000 });
     await page.getByTestId("canvas-restoring").waitFor({ state: "detached" });
-    console.log(
-      `restore ${run}: ${Date.now() - start} ms (reload → first table node, or the overview canvas, on screen)`,
-    );
+    console.log(`restore ${run}: ${Date.now() - start} ms (reload → first table node on screen)`);
   }
   console.log(`tables: ${await page.getByTestId("toolbar-schema-name").textContent()}`);
 } catch (error) {

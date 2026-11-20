@@ -102,8 +102,6 @@ async function click(testid) {
 
 async function importFixture() {
   await send("Page.navigate", { url });
-  // A background tab may not run requestAnimationFrame, which the import's busy state waits for.
-  await send("Page.bringToFront");
   for (let k = 0; k < 60; k++) {
     await sleep(250);
     if (await evaluate(`!!${q("toolbar-import")}`)) break;
@@ -123,15 +121,13 @@ async function importFixture() {
     await sleep(500);
     if (
       await evaluate(
-        `!${q("import-dialog")} && (document.querySelectorAll('.react-flow__node').length > 0 && !/E-commerce/.test(document.querySelector('[data-testid="toolbar-schema-name"]')?.textContent ?? '')) || !!document.querySelector('[data-testid="canvas-overview"]')`,
+        `!${q("import-dialog")} && document.querySelectorAll('.react-flow__node').length > 0`,
       )
     )
       break;
   }
   await sleep(1500);
-  return evaluate(
-    `(document.querySelectorAll('.react-flow__node').length > 0 && !/E-commerce/.test(document.querySelector('[data-testid="toolbar-schema-name"]')?.textContent ?? '')) || !!document.querySelector('[data-testid="canvas-overview"]')`,
-  );
+  return evaluate(`document.querySelectorAll('.react-flow__node').length > 0`);
 }
 
 /** Clicks a segmented-control radio through its label (the input itself is visually hidden). */

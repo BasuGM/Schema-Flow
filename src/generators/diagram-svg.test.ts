@@ -33,6 +33,11 @@ describe("renderDiagramSvg", () => {
     expect(render().svg).toBe(render().svg);
   });
 
+  it("ignores layout fields that are not positions, collapse modes or routes", () => {
+    const extra = { ...layout, viewport: { x: 5, y: 5, zoom: 0.1 }, version: 9, fingerprint: "x" };
+    expect(render(schema, extra).svg).toBe(render().svg);
+  });
+
   it("sizes the image from computeDiagramBounds and pads the content", () => {
     const bounds = computeDiagramBounds(schema, layout);
     const { svg, width, height } = render();

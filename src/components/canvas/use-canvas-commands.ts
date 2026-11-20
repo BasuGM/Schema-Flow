@@ -6,14 +6,10 @@ import { SHEET_HEIGHT_PERCENT, SHEET_QUERY } from "@/components/issues/issues-sh
 import {
   NODE_ROW_HEIGHT,
   NODE_WIDTH,
-  estimateNodeHeight,
   renderedColumns,
   rowCenterOffset,
-  visibleColumns,
 } from "@/graph/node-metrics";
-import type { Viewport } from "@/domain/schema/types";
 import type { FlowElements } from "@/graph/schema-to-flow";
-import type { FitPadding } from "@/graph/overview";
 import type { TableFlowNode } from "@/graph/types";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -35,21 +31,6 @@ export function issuesSheetOpen(): boolean {
 export function fitPadding(sheetOpen: boolean): FitViewOptions["padding"] {
   if (!sheetOpen) return 0.15;
   return { top: "5%", bottom: `${SHEET_HEIGHT_PERCENT + 5}%`, x: "6%" };
-}
-
-/** `fitPadding` as per-side fractions, for the overview's own fit (same result as `fitView`). */
-export function toFitPadding(padding: FitViewOptions["padding"]): number | FitPadding {
-  if (typeof padding === "number") return padding;
-  const frac = (v: string | number | undefined) =>
-    v === undefined ? 0 : typeof v === "number" ? v : parseFloat(v) / 100;
-  if (typeof padding === "string") return frac(padding);
-  const p = padding ?? {};
-  return {
-    top: frac(p.top ?? p.y),
-    bottom: frac(p.bottom ?? p.y),
-    left: frac(p.left ?? p.x),
-    right: frac(p.right ?? p.x),
-  };
 }
 
 export function motionDuration(ms: number): number {
@@ -75,34 +56,17 @@ export function centerDuration(fromZoom: number, toZoom: number, large: boolean)
  * Bridges UI-store focus requests (center on table) and layout changes to the React Flow
  * viewport. Only imperative viewport calls happen here; no React state is set.
  */
-export interface OverviewFit {
-  /** Where a fit-to-view lands for the current layout and canvas size (null: not measurable yet). */
-  fit: (padding: number | FitPadding) => Viewport | null;
-  /** Decides and applies the overview state for the target zoom, before the view moves there. */
-  decide: (zoom: number) => void;
-}
-
-export function useCanvasCommands(
-  base: FlowElements,
-  large = false,
-  overviewFit: OverviewFit | null = null,
-) {
-  const { fitView, setCenter, getZoom, getInternalNode, setViewport } =
-    useReactFlow<TableFlowNode>();
+export function useCanvasCommands(base: FlowElements, large = false) {
+  const { fitView, setCenter, getZoom, getInternalNode } = useReactFlow<TableFlowNode>();
   const focusRequest = useUiStore((s) => s.focusRequest);
 
   const resetView = useCallback(() => {
-    const padding = fitPadding(issuesSheetOpen());
-    // Large schemas decide the overview from the target zoom first, so the tables are never
-    // mounted just to be hidden again (R1).
-    const target = overviewFit?.fit(toFitPadding(padding));
-    if (overviewFit && target) {
-      overviewFit.decide(target.zoom);
-      void setViewport(target, { duration: motionDuration(250) });
-      return;
-    }
-    void fitView({ padding, maxZoom: 1, duration: motionDuration(250) });
-  }, [fitView, setViewport, overviewFit]);
+    void fitView({
+      padding: fitPadding(issuesSheetOpen()),
+      maxZoom: 1,
+      duration: motionDuration(250),
+    });
+  }, [fitView]);
 
   const flowStore = useStoreApi();
   useEffect(() => {
@@ -111,13 +75,11 @@ export function useCanvasCommands(
     if (!node) return;
     const { x, y } = node.internals.positionAbsolute;
     const width = node.measured.width ?? NODE_WIDTH;
-    const schemaTable = useSchemaStore.getState().schema?.tables[focusRequest.tableId];
-    // Nodes hidden by the overview are never measured: use the estimate export and layout share.
-    const height =
-      node.measured.height ??
-      (schemaTable ? estimateNodeHeight(visibleColumns(schemaTable, node.data.mode).length) : 0);
+    const height = node.measured.height ?? 0;
     // A column (search hit, link) centers on its row, which may be far down a long table.
-    const table = focusRequest.columnId ? schemaTable : undefined;
+    const table = focusRequest.columnId
+      ? useSchemaStore.getState().schema?.tables[focusRequest.tableId]
+      : undefined;
     const rowOffset =
       table && focusRequest.columnId
         ? rowCenterOffset(

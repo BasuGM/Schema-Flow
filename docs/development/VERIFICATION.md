@@ -762,3 +762,14 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 - AC-P3-T06-7: The stored record is inspectable: IndexedDB `schemaflow` → `session` → `current` has exactly `v`, `text`, `format`, `name`, `savedAt`; localStorage has `schemaflow:session-ui:v1`, `schemaflow:layout:v1:*`, `schemaflow:layout-index:v1`, `schemaflow:prefs:v1`. _Auto_ — **Verified (Cowork round 20)** (`ad32775`).
 
 - **Status: Verified** (Cowork round 20 at `ad32775`; not tested: Safari/iOS, real phone).
+
+## P3-T07 — Packed layout + large-schema note
+
+- AC-P3-T07-1: Import `tests/fixtures/real/gitlab-structure.postgres.sql` (992 tables) → the layout is about 1.2:1 (within 3:1 either way) with no overlapping tables; Reset view shows the diagram, though its fitted zoom is near the 0.05 minimum and may clip it (ADR-031). _Auto_ (`layout-packed.test.ts`, `real-fixtures-performance.test.ts`, `tests/e2e/packed-layout.spec.ts`).
+- AC-P3-T07-2: The 12-table `ecommerce` sample, Sakila and mysqldump-180 → Layout gives exactly the plain Dagre positions (no packing, no routes changed). _Auto_ (`layout-packed.test.ts`).
+- AC-P3-T07-3: Layout of the same GitLab schema twice, and once after re-parsing its SQL → identical positions. _Auto_ (`layout-packed.test.ts`).
+- AC-P3-T07-4: Import GitLab, Layout, reload → the saved (packed) layout is kept; a saved tall layout is kept on reload, and the Layout button repacks it and saves the new one. _Auto_ (`tests/e2e/packed-layout.spec.ts`).
+- AC-P3-T07-5: Export GitLab as PNG and SVG → the image uses the packed positions (PNG 4,421 × 3,793 at scale 0.2118, canvas 20,872 × 17,908 px); changing viewport or layout version leaves the SVG output unchanged. _Auto_ (`diagram-svg.test.ts`, `real-fixtures-performance.test.ts`).
+- AC-P3-T07-6: Import GitLab (992 tables) → a one-line "Large schema (992 tables): …" note (`role=status`) appears; its dismiss button hides it. The 12-table sample, Sakila and mysqldump-180 show no note. _Auto_ (`large-schema-notice.test.tsx`, `tests/e2e/packed-layout.spec.ts`).
+
+- **Status: Awaiting Cowork verification** (automated checks only; not verified by Cowork or a human).

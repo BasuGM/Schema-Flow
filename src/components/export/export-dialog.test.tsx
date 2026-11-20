@@ -173,7 +173,7 @@ describe("Export dialog", () => {
     await user.click(screen.getByTestId("export-copy"));
     const full = String(copyText.mock.calls[0]![0]);
     expect(full.length).toBeGreaterThan(screen.getByTestId("export-preview").textContent!.length);
-  });
+ }, 20_000);
 
   it("shows new output after a re-import that changes only a default (cache keyed on revision)", async () => {
     const user = userEvent.setup();

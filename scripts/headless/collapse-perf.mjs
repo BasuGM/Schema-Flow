@@ -130,8 +130,6 @@ async function measuredClick(testid, ms = 1500) {
 
 async function importFixture() {
   await send("Page.navigate", { url });
-  // A background tab may not run requestAnimationFrame, which the import's busy state waits for.
-  await send("Page.bringToFront");
   for (let k = 0; k < 60; k++) {
     await sleep(250);
     if (await evaluate(`!!${q("toolbar-import")}`)) break;
@@ -151,15 +149,13 @@ async function importFixture() {
     await sleep(500);
     if (
       await evaluate(
-        `!${q("import-dialog")} && (document.querySelectorAll('.react-flow__node').length > 0 && !/E-commerce/.test(document.querySelector('[data-testid="toolbar-schema-name"]')?.textContent ?? '')) || !!document.querySelector('[data-testid="canvas-overview"]')`,
+        `!${q("import-dialog")} && document.querySelectorAll('.react-flow__node').length > 0`,
       )
     )
       break;
   }
   await sleep(1500);
-  return evaluate(
-    `(document.querySelectorAll('.react-flow__node').length > 0 && !/E-commerce/.test(document.querySelector('[data-testid="toolbar-schema-name"]')?.textContent ?? '')) || !!document.querySelector('[data-testid="canvas-overview"]')`,
-  );
+  return evaluate(`document.querySelectorAll('.react-flow__node').length > 0`);
 }
 
 await send("Runtime.enable");

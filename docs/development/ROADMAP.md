@@ -2,12 +2,12 @@
 
 ## Now
 
-- **Task:** P3-T06 (Session restore): Verified (Cowork round 20 at `ad32775`; ADR-030). P3-T05 Verified (round 19; ADR-029). P3-T04 Verified (round 19; QA-030 closed).
+- **Task:** P3-T07 (packed layout + large-schema note; ADR-031): Awaiting Cowork verification (commits `78327f3`, `<HASH>`). Canvas overview dropped by user decision (2026-11-20). P3-T06 Verified (Cowork round 20 at `ad32775`; ADR-030).
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** P3-T07 (packed layout, QA-018; plan first), then P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) before the Phase 3 bug-bash.
-- **Backlog:** 7 open: QA-018 → P3-T07; QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Next:** Cowork verification of P3-T07 (GitLab import, Reset view), then P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) before the Phase 3 bug-bash.
+- **Backlog:** 7 open: QA-018 fixed – pending QA (P3-T07); QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Blockers:** none.
-- **Latest handoff:** [handoffs/P3-T06.md](handoffs/P3-T06.md).
+- **Latest handoff:** [handoffs/P3-T07.md](handoffs/P3-T07.md).
 
 Status vocabulary (exact): `Not started | In progress | Self-checked | Awaiting Cowork verification |
 Verified | Verified with known issues | Blocked`. `Verified*` is set only after a Cowork report has
@@ -72,8 +72,8 @@ issues accepted at close-out:
 P3-T01 Layout persistence (localStorage, keyed by fingerprint) · P3-T02 Per-table collapse modes
 UI · P3-T03 Image export (PNG/SVG, own SVG renderer, ADR-027) · P3-T04 Schema generators (SQL DDL,
 Prisma, Mermaid, JSON) · P3-T05 Export dialog · P3-T06 Session restore · P3-T07 Packed layout for
-large, shallow schemas together with a cheap overview renderer (QA-018; a packed 2,000-table
-overview drawn as DOM costs 150–330 ms per click and 10–17 fps panning, ADR-023) · P3-T08
+large, shallow schemas plus a large-schema note (QA-018; the overview renderer was dropped, the
+design target is about 300 tables, ADR-031) · P3-T08
 Bug-fix task before the Phase 3 bug-bash: QA-027 and QA-028 (inspector focus after relation
 navigation and Back), QA-029 (import file label focus ring), and the AC-BB-P2-3 spec gap (assert exact
 focus targets, unconditionally). Fold into an earlier P3 task if it touches the inspector or import dialog.
@@ -93,7 +93,7 @@ control, node-header toggle, "All tables" actions; modes persist per fingerprint
 
 **P3-T06 Session restore: Verified** (Cowork round 20 at `ad32775`, no new defects; ADR-030; AC-P3-T06-1…7; plan [plans/p3-t06.md](plans/p3-t06.md)). A reload restores the last imported schema (IndexedDB source text, re-parsed), its pan and zoom, and the selected table with its inspector tab; `?sample=` URLs win. Settings / More → "Clear saved data…" removes everything stored and is final across tabs. GitLab restores in about 3 s.
 
-**Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; not scheduled).** Dagre
+**Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; out of scope per ADR-031: the large-schema notice covers it).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),
 while realistic 2,000-table schemas lay out in about 3 s. Import doesn't guard against this yet.
 Options: warn before laying out above N tables or above a large chain depth (longest FK path),
@@ -103,5 +103,5 @@ offer a cheaper layout (grid/components) for such schemas, or run layout off the
 
 P4-T01 Schema health checks (missing PKs, unindexed FKs, orphan tables, naming) · P4-T02 Path
 finder between tables · P4-T03 Subject-area grouping/filtering · P4-T04 Keyboard shortcuts &
-command palette extensions · P4-T05 Performance & layout pass for 500+ tables (component packing) ·
+command palette extensions · P4-T05 won't do: out of scope (SchemaFlow targets up to ~300 tables; see ADR-031) ·
 P4-T06 Accessibility audit & docs.
