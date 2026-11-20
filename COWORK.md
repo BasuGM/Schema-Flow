@@ -2,6 +2,12 @@
 
 Cowork verifies in the browser; it does not edit the repo. Claude Code implements and fixes.
 
+## Scope
+
+- Target machine: MacBook Air M1, 8 GB RAM. Features, fixtures and checks must run comfortably there.
+- Build for the common case: realistic inputs (SchemaFlow: up to ~300 tables). No work on extreme sizes or rare edge cases. Beyond the envelope, degrade gracefully (no crash, a short notice) and stop there.
+- Priority: development speed and good everyday usability over completeness. Plans list edge cases only if they cause a crash or data loss. Perf budgets and perf harness runs only when a feature is visibly slow on the target machine.
+
 ## Start of every chat
 
 Read, in order: this file, the **Now** block at the top of `docs/development/ROADMAP.md`, the
@@ -19,6 +25,8 @@ Now block. Do **not** read `docs/development/handoffs/archive/` unless asked.
    a triage:
    - **fix now** only if it is **blocking**: High severity, a crash or data loss, it breaks what
      the next task builds on, or it stops verification;
+   - rare edge cases (extreme sizes, unusual inputs) are logged Low / Deferred unless they crash
+     or lose data;
    - otherwise (Medium, Low, non-blocking a11y) **deferred → target** (a bug-fix task ID or the
      phase-end bug-bash). Log it, don't hold the round: the verdict is "Verified with known
      issues" and the next task starts.
@@ -42,9 +50,8 @@ Now block. Do **not** read `docs/development/handoffs/archive/` unless asked.
 - Builds: on the Mac, tar out/ and out-qa/ (fresher than src/), stage, delete the tarball; in the
   cloud, serve with `python3 -m http.server 3100 --directory out` (and 3101 for out-qa).
 - Harnesses: `node scripts/headless/<name>.mjs http://localhost:3100/ /tmp/claude-0/chw.sh`
-  (chw.sh = Playwright's Chromium with --no-sandbox). Real input only; compare timings to Off on
-  the same machine (cloud ≈ 2–3× slower than the M1). Harnesses: `large-schema-perf.mjs`;
-  `toolbar-width.mjs` (must print PASS in light and dark at 390×844).
+  (chw.sh = Playwright's Chromium with --no-sandbox). Harness: `toolbar-width.mjs` (must print PASS in
+  light and dark at 390×844). No perf measurements unless a feature is visibly slow (see Scope).
 - Parser checks: run TS sources with `node --experimental-transform-types` + a resolve hook for
   `@/` and `.ts`.
 - e2e now covers QA-020 edge stroke/fill-opacity (`neighbourhood.spec.ts`) and zoomed-out

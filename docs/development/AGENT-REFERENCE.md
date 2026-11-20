@@ -11,8 +11,9 @@ Linked from the root `CLAUDE.md`. Everything here is still a rule; nothing was d
   `npm run start`, which serves `out/` with `python3 -m http.server 3000`. It is a static file
   server, not `next start`.
 - Dev-only perf sample: `/?sample=synthetic&tables=200` (capped at 1,000 tables).
-- Wall-clock budgets live in `*performance.test.ts`; Vitest runs them in their own project after
-  the other tests, one file at a time.
+- Wall-clock budgets live in `*performance.test.ts` (Vitest runs them in their own project, one
+  file at a time). Per the Scope rules, add or run perf budgets and the perf harness only when a
+  feature is visibly slow on the M1 at ≤ ~300 tables; budgets for larger sizes are won't do (scope).
 - Phone toolbar regression: `node scripts/headless/toolbar-width.mjs` (needs Chrome and the server
   running) must print PASS for light and dark at 390×844.
 - Text export from the CLI (P3-T04, plain Node ≥ 22.18, no dependency):

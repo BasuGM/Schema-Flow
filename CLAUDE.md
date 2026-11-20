@@ -9,6 +9,12 @@ never leaves the browser. No backend, no Docker, no AI integrations, 2D only.
 Full detail for every section below: [docs/development/AGENT-REFERENCE.md](docs/development/AGENT-REFERENCE.md).
 Workflow skills: implement-plan, fix-qa-round (user-level). Plans go in `docs/development/plans/`.
 
+## Scope
+
+- Target machine: MacBook Air M1, 8 GB RAM. Features, fixtures and checks must run comfortably there.
+- Build for the common case: realistic inputs (SchemaFlow: up to ~300 tables). No work on extreme sizes or rare edge cases. Beyond the envelope, degrade gracefully (no crash, a short notice) and stop there.
+- Priority: development speed and good everyday usability over completeness. Plans list edge cases only if they cause a crash or data loss. Perf budgets and perf harness runs only when a feature is visibly slow on the target machine.
+
 ## Commands
 
 - `npm run check` — typecheck → lint → test → build (fail fast). Must be green before a commit.

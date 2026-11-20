@@ -6,6 +6,7 @@
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
 - **Next:** Cowork verification of P3-T07 (GitLab import, Reset view), then P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) before the Phase 3 bug-bash.
 - **Backlog:** 7 open: QA-018 fixed – pending QA (P3-T07); QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Scope (2026-11-20):** Scope rules added to CLAUDE.md/COWORK.md; BB-P3 limited to everyday flows at ≤ 300 tables, 2,000-table layout guard marked won't do, perf budgets only when visibly slow; P3-T08 and Phase 4 had no extreme-size items.
 - **Blockers:** none.
 - **Latest handoff:** [handoffs/P3-T07.md](handoffs/P3-T07.md).
 
@@ -77,6 +78,7 @@ design target is about 300 tables, ADR-031) · P3-T08
 Bug-fix task before the Phase 3 bug-bash: QA-027 and QA-028 (inspector focus after relation
 navigation and Back), QA-029 (import file label focus ring), and the AC-BB-P2-3 spec gap (assert exact
 focus targets, unconditionally). Fold into an earlier P3 task if it touches the inspector or import dialog.
+BB-P3 (Phase 3 bug-bash): everyday flows only (import, search, inspect, export, restore) on schemas of up to ~300 tables; no extreme-size or perf sweeps.
 
 **P3-T01 Layout persistence: Verified** (Cowork round 15 at `4ef042a`, no new defects; ADR-025;
 AC-P3-T01-1…6). Per-fingerprint localStorage keys, LRU 20, debounced saves, safe when storage is
@@ -93,7 +95,7 @@ control, node-header toggle, "All tables" actions; modes persist per fingerprint
 
 **P3-T06 Session restore: Verified** (Cowork round 20 at `ad32775`, no new defects; ADR-030; AC-P3-T06-1…7; plan [plans/p3-t06.md](plans/p3-t06.md)). A reload restores the last imported schema (IndexedDB source text, re-parsed), its pan and zoom, and the selected table with its inspector tab; `?sample=` URLs win. Settings / More → "Clear saved data…" removes everything stored and is final across tabs. GitLab restores in about 3 s.
 
-**Possible P3 guard: layout cost (observation from Cowork, 2026-11-16; out of scope per ADR-031: the large-schema notice covers it).** Dagre
+**Possible P3 guard: layout cost: won't do (scope; ADR-031, the large-schema notice covers it).** Dagre
 took **over 90 s** on a 2,000-table linear FK chain (each table referencing the previous one),
 while realistic 2,000-table schemas lay out in about 3 s. Import doesn't guard against this yet.
 Options: warn before laying out above N tables or above a large chain depth (longest FK path),
