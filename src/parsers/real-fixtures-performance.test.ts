@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { layoutWithDagre } from "@/graph/layout-dagre";
+import { layoutPacked } from "@/graph/layout-packed";
 import { schemaToFlow } from "@/graph/schema-to-flow";
 import { parseSchemaText } from "./parse-schema-text";
 
@@ -21,7 +21,7 @@ describe("GitLab structure.sql on the main thread", () => {
     const parseMs = performance.now() - start;
 
     start = performance.now();
-    const layout = layoutWithDagre(schema);
+    const layout = layoutPacked(schema);
     const layoutMs = performance.now() - start;
 
     start = performance.now();
@@ -32,6 +32,12 @@ describe("GitLab structure.sql on the main thread", () => {
       `GitLab: parse ${Math.round(parseMs)} ms, layout ${Math.round(layoutMs)} ms, flow ${Math.round(flowMs)} ms`,
     );
     expect(flow.nodes).toHaveLength(992);
+    const xs = flow.nodes.map((n) => n.position.x);
+    const ys = flow.nodes.map((n) => n.position.y);
+    const w = Math.max(...xs) - Math.min(...xs);
+    const h = Math.max(...ys) - Math.min(...ys);
+    console.info(`GitLab packed extent ≈ ${w} × ${h} px (tables' top-left corners)`);
+    expect(Math.max(w, h) / Math.min(w, h)).toBeLessThan(3);
     expect(parseMs).toBeLessThan(1200);
     expect(layoutMs).toBeLessThan(7500);
     expect(flowMs).toBeLessThan(100);

@@ -9,7 +9,7 @@ import type {
   Viewport,
 } from "@/domain/schema/types";
 import { dropRoutesAt } from "@/graph/edge-path";
-import { layoutWithDagre } from "@/graph/layout-dagre";
+import { layoutPacked } from "@/graph/layout-packed";
 import { loadLayout, scheduleSave } from "./layout-persistence";
 
 interface LayoutState {
@@ -45,7 +45,7 @@ function computeLayout(
 ): DiagramLayout {
   const dir = direction ?? prev?.direction ?? "LR";
   const collapsed = prev?.collapsed ?? {};
-  const { positions, edgeRoutes } = layoutWithDagre(schema, { direction: dir, collapsed });
+  const { positions, edgeRoutes } = layoutPacked(schema, { direction: dir, collapsed });
   return {
     fingerprint,
     positions,
