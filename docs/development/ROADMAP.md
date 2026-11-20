@@ -2,13 +2,13 @@
 
 ## Now
 
-- **Task:** P3-T07 (packed layout + large-schema note; ADR-031): Awaiting Cowork verification (commits `78327f3`, `150fb40`). Canvas overview dropped by user decision (2026-11-20). P3-T06 Verified (Cowork round 20 at `ad32775`; ADR-030).
+- **Task:** P3-T07 (packed layout + large-schema note; ADR-031): Verified with known issues (Cowork round 21 at `9393c3b`; QA-018 verified; QA-034/035 → BB-P3). Canvas overview dropped by user decision (2026-11-20).
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** Cowork verification of P3-T07 (GitLab import, Reset view), then P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) before the Phase 3 bug-bash.
-- **Backlog:** 7 open: QA-018 fixed – pending QA (P3-T07); QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Next:** P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap), then the Phase 3 bug-bash (BB-P3).
+- **Backlog:** 8 open: QA-027…029 → P3-T08; QA-031…035 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Scope (2026-11-20):** Scope rules added to CLAUDE.md/COWORK.md; BB-P3 limited to everyday flows at ≤ 300 tables, 2,000-table layout guard marked won't do, perf budgets only when visibly slow; P3-T08 and Phase 4 had no extreme-size items.
 - **Blockers:** none.
-- **Latest handoff:** [handoffs/P3-T07.md](handoffs/P3-T07.md).
+- **Latest handoff:** [handoffs/P3-T07.md](handoffs/P3-T07.md) (verified in round 21).
 
 Status vocabulary (exact): `Not started | In progress | Self-checked | Awaiting Cowork verification |
 Verified | Verified with known issues | Blocked`. `Verified*` is set only after a Cowork report has

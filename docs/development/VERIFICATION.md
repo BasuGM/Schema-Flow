@@ -765,6 +765,7 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 
 ## P3-T07 — Packed layout + large-schema note
 
+- **Status: Verified with known issues** (Cowork round 21 at `9393c3b`: e2e 185/0/20; AC-P3-T07-1…6 pass; QA-034/035 Low, deferred → BB-P3).
 - AC-P3-T07-1: Import `tests/fixtures/real/gitlab-structure.postgres.sql` (992 tables) → the layout is about 1.2:1 (within 3:1 either way) with no overlapping tables; Reset view shows the diagram, though its fitted zoom is near the 0.05 minimum and may clip it (ADR-031). _Auto_ (`layout-packed.test.ts`, `real-fixtures-performance.test.ts`, `tests/e2e/packed-layout.spec.ts`).
 - AC-P3-T07-2: The 12-table `ecommerce` sample, Sakila and mysqldump-180 → Layout gives exactly the plain Dagre positions (no packing, no routes changed). _Auto_ (`layout-packed.test.ts`).
 - AC-P3-T07-3: Layout of the same GitLab schema twice, and once after re-parsing its SQL → identical positions. _Auto_ (`layout-packed.test.ts`).
