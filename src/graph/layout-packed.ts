@@ -270,7 +270,13 @@ function shiftRoute(route: EdgeRoute, dx: number, dy: number): EdgeRoute {
   };
 }
 
-/** Shelf packing: tallest boxes first, left to right, new shelf past the target row width. */
+/**
+ * Shelf packing: tallest boxes first, left to right, new shelf past the target row width. A shelf
+ * is as tall as its first (tallest) box, and the boxes after it are stacked in columns inside that
+ * height instead of each standing on the shelf floor, so one very tall component no longer leaves
+ * an empty band beside it (QA-034). A box only goes under the previous one when it fits within the
+ * shelf height, so a shelf is never taller, nor a row wider, than plain shelf packing.
+ */
 function shelfPack(boxes: Box[], tableOrder: TableId[]): DagreLayoutResult {
   const sorted = [...boxes].sort((a, b) => b.height - a.height || a.order - b.order);
   const area = sorted.reduce(
@@ -282,14 +288,36 @@ function shelfPack(boxes: Box[], tableOrder: TableId[]): DagreLayoutResult {
 
   const positions: Record<TableId, Position> = {};
   const edgeRoutes: Record<RelationshipId, EdgeRoute> = {};
-  let x = 0;
-  let y = 0;
-  let shelf = 0;
+  let shelfY = 0;
+  let shelfHeight = 0;
+  // The column being filled: left edge, widest box so far, and where the next box starts.
+  let colX = 0;
+  let colWidth = 0;
+  let colBottom = 0;
+  let started = false;
   for (const box of sorted) {
-    if (x > 0 && x + box.width > rowWidth) {
-      x = 0;
-      y += shelf + COMPONENT_GAP;
-      shelf = 0;
+    let x: number;
+    let y: number;
+    if (started && colBottom + COMPONENT_GAP + box.height <= shelfHeight) {
+      x = colX;
+      y = shelfY + colBottom + COMPONENT_GAP;
+      colWidth = Math.max(colWidth, box.width);
+      colBottom += COMPONENT_GAP + box.height;
+    } else {
+      const nextX = started ? colX + colWidth + COMPONENT_GAP : 0;
+      if (started && nextX + box.width > rowWidth) {
+        shelfY += shelfHeight + COMPONENT_GAP;
+        shelfHeight = box.height;
+        x = 0;
+      } else {
+        x = nextX;
+        if (!started) shelfHeight = box.height;
+      }
+      y = shelfY;
+      colX = x;
+      colWidth = box.width;
+      colBottom = box.height;
+      started = true;
     }
     for (const [id, p] of Object.entries(box.positions)) {
       positions[id] = { x: Math.round(p.x + x), y: Math.round(p.y + y) };
@@ -297,8 +325,6 @@ function shelfPack(boxes: Box[], tableOrder: TableId[]): DagreLayoutResult {
     for (const [id, route] of Object.entries(box.routes)) {
       edgeRoutes[id] = shiftRoute(route, x, y);
     }
-    x += box.width + COMPONENT_GAP;
-    shelf = Math.max(shelf, box.height);
   }
   // Stable key order (declaration order), like layoutWithDagre.
   const ordered: Record<TableId, Position> = {};

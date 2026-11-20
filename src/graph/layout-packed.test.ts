@@ -133,4 +133,38 @@ describe("layoutPacked", () => {
     const b = bounds(schema, positions);
     expect(Math.max(b.width, b.height) / Math.min(b.width, b.height)).toBeLessThan(3);
   }, 30_000);
+
+  /** Recorded before QA-034 (column stacking in shelves): width × height of the packed layout. */
+  const BEFORE: Array<[string, number, number]> = [
+    ["tests/fixtures/synthetic/saas-300.postgres.sql", 9888, 8050],
+    ["tests/fixtures/real/mysqldump-180.mysql.sql", 8144, 4060],
+  ];
+  it.each(BEFORE)(
+    "%s: no overlaps and no bigger than before QA-034",
+    (path, width, height) => {
+      const text = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+      const schema = parseSchemaText(text).result.schema!;
+      const { positions } = layoutPacked(schema);
+      const b = bounds(schema, positions);
+      expect(overlaps(schema, positions)).toBe(0);
+      expect(b.width).toBeLessThanOrEqual(width);
+      expect(b.height).toBeLessThanOrEqual(height);
+      expect(b.width * b.height).toBeLessThanOrEqual(width * height);
+    },
+    30_000,
+  );
+
+  it("GitLab: short components are stacked beside the tall one, without overlaps (QA-034)", () => {
+    const text = readFileSync(
+      new URL("../../tests/fixtures/real/gitlab-structure.postgres.sql", import.meta.url),
+      "utf8",
+    );
+    const schema = parseSchemaText(text).result.schema!;
+    const { positions } = layoutPacked(schema);
+    const b = bounds(schema, positions);
+    expect(overlaps(schema, positions)).toBe(0);
+    // Before: 20,760 × 17,796 with an ~8,000 px empty band under the first shelf.
+    expect(b.height).toBeLessThan(15_500);
+    expect(b.width).toBeLessThan(21_500);
+  }, 60_000);
 });
