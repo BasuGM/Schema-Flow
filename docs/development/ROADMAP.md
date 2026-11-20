@@ -2,7 +2,7 @@
 
 ## Now
 
-- **Task:** P3-T07 (packed layout + large-schema note; ADR-031): Awaiting Cowork verification (commits `78327f3`, `<HASH>`). Canvas overview dropped by user decision (2026-11-20). P3-T06 Verified (Cowork round 20 at `ad32775`; ADR-030).
+- **Task:** P3-T07 (packed layout + large-schema note; ADR-031): Awaiting Cowork verification (commits `78327f3`, `150fb40`). Canvas overview dropped by user decision (2026-11-20). P3-T06 Verified (Cowork round 20 at `ad32775`; ADR-030).
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
 - **Next:** Cowork verification of P3-T07 (GitLab import, Reset view), then P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap) before the Phase 3 bug-bash.
 - **Backlog:** 7 open: QA-018 fixed – pending QA (P3-T07); QA-027…029 → P3-T08; QA-031…033 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
