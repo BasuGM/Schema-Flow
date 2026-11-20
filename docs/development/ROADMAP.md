@@ -2,10 +2,11 @@
 
 ## Now
 
-- **Task:** P3-T07 (packed layout + large-schema note; ADR-031): Verified with known issues (Cowork round 21 at `9393c3b`; QA-018 verified; QA-034/035 → BB-P3). Canvas overview dropped by user decision (2026-11-20).
-- **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13).
-- **Next:** P3-T08 (bug-fix: QA-027…029 and the AC-BB-P2-3 spec gap), then the Phase 3 bug-bash (BB-P3).
-- **Backlog:** 8 open: QA-027…029 → P3-T08; QA-031…035 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Task:** P3-T08 (bug-fix: inspector focus after Relations/Back, import file-label ring, AC-BB-P2-3 exact focus targets; ADR-032): Awaiting Cowork verification (commit `75f9b08`; QA-027/028/029 fixed – pending QA; AC-P3-T08-1…5; plan [plans/p3-t08.md](plans/p3-t08.md)).
+- **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13). P3-T07 Verified with known issues (Cowork round 21 at `9393c3b`; QA-018 verified; QA-034/035 → BB-P3).
+- **Next:** Phase 3 bug-bash (BB-P3), after Cowork verifies P3-T08.
+- **Backlog:** 8 open rows: QA-027…029 fixed – pending QA; QA-031…035 deferred → BB-P3 (QA-031 also covers GitLab → SQLite `char_length`) ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Latest handoff:** [handoffs/P3-T08.md](handoffs/P3-T08.md) (Awaiting Cowork verification).
 - **Scope (2026-11-20):** Scope rules added to CLAUDE.md/COWORK.md; BB-P3 limited to everyday flows at ≤ 300 tables, 2,000-table layout guard marked won't do, perf budgets only when visibly slow; P3-T08 and Phase 4 had no extreme-size items.
 - **Blockers:** none.
 - **Latest handoff:** [handoffs/P3-T07.md](handoffs/P3-T07.md) (verified in round 21).
@@ -74,7 +75,7 @@ P3-T01 Layout persistence (localStorage, keyed by fingerprint) · P3-T02 Per-tab
 UI · P3-T03 Image export (PNG/SVG, own SVG renderer, ADR-027) · P3-T04 Schema generators (SQL DDL,
 Prisma, Mermaid, JSON) · P3-T05 Export dialog · P3-T06 Session restore · P3-T07 Packed layout for
 large, shallow schemas plus a large-schema note (QA-018; the overview renderer was dropped, the
-design target is about 300 tables, ADR-031) · P3-T08
+design target is about 300 tables, ADR-031) · P3-T08 **Awaiting Cowork verification** (`75f9b08`).
 Bug-fix task before the Phase 3 bug-bash: QA-027 and QA-028 (inspector focus after relation
 navigation and Back), QA-029 (import file label focus ring), and the AC-BB-P2-3 spec gap (assert exact
 focus targets, unconditionally). Fold into an earlier P3 task if it touches the inspector or import dialog.

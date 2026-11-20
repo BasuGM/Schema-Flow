@@ -774,3 +774,13 @@ Automated in `src/generators/**` unit, fixed-point and SQLite-execution tests, `
 - AC-P3-T07-6: Import GitLab (992 tables) → a one-line "Large schema (992 tables): …" note (`role=status`) appears; its dismiss button hides it. The 12-table sample, Sakila and mysqldump-180 show no note. _Auto_ (`large-schema-notice.test.tsx`, `tests/e2e/packed-layout.spec.ts`).
 
 - **Status: Awaiting Cowork verification** (automated checks only; not verified by Cowork or a human).
+
+## P3-T08 — Inspector focus + import file label ring
+
+- **Status: Awaiting Cowork verification** (automated checks only; not verified by Cowork or a human). QA-027/028/029 fixed – pending QA (`75f9b08`).
+- AC-P3-T08-1, step (a): Select `orders`, Relations tab, Tab to the `users` target, Enter → inspector title focused with the ring, text `users`, Relations tab still selected. _Auto_ (`inspector.test.tsx`, `tests/e2e/bug-bash.spec.ts`).
+- AC-P3-T08-2, step (b): Shift+Tab to Back, Enter → inspector title focused, text `orders`. _Auto_ (`inspector.test.tsx`, `tests/e2e/bug-bash.spec.ts`).
+- AC-P3-T08-3, step (c): Same as (a) with a mouse click → inspector title focused, no ring. _Auto_ (`tests/e2e/bug-bash.spec.ts`).
+- AC-P3-T08-1 at 390×844, step (d): Repeat (a) in the inspector sheet → title focused with the ring, text `users`. _Auto_ (`tests/e2e/bug-bash.spec.ts`).
+- AC-P3-T08-4, step (e): Import dialog, Tab to "Choose file…" → ring on the label; mouse click → no ring. _Auto_ (`import-dialog.test.tsx`, `tests/e2e/bug-bash.spec.ts`).
+- AC-P3-T08-5: `bug-bash.spec.ts` row 4 asserts exact focus targets with no conditional branches. _Auto_ (`tests/e2e/bug-bash.spec.ts`).
