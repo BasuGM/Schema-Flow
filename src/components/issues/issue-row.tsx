@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, CircleAlert, Crosshair, TriangleAlert } from "lucide-react";
+import { ChevronRight, CircleAlert, Crosshair, Info, TriangleAlert } from "lucide-react";
 import { memo, useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,18 @@ import type { ImportIssue } from "@/domain/schema/types";
 import { cn } from "@/lib/utils";
 import { IssueExcerpt } from "./issue-excerpt";
 
+/** An import issue, or a health finding (P4-T01), which adds the `info` severity and a column. */
+export type RowIssue = Pick<ImportIssue, "message" | "line" | "statement" | "tableId"> & {
+  severity: "error" | "warning" | "info";
+  /** Column to reveal along with the table. */
+  columnId?: string;
+};
+
 interface IssueRowProps {
-  issue: ImportIssue;
+  issue: RowIssue;
   /** The linked table's display name, when it exists in the current schema. */
   tableName: string | undefined;
-  onShowTable: (tableId: string) => void;
+  onShowTable: (tableId: string, columnId?: string) => void;
 }
 
 /**
@@ -24,17 +31,23 @@ export const IssueRow = memo(function IssueRow({ issue, tableName, onShowTable }
   const [open, setOpen] = useState(false);
   const excerptId = useId();
   const error = issue.severity === "error";
-  const Icon = error ? CircleAlert : TriangleAlert;
+  const Icon = error ? CircleAlert : issue.severity === "info" ? Info : TriangleAlert;
   const content = (
     <>
       <Icon
         aria-hidden
         className={cn(
           "mt-0.5 size-4 shrink-0",
-          error ? "text-destructive" : "text-amber-600 dark:text-amber-400",
+          error
+            ? "text-destructive"
+            : issue.severity === "info"
+              ? "text-muted-foreground"
+              : "text-amber-600 dark:text-amber-400",
         )}
       />
-      <span className="sr-only">{error ? "Error" : "Warning"}</span>
+      <span className="sr-only">
+        {error ? "Error" : issue.severity === "info" ? "Info" : "Warning"}
+      </span>
       {issue.line !== undefined && (
         <Badge
           variant={error ? "destructive" : "secondary"}
@@ -77,7 +90,12 @@ export const IssueRow = memo(function IssueRow({ issue, tableName, onShowTable }
           <div className="flex min-w-0 flex-1 items-start gap-2 pl-6 text-xs">{content}</div>
         )}
         {issue.tableId !== undefined && (
-          <ShowTable tableId={issue.tableId} tableName={tableName} onShowTable={onShowTable} />
+          <ShowTable
+            tableId={issue.tableId}
+            columnId={issue.columnId}
+            tableName={tableName}
+            onShowTable={onShowTable}
+          />
         )}
       </div>
       {open && issue.line !== undefined && (
@@ -89,12 +107,14 @@ export const IssueRow = memo(function IssueRow({ issue, tableName, onShowTable }
 
 function ShowTable({
   tableId,
+  columnId,
   tableName,
   onShowTable,
 }: {
   tableId: string;
+  columnId: string | undefined;
   tableName: string | undefined;
-  onShowTable: (tableId: string) => void;
+  onShowTable: (tableId: string, columnId?: string) => void;
 }) {
   const missing = tableName === undefined;
   return (
@@ -105,7 +125,11 @@ function ShowTable({
           size="xs"
           className={cn("shrink-0", missing && "cursor-not-allowed opacity-50")}
           aria-disabled={missing || undefined}
-          onClick={missing ? undefined : () => onShowTable(tableId)}
+          onClick={
+            missing
+              ? undefined
+              : () => (columnId ? onShowTable(tableId, columnId) : onShowTable(tableId))
+          }
           data-testid="issue-show-table"
         >
           <Crosshair aria-hidden />

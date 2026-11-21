@@ -18,6 +18,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { ClearDataItem } from "./clear-data-item";
 import { CollapseAllItems } from "./collapse-all-items";
 import { ExportItem, keepFocusForExportDialog } from "./export-item";
+import { HealthItem } from "./health-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 /**
@@ -80,6 +81,8 @@ export function MoreMenu({
         <NeighbourhoodRadio testIdPrefix="more" />
         <DropdownMenuSeparator />
         <CollapseAllItems testIdPrefix="more" />
+        <DropdownMenuSeparator />
+        <HealthItem testId="more-health" />
         <DropdownMenuSeparator />
         <ExportItem testId="more-export" returnFocusTestId="toolbar-more" />
         <ExportItem testId="more-export-image" returnFocusTestId="toolbar-more" tab="image" />

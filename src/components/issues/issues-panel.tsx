@@ -1,21 +1,20 @@
 "use client";
 
 import { Check, Copy, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { countIssues, issuesToText, sortIssues } from "@/domain/schema/issues";
-import { copyText } from "@/lib/copy-text";
 import { cn } from "@/lib/utils";
 import { revealTable } from "@/stores/reveal";
 import { useSchemaStore } from "@/stores/schema-store";
 import { closeIssuesPanel } from "./close-issues";
 import { IssueRow } from "./issue-row";
+import { useCopyText } from "./use-copy-text";
 
 /** Rows rendered per step: a garbage file can produce thousands of issues. */
 export const ISSUE_BATCH = 500;
 
 type Filter = "all" | "errors" | "warnings";
-type CopyState = "idle" | "copied" | "failed";
 
 /**
  * Issues of the current schema (import issues plus validation). Rendered as the bottom panel or,
@@ -27,8 +26,6 @@ export function IssuesPanel({ className }: { className?: string }) {
   const tables = useSchemaStore((s) => s.schema?.tables);
   const [filter, setFilter] = useState<Filter>("all");
   const [limit, setLimit] = useState(ISSUE_BATCH);
-  const [copy, setCopy] = useState<CopyState>("idle");
-  const fallbackRef = useRef<HTMLTextAreaElement>(null);
 
   const sorted = useMemo(() => sortIssues(issues), [issues]);
   const counts = useMemo(() => countIssues(issues), [issues]);
@@ -44,14 +41,7 @@ export function IssuesPanel({ className }: { className?: string }) {
     [sorted, filter],
   );
 
-  const onCopy = async () => setCopy(await copyText(issuesToText(sorted)));
-
-  useEffect(() => {
-    if (copy === "failed") fallbackRef.current?.select();
-    if (copy !== "copied") return;
-    const timer = setTimeout(() => setCopy("idle"), 2000);
-    return () => clearTimeout(timer);
-  }, [copy]);
+  const { copy, fallbackRef, onCopy } = useCopyText(() => issuesToText(sorted));
 
   const chip = (value: Filter, label: string, n: number) => (
     <Button

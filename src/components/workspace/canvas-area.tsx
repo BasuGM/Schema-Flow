@@ -7,7 +7,7 @@ import { closeIssuesPanel } from "@/components/issues/close-issues";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { SchemaCanvas } from "@/components/canvas/schema-canvas";
-import { IssuesPanel } from "@/components/issues/issues-panel";
+import { BottomPanel } from "@/components/issues/bottom-panel";
 import { SHEET_HEIGHT_PERCENT, SHEET_QUERY } from "@/components/issues/issues-sheet";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -82,7 +82,7 @@ function IssuesRegion({ fingerprint }: { fingerprint: string }) {
       onClose={() => useUiStore.getState().setIssuesPanelOpen(false)}
     >
       <QaCrash region="issues" />
-      <IssuesPanel key={fingerprint} />
+      <BottomPanel key={fingerprint} />
     </ErrorBoundary>
   );
 }

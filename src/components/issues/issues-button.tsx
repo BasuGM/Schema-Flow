@@ -12,8 +12,11 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 export function IssuesButton() {
   const errors = useSchemaStore((s) => countIssues(s.issues).errors);
   const warnings = useSchemaStore((s) => countIssues(s.issues).warnings);
+  const total = useSchemaStore((s) => s.issues.length);
+  const hasSchema = useSchemaStore((s) => s.schema !== null);
   const open = useUiStore((s) => s.issuesPanelOpen);
   const setOpen = useUiStore((s) => s.setIssuesPanelOpen);
+  const openHealth = useUiStore((s) => s.openHealthPanel);
   const none = errors + warnings === 0;
   const summary = none
     ? "No import issues"
@@ -23,11 +26,12 @@ export function IssuesButton() {
 
   return (
     <ToolbarButton
-      tooltip={none ? "No import issues" : open ? "Hide issues" : "Show issues"}
-      unavailable={none && !open}
-      aria-label={`Issues: ${summary}`}
+      tooltip="Issues and health checks"
+      unavailable={!hasSchema && !open}
+      aria-label={`Issues and health checks: ${summary}`}
       aria-pressed={open}
-      onClick={() => setOpen(!open)}
+      // With nothing to show under Issues the panel opens on Health.
+      onClick={() => (!open && total === 0 ? openHealth() : setOpen(!open))}
       data-testid="toolbar-issues"
     >
       {errors > 0 && (

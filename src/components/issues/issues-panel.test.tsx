@@ -51,11 +51,11 @@ beforeEach(() => resetStores());
 afterEach(() => vi.restoreAllMocks());
 
 describe("Issues panel", () => {
-  it("is disabled and closed for the sample (no issues)", () => {
+  it("is available but closed for the sample (no import issues)", () => {
     renderWorkspace();
     const button = screen.getByTestId("toolbar-issues");
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button).toHaveAccessibleName("Issues: No import issues");
+    expect(button).not.toHaveAttribute("aria-disabled");
+    expect(button).toHaveAccessibleName("Issues and health checks: No import issues");
     expect(screen.queryByTestId("issues-panel")).toBeNull();
   });
 
@@ -63,7 +63,7 @@ describe("Issues panel", () => {
     renderWorkspace();
     importFixture("sql/edge-cases.postgres.sql");
     const button = screen.getByTestId("toolbar-issues");
-    expect(button).toHaveAccessibleName("Issues: 1 error, 5 warnings");
+    expect(button).toHaveAccessibleName("Issues and health checks: 1 error, 5 warnings");
     expect(screen.getByTestId("toolbar-issues-errors")).toHaveTextContent("1");
     expect(screen.getByTestId("toolbar-issues-warnings")).toHaveTextContent("5");
     expect(screen.getByTestId("issues-panel")).toBeInTheDocument();
@@ -218,7 +218,6 @@ describe("Issues panel", () => {
     expect(button).not.toHaveAttribute("aria-disabled");
     await user.click(button);
     expect(screen.queryByTestId("issues-panel")).toBeNull();
-    expect(button).toHaveAttribute("aria-disabled", "true");
   });
 
   it("opening, closing and resizing the panel keeps the canvas viewport", async () => {

@@ -15,6 +15,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { ClearDataItem } from "./clear-data-item";
 import { CollapseAllItems } from "./collapse-all-items";
 import { ExportItem, keepFocusForExportDialog } from "./export-item";
+import { HealthItem } from "./health-item";
 import { NeighbourhoodRadio } from "./neighbourhood-radio";
 
 export function SettingsMenu() {
@@ -40,6 +41,8 @@ export function SettingsMenu() {
         <NeighbourhoodRadio testIdPrefix="settings" />
         <DropdownMenuSeparator />
         <CollapseAllItems testIdPrefix="settings" />
+        <DropdownMenuSeparator />
+        <HealthItem testId="settings-health" />
         <DropdownMenuSeparator />
         <ExportItem testId="settings-export" returnFocusTestId="toolbar-settings" />
         <ExportItem

@@ -19,6 +19,7 @@ export interface FocusRequest {
 
 /** Neighbourhood highlighting depth (P2-T09): 0 = off. */
 export type ExportTab = "sql" | "prisma" | "mermaid" | "json" | "image";
+export type BottomTab = "issues" | "health";
 
 export type NeighbourhoodDepth = 0 | 1 | 2;
 
@@ -71,6 +72,8 @@ interface UiState {
   clearRequest: number;
   /** Bottom issues panel (P2-T06). */
   issuesPanelOpen: boolean;
+  /** Tab of the bottom panel (P4-T01); session only. */
+  issuesPanelTab: BottomTab;
   /** Search dialog (P2-T07). */
   searchOpen: boolean;
   /** Export dialog (P3-T03, P3-T05), its tab (session only) and the button that gets focus back. */
@@ -115,6 +118,9 @@ interface UiState {
   setShowMiniMap: (show: boolean) => void;
   setPanelOpen: (panel: "left" | "right", open: boolean) => void;
   setIssuesPanelOpen: (open: boolean) => void;
+  setIssuesPanelTab: (tab: BottomTab) => void;
+  /** Opens the bottom panel on the Health tab. */
+  openHealthPanel: () => void;
   setSearchOpen: (open: boolean) => void;
   /** `returnFocusTestId` is the `data-testid` of the toolbar button the dialog was opened from. */
   openExport: (returnFocusTestId: string, tab?: ExportTab) => void;
@@ -137,6 +143,7 @@ const initial = {
   focusRequest: null,
   clearRequest: 0,
   issuesPanelOpen: false,
+  issuesPanelTab: "issues",
   searchOpen: false,
   exportOpen: false,
   exportTab: "sql",
@@ -202,6 +209,9 @@ export const useUiStore = create<UiState>()((set) => ({
     }),
   setIssuesPanelOpen: (issuesPanelOpen) =>
     set((s) => (s.issuesPanelOpen === issuesPanelOpen ? s : { issuesPanelOpen })),
+  setIssuesPanelTab: (issuesPanelTab) =>
+    set((s) => (s.issuesPanelTab === issuesPanelTab ? s : { issuesPanelTab })),
+  openHealthPanel: () => set({ issuesPanelOpen: true, issuesPanelTab: "health" }),
   setSearchOpen: (searchOpen) => set((s) => (s.searchOpen === searchOpen ? s : { searchOpen })),
   openExport: (exportReturnFocus, tab) =>
     set((s) => ({ exportOpen: true, exportReturnFocus, exportTab: tab ?? s.exportTab })),

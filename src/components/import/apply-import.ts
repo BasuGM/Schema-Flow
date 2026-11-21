@@ -2,11 +2,7 @@ import { countIssues } from "@/domain/schema/issues";
 import type { Schema } from "@/domain/schema/types";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
-import {
-  loadSessionUi,
-  saveSession,
-  type InspectorTabName,
-} from "@/stores/session-persistence";
+import { loadSessionUi, saveSession, type InspectorTabName } from "@/stores/session-persistence";
 import { useUiStore } from "@/stores/ui-store";
 import type { ImportFormatChoice } from "@/parsers";
 
@@ -49,7 +45,10 @@ function load(schema: Schema, sourceText?: string): void {
   if (fingerprint) useLayoutStore.getState().ensureLayout(schema, fingerprint);
   const ui = useUiStore.getState();
   ui.resetForNewSchema();
-  if (countIssues(issues).errors > 0) ui.setIssuesPanelOpen(true);
+  if (countIssues(issues).errors > 0) {
+    ui.setIssuesPanelTab("issues");
+    ui.setIssuesPanelOpen(true);
+  }
 }
 
 /**
