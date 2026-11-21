@@ -97,14 +97,20 @@ test.describe("issues panel", () => {
     page,
   }) => {
     const button = page.getByTestId("toolbar-issues");
-    await expect(button).toBeDisabled();
-    await expect(button).toHaveAttribute("aria-label", "Issues: No import issues");
+    await expect(button).toBeEnabled();
+    await expect(button).toHaveAttribute(
+      "aria-label",
+      "Issues and health checks: No import issues",
+    );
     await expect(page.getByTestId("issues-panel")).toHaveCount(0);
 
     await importFixture(page, "sql/edge-cases.postgres.sql");
     await expect(page.getByTestId("issues-panel")).toBeVisible();
     await expect(button).toBeEnabled();
-    await expect(button).toHaveAttribute("aria-label", "Issues: 1 error, 5 warnings");
+    await expect(button).toHaveAttribute(
+      "aria-label",
+      "Issues and health checks: 1 error, 5 warnings",
+    );
     await expect(button).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("toolbar-issues-errors")).toHaveText("1");
     await expect(page.getByTestId("toolbar-issues-warnings")).toHaveText("5");
@@ -122,7 +128,7 @@ test.describe("issues panel", () => {
     await expect(page.getByTestId("issues-panel")).toHaveCount(0);
     await expect(page.getByTestId("toolbar-issues")).toHaveAttribute(
       "aria-label",
-      "Issues: 2 warnings",
+      "Issues and health checks: 2 warnings",
     );
     await page.getByTestId("toolbar-issues").click();
     await expectRows(page, PGDUMP_SQL);
