@@ -799,3 +799,16 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 - AC-BB-P3-8: Export (Enter, arrow-key tabs, Escape) and Clear saved data (Cancel) return focus. _Auto_
 - AC-BB-P3-9: Export and Clear dialogs at 390 and 1280 px, light and dark: no overflow, empty console. _Auto_
 - **Status: Verified (Cowork round 23 at `9c87ffc`; QA-031…037 verified; QA-038 deferred → first P4 bug-fix task).**
+
+## P4-T01 — Schema health checks
+
+- **Status: Awaiting Cowork verification** (automated checks only; not verified by Cowork or a human). Plan: [plans/p4-t01.md](plans/p4-t01.md), ADR-034. Fixtures: `tests/fixtures/sql/health.postgres.sql`, `health.mysql.sql`.
+- AC-P4-T01-1: `health.postgres.sql` shows 7 findings (1 missing PK, 3 unindexed FK, 2 orphan, 1 naming); a table without the problem has no finding; the MySQL twin shows no unindexed-FK finding. _Auto_ (`src/analysis/health.test.ts`, `tests/e2e/health.spec.ts`)
+- AC-P4-T01-2: "Show table" on a row selects and centres that table. _Auto_ (`health.spec.ts`)
+- AC-P4-T01-3: the check chips filter the rows and show counts. _Auto_
+- AC-P4-T01-4: Copy puts one line per finding on the clipboard. _Cowork_ (unit-tested text only)
+- AC-P4-T01-5: Issues and Health tabs switch with the arrow keys, focus stays on the tab with a visible ring. _Auto + Cowork (ring)_
+- AC-P4-T01-6: at 390×844 the sheet shows both tabs, no horizontal overflow, via More → Schema health. _Auto_
+- AC-P4-T01-7: `scripts/headless/toolbar-width.mjs` prints PASS at 390×844. _Auto_
+- Entry points: toolbar button (0 import issues → Health), Settings → Schema health, More → Schema health. _Auto_ (`health.spec.ts`, `health-panel.test.tsx`)
+- Counts for recounting: see the handoff (ecommerce, saas-300, mysqldump-180).

@@ -45,6 +45,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-031](#adr-031--packed-layout-300-table-design-target-no-canvas-overview-2026-11-20-p3-t07)                                          | 2026-11-20 | Packed layout for elongated large schemas; ~300-table design target; no canvas overview                            | Tall GitLab layout (242,000 px) is unusable; overview renderer dropped by scope decision | Canvas overview renderer (designed, not built)                          |
 | [ADR-032](#adr-032--focus-anchor-after-in-inspector-navigation-2026-11-20-p3-t08)                                                        | 2026-11-20 | Focus moves to the inspector title after Relations/Back navigation                                                 | QA-027/028: the activated button unmounts, focus fell to `body`                          | Focusing the store action (DOM in stores)                               |
 | [ADR-033](#adr-033--postgresql-expressions-in-mysql-and-sqlite-exports-2026-11-20-bb-p3)                                                 | 2026-11-20 | CHECKs and defaults from PostgreSQL are rewritten for MySQL/SQLite when safe, otherwise left out with one warning  | QA-031: GitLab → SQLite failed on `char_length`, `::` casts, `~`                         | Copying verbatim and warning only; a full SQL expression translator     |
+| [ADR-034](#adr-034--schema-health-checks-in-a-second-bottom-panel-tab-2026-11-21-p4-t01)                                                 | 2026-11-21 | Pure advisory checks in `src/analysis`, shown in a Health tab beside Issues                                        | P4-T01: findings are advice, not import problems                                         | Mixing them into `ImportIssue`; a new toolbar button                    |
 
 ## Data flow
 
@@ -127,7 +128,7 @@ flowchart LR
 | `src/stores`          | Zustand slices                                                                                                                   | domain, graph                |
 | `src/components`      | React UI (`workspace/`, `canvas/`, `errors/`, `ui/` = shadcn)                                                                    | everything above             |
 | `src/parsers` (P2)    | SQL / Prisma → `DraftSchema`                                                                                                     | domain                       |
-| `src/analysis` (P4)   | Health checks                                                                                                                    | domain                       |
+| `src/analysis` (P4)   | Health checks (P4-T01: `analyzeSchema`, ADR-034)                                                                                 | domain                       |
 | `src/generators` (P3) | Diagram SVG + raster sizing (P3-T03); SQL / Prisma / Mermaid / JSON text (P3-T04); Export dialog in `components/export` (P3-T05) | domain, graph (pure)         |
 
 Rules: pure modules have zero React/Next/DOM imports and are unit-tested; parsers never import
@@ -982,3 +983,9 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
 - **Faithful exports are untouched:** same-dialect output is byte-identical to before (SHA-256 guard in `faithful-output.test.ts`).
 - **Why not translate more:** a real translator is out of scope (SchemaFlow reads schemas; exports are a convenience). Leaving a constraint out with a count is safer than a wrong one.
 - **Also in BB-P3:** shelf packing stacks short components in columns beside a tall one (QA-034; never taller or wider than before); `CANVAS_MIN_ZOOM` 0.02 so Reset view fits GitLab (QA-035); panel ids no longer collide with `data-testid="inspector"` (QA-036).
+
+### ADR-034 — Schema health checks in a second bottom-panel tab (2026-11-21, P4-T01)
+
+- **Decision:** `analyzeSchema` (`src/analysis/health.ts`, pure) returns `HealthFinding`s: missing PK (warning), unindexed FK, orphan table, naming (info). Not `ImportIssue`s: they are advice.
+- **UI:** the bottom panel has Radix Tabs Issues | Health (`bottom-panel.tsx` runs the analysis once per schema, only while open). Entry points: the Issues button (opens on Health when there are no import issues), Settings and More → "Schema health". No new toolbar button (390 px width).
+- **Optimistic scope:** FK coverage compares column sets against leading index/unique/PK columns (no partial or expression indexes); MySQL skips unindexed-FK (InnoDB indexes FKs); naming needs ≥ 10 names of a kind and a ≥ 60 % majority style.
