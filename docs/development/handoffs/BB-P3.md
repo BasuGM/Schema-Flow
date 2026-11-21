@@ -1,6 +1,6 @@
 # BB-P3: Phase 3 bug-bash
 
-**Summary:** Fixes QA-031…037 (cross-dialect SQL export, Mermaid, MySQL detection, packed layout, min zoom, duplicate testid, CLI usage), adds an in-scope 300-table fixture and automated Phase 3 rows. Status: **Awaiting Cowork verification** (not independently verified).
+**Summary:** Fixes QA-031…037 (cross-dialect SQL export, Mermaid, MySQL detection, packed layout, min zoom, duplicate testid, CLI usage), adds an in-scope 300-table fixture and automated Phase 3 rows. Status: **Verified** (Cowork round 23 at `9c87ffc`; QA-038 deferred to P4).
 
 ## Commits (pushed to origin/main)
 

@@ -798,4 +798,4 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 - AC-BB-P3-7: saas-300 import, search, inspect, export and reload work with an empty console. _Auto_
 - AC-BB-P3-8: Export (Enter, arrow-key tabs, Escape) and Clear saved data (Cancel) return focus. _Auto_
 - AC-BB-P3-9: Export and Clear dialogs at 390 and 1280 px, light and dark: no overflow, empty console. _Auto_
-- **Status: Awaiting Cowork verification.**
+- **Status: Verified (Cowork round 23 at `9c87ffc`; QA-031…037 verified; QA-038 deferred → first P4 bug-fix task).**

@@ -2,10 +2,10 @@
 
 ## Now
 
-- **Task:** BB-P3 (Phase 3 bug-bash; QA-031…037; ADR-033; plan [plans/bb-p3.md](plans/bb-p3.md)): Awaiting Cowork verification (code `7f77306…5faead4`).
-- **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13). P3-T07 Verified with known issues (Cowork round 21 at `9393c3b`; QA-018 verified; QA-034/035 → BB-P3). P3-T08 Verified (Cowork round 22 at `4d88dcd`).
-- **Next:** Cowork verifies BB-P3 (hands-on rows 2–3), then Phase 4 (P4-T01).
-- **Backlog:** 7 rows fixed – pending QA (QA-031…037); no open rows ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Task:** Phase 4, P4-T01 (schema health checks): Not started.
+- **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13). P3-T07 Verified with known issues (Cowork round 21 at `9393c3b`; QA-018 verified; QA-034/035 verified in round 23). P3-T08 Verified (Cowork round 22 at `4d88dcd`). Phase 3 Verified with known issues; BB-P3 Verified (Cowork round 23 at `9c87ffc`; QA-031…037 verified; plan [plans/bb-p3.md](plans/bb-p3.md), ADR-033).
+- **Next:** P4-T01; first P4 bug-fix task: QA-038.
+- **Backlog:** 1 open: QA-038 (Low, deferred → first P4 bug-fix task) ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Latest handoff:** [handoffs/BB-P3.md](handoffs/BB-P3.md).
 - **Scope (2026-11-20):** Scope rules added to CLAUDE.md/COWORK.md; BB-P3 limited to everyday flows at ≤ 300 tables, 2,000-table layout guard marked won't do, perf budgets only when visibly slow; P3-T08 and Phase 4 had no extreme-size items.
 - **Blockers:** none.
@@ -78,7 +78,14 @@ design target is about 300 tables, ADR-031) · P3-T08 **Verified** (Cowork round
 Bug-fix task before the Phase 3 bug-bash: QA-027 and QA-028 (inspector focus after relation
 navigation and Back), QA-029 (import file label focus ring), and the AC-BB-P2-3 spec gap (assert exact
 focus targets, unconditionally). Fold into an earlier P3 task if it touches the inspector or import dialog.
-BB-P3 (Phase 3 bug-bash; **Awaiting Cowork verification**, [handoffs/BB-P3.md](handoffs/BB-P3.md)): everyday flows only (import, search, inspect, export, restore) on schemas of up to ~300 tables; no extreme-size or perf sweeps.
+BB-P3 (Phase 3 bug-bash; **Verified**, Cowork round 23 at `9c87ffc`; [handoffs/BB-P3.md](handoffs/BB-P3.md)): everyday flows only (import, search, inspect, export, restore) on schemas of up to ~300 tables; no extreme-size or perf sweeps.
+
+**Phase 3 overall: Verified with known issues** (Cowork round 23 at `9c87ffc`; final handoff
+[handoffs/BB-P3.md](handoffs/BB-P3.md)). Accepted known issues:
+
+- QA-038 (Low, deferred → first P4 bug-fix task): e2e `importFixture` uses the default 10 s timeout, so a GitLab import under load can fail the packed-layout spec.
+- P3-T02: nodes overlap until Layout; the first Headers-only on GitLab takes ~257 ms on M1.
+- Layout cost on very large chains stays won't do (scope; ADR-031).
 
 **P3-T01 Layout persistence: Verified** (Cowork round 15 at `4ef042a`, no new defects; ADR-025;
 AC-P3-T01-1…6). Per-fingerprint localStorage keys, LRU 20, debounced saves, safe when storage is
