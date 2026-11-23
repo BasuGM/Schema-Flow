@@ -6,6 +6,9 @@ import type { CollapseMode, Schema } from "@/domain/schema/types";
 import { NODE_HEADER_HEIGHT, NODE_ROW_HEIGHT } from "@/graph/node-metrics";
 import { createEcommerceSchema } from "@/samples/ecommerce";
 import { computeDiagramBounds, EXPORT_PADDING } from "./diagram-bounds";
+import { showPath } from "@/stores/reveal";
+import { useSchemaStore } from "@/stores/schema-store";
+import { useUiStore } from "@/stores/ui-store";
 import { renderDiagramSvg } from "./diagram-svg";
 import { DEFAULT_DARK_PALETTE, DEFAULT_LIGHT_PALETTE } from "./export-palette";
 
@@ -19,6 +22,17 @@ const render = (s: Schema = schema, l = layout, palette = DEFAULT_LIGHT_PALETTE)
 const parse = (svg: string) => new DOMParser().parseFromString(svg, "image/svg+xml");
 
 describe("renderDiagramSvg", () => {
+  it("ignores an active path: the canvas dimming is not exported (P4-T02)", () => {
+    const before = render().svg;
+    useSchemaStore.getState().loadSchema(schema);
+    expect(showPath("public.reviews", "public.coupons")).not.toBeNull();
+    const after = render().svg;
+    useUiStore.getState().reset();
+    useSchemaStore.getState().clear();
+    expect(after).toBe(before);
+    expect(after).not.toMatch(/dimmed|data-on-path/);
+  });
+
   it("draws every table and relationship as well-formed XML", () => {
     const { svg } = render();
     const doc = parse(svg);

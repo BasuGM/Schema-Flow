@@ -813,6 +813,20 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 - Entry points: toolbar button (0 import issues → Health), Settings → Schema health, More → Schema health. _Auto_ (`health.spec.ts`, `health-panel.test.tsx`)
 - Counts for recounting: see the handoff (ecommerce, saas-300, mysqldump-180).
 
+## P4-T02 — Path finder between tables
+
+- **Status: Awaiting Cowork verification (automated checks only).** Plan: [plans/p4-t02.md](plans/p4-t02.md), ADR-035.
+- AC-P4-T02-1: select a table, open the inspector's Path tab, pick another table: the shortest chain of foreign keys is listed hop by hop (`path-hop`), summary "A → B: N hops". The recount pairs in the handoff (saas-300) give the same tables in order and the same hop counts. _Auto_ (`src/domain/schema/path*.test.ts`, `tests/e2e/path.spec.ts`) + _Cowork_ (recount)
+- AC-P4-T02-2: each hop shows the walk as text ("references" / "referenced by") and the FK as `fkTable.cols → refTable.cols`; one path shows both directions. _Auto_
+- AC-P4-T02-3: on the canvas the path's tables and edges are lit (`data-on-path`) and everything else is dimmed, also in the zoomed-out overview and the keys/header collapse modes; with parallel FKs only the chosen relationship is lit. Hover or clicking an edge keeps the path. _Auto_ (unit, e2e) + _Cowork_ (overview, collapse modes)
+- AC-P4-T02-4: "Show on canvas" fits all path tables in view; Clear removes the highlight, restores the neighbourhood dimming of the selected table at the current depth, and returns focus to the field. _Auto_
+- AC-P4-T02-5: Escape in the field clears the query only; Escape from the canvas clears path and selection; on the phone the first Escape closes the sheet, the second clears. A new schema clears the path; a reload restores the Path tab but not the path. _Auto_
+- AC-P4-T02-6: an unconnected pair shows "No path between A and B" and lights nothing. _Auto_
+- AC-P4-T02-7: the picker lists schema-qualified names (`core.t001_wide` vs `billing.t001_wide`), an empty query shows the first 50 with "Type to narrow (N tables)", and ArrowUp/Down/Enter work with a visible focus ring. _Auto + Cowork (ring)_
+- AC-P4-T02-8: at 390×844 the four inspector tabs fit without clipping or horizontal overflow, Show on canvas closes the sheet and fits the path. _Auto_
+- AC-P4-T02-9: image export while a path is active has no dimming (the export renders from the schema, not the canvas). _Auto_ (`diagram-svg.test.ts`)
+- AC-P4-T02-10: `scripts/headless/toolbar-width.mjs` prints PASS at 390×844. _Auto_
+
 ## P4-T07 — Phone sheet reveal and e2e import timeout (QA-038, QA-039)
 
 - **Status: Verified (Cowork round 25b at `adf8b31`; QA-038/039/040 verified).** Plan: [plans/p4-t07.md](plans/p4-t07.md).

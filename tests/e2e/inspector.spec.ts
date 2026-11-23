@@ -53,6 +53,8 @@ test.describe("inspector (sample)", () => {
     await page.keyboard.press("ArrowRight");
     await expect(tab(page, "keys")).toHaveAttribute("aria-selected", "true");
     await page.keyboard.press("End");
+    await expect(tab(page, "path")).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("ArrowLeft");
     await expect(tab(page, "relations")).toHaveAttribute("aria-selected", "true");
     await page.keyboard.press("ArrowLeft");
     await expect(tab(page, "keys")).toHaveAttribute("aria-selected", "true");
