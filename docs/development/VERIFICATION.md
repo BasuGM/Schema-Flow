@@ -815,7 +815,7 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 
 ## P4-T07 — Phone sheet reveal and e2e import timeout (QA-038, QA-039)
 
-- **Status: Awaiting Cowork verification** (automated checks only; not verified by Cowork or a human). Plan: [plans/p4-t07.md](plans/p4-t07.md).
+- **Status: Verified with known issues (Cowork round 25 at `626cd17`; QA-038/039 verified; QA-040 fixed – pending QA at `ed870ca`, not yet re-verified).** Plan: [plans/p4-t07.md](plans/p4-t07.md).
 - AC-P4-T07-1: at 390×844 with the sheet open, Show table (Health and Issues) puts the table header above the sheet, the table is selected, the sheet stays open; tall tables are top-aligned. _Auto (`health.spec.ts`, `issues.spec.ts`) + Cowork_
 - AC-P4-T07-2: desktop Show table is unchanged. _Auto_ (existing specs)
 - AC-P4-T07-3: every wait in `importFixture` is 60 s; `real/` specs have a 120 s test timeout. _Auto_
