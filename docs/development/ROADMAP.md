@@ -2,10 +2,10 @@
 
 ## Now
 
-- **Task:** Phase 4, P4-T04 (keyboard shortcuts & commands in the search dialog): Awaiting Cowork verification (automated checks only; plan [plans/p4-t04.md](plans/p4-t04.md), ADR-037). P4-T03 (subject-area grouping/filtering): Verified (Cowork round 27 at `fca073f`; ADR-036). P4-T02 (path finder between tables): Verified with known issues (Cowork round 26 at `26e766f`; QA-041 deferred; plan [plans/p4-t02.md](plans/p4-t02.md), ADR-035). P4-T07 Verified (Cowork round 25b at `adf8b31`).
+- **Task:** Phase 4, P4-T04 (keyboard shortcuts & commands in the search dialog): Verified with known issues (Cowork round 28 at `72e2caf`; QA-042 deferred; plan [plans/p4-t04.md](plans/p4-t04.md), ADR-037). P4-T03 (subject-area grouping/filtering): Verified (Cowork round 27 at `fca073f`; ADR-036). P4-T02 (path finder between tables): Verified with known issues (Cowork round 26 at `26e766f`; QA-041 deferred; plan [plans/p4-t02.md](plans/p4-t02.md), ADR-035). P4-T07 Verified (Cowork round 25b at `adf8b31`).
 - **Progress:** Phase 1 and Phase 2 Verified with known issues (P2-T10 and E2E-01 Verified by Cowork round 13). P3-T07 Verified with known issues (Cowork round 21 at `9393c3b`; QA-018 verified; QA-034/035 verified in round 23). P3-T08 Verified (Cowork round 22 at `4d88dcd`). Phase 3 Verified with known issues; BB-P3 Verified (Cowork round 23 at `9c87ffc`; QA-031…037 verified; plan [plans/bb-p3.md](plans/bb-p3.md), ADR-033).
-- **Next:** P4 bug-fix (QA-041) after Cowork verifies P4-T04; then P4-T06 (accessibility audit & docs).
-- **Backlog:** 1 open (QA-041 deferred) ([QA_LOG Backlog](QA_LOG.md#backlog)).
+- **Next:** P4 bug-fix (QA-041, QA-042), then P4-T06 (accessibility audit & docs).
+- **Backlog:** 2 open (QA-041, QA-042 deferred) ([QA_LOG Backlog](QA_LOG.md#backlog)).
 - **Latest handoff:** [handoffs/P4-T04.md](handoffs/P4-T04.md).
 - **Scope (2026-11-20):** Scope rules added to CLAUDE.md/COWORK.md; BB-P3 limited to everyday flows at ≤ 300 tables, 2,000-table layout guard marked won't do, perf budgets only when visibly slow; P3-T08 and Phase 4 had no extreme-size items.
 - **Blockers:** none.
@@ -111,5 +111,5 @@ offer a cheaper layout (grid/components) for such schemas, or run layout off the
 ## Phase 4 — Analysis & polish (summary)
 
 P4-T01 Schema health checks (missing PKs, unindexed FKs, orphan tables, naming; Verified with known issues) · P4-T02 Path finder between tables (Verified with known issues) · P4-T03 Subject-area grouping/filtering (Verified, Cowork round 27) · P4-T04 Keyboard shortcuts &
-command palette extensions (Awaiting Cowork verification) · P4-T05 won't do: out of scope (SchemaFlow targets up to ~300 tables; see ADR-031) ·
+command palette extensions (Verified with known issues) · P4-T05 won't do: out of scope (SchemaFlow targets up to ~300 tables; see ADR-031) ·
 P4-T06 Accessibility audit & docs · P4-T07 Bug fixes QA-038/039/040 (Verified, Cowork round 25b).

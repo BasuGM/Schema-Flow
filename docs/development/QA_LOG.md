@@ -31,6 +31,7 @@ Update this table when an item changes; the dated log below stays append-only.
 | QA-039 | Cowork round 24 (P4-T01)               | At 390×844, "Show table" from the Health sheet centres the table in the full canvas, so it sits behind the sheet (categories node y 370–512, sheet top 404); the table is selected. Probably shared with the Issues sheet (same revealTable). Suggest: centre in the area above the open sheet (offset the reveal by the sheet height) or close the sheet on Show table as the phone table list does | Phone 390×844: Health → Show table                                                        | Low           | verified (round 25)  |
 | QA-040 | Cowork round 25 (P4-T07)               | Phone: Show table on an unindexed-FK row centres the column in the band, so a fitting table's header goes under the toolbar (saas-300 → Health → row 10, core.t008_entity.parent_id: node top 14 px; higher columns 37 px, 11 px clipped)                                                                                                                                                            | Phone 390×844: saas-300 Health row 10 → Show table                                        | Medium        | verified (round 25b) |
 | QA-041 | Cowork round 26 (P4-T02)               | Overview zoom (~0.06–0.13; saas-300 billing.t097_link → analytics.t031_entity): on-path edges are 2px scaled → hairlines. Suggest vector-effect: non-scaling-stroke or a zoom-compensated width for on-path edges | Long path or Reset view on saas-300 in overview | Low | deferred → next P4 bug-fix |
+| QA-042 | Cowork round 28 (P4-T04)               | `aria-keyshortcuts` missing on `toolbar-search` ("Control+K /", Meta on Mac) and `canvas-reset-view` ("F"); present on the other six toolbar buttons | Inspect the two buttons | Low | deferred → next P4 bug-fix |
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -986,4 +987,12 @@ Pending — not independently verified.
 
 - **Handoff:** [handoffs/P4-T04.md](handoffs/P4-T04.md). Plan [plans/p4-t04.md](plans/p4-t04.md) (Cowork amendments 1–9), ADR-037.
 - **Status:** Pending — not independently verified. Automated: `npm run check` green; e2e 221/1/20 then the one failure (a race in the new spec) fixed and re-run green; toolbar-width PASS.
+
+## 2026-11-23 — Cowork round 28 at `72e2caf`: P4-T04 Verified with known issues
+
+- **Result:** AC-P4-T04-1…9 Verified. Full e2e 222/0/20; toolbar-width PASS light/dark. Bundle vs the `fca073f` build: +10,604 B raw / +2,879 B gzip (one main chunk), under ADR-016's 5 KB gzip lazy-load threshold.
+- **Browser 1280:** empty ⌘K = 15 commands in handoff order (Find path disabled); saas-300 + selection = 16 (Show all areas disabled until hidden). `lay`/`exp`/`theme`/`>exp`/`reset` tops correct; per-area commands only on a typed query; Enter on a disabled command keeps the dialog. Focus returns after Export, Reset view and Settings → Keyboard shortcuts. `?` → help (10 rows from `SHORTCUTS`); `/` → search; table search unchanged. F, Shift+F, L, `[` `]`, held `[` toggles once, H/E/I; ignored in the filter field, with Ctrl/Alt/Meta, with a menu open, and `I` over Export. `[` from a list item → focus on `toolbar-toggle-left` (desktop and phone sheet). Theme, minimap, clear data, health, area and find-path commands work.
+- **Phone 390:** E closes the sheet and opens Export; help and palette 358 px wide, no overflow; More → Keyboard shortcuts. Console clean.
+- **QA-042** (Low): see Backlog; deferred to the next P4 bug-fix.
+- **Doc fix:** the handoff said `bill` lists billing tables after the area commands; search doesn't match a bare schema name (same at `fca073f`). Sentence corrected.
 

@@ -850,14 +850,14 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 
 ## P4-T04 — Keyboard shortcuts and commands in the search dialog
 
-- **Status: Awaiting Cowork verification** (automated checks only). Plan: [plans/p4-t04.md](plans/p4-t04.md), ADR-037.
-- AC-P4-T04-1: ⌘K with an empty query lists the commands (Reset view first); "lay" ranks Layout first; `>` shows commands only; Enter runs one and closes the dialog. _Auto_ (`palette.test.tsx`, `shortcuts.spec.ts`) + _Cowork_
-- AC-P4-T04-2: every command works (Reset view, Layout, Export, Export image, Import, Health, Path finder, panels, minimap, theme, Show all areas, shortcuts, Clear saved data); disabled ones (Path finder without a selection, Show all areas with nothing hidden) are marked and Enter skips them. _Auto_ + _Cowork_
-- AC-P4-T04-3: `F L [ ] H E I ?` work on the canvas and do nothing in a text field, over a dialog or menu, with Ctrl/Meta/Alt or on key repeat; on a phone E, I and ? close an open sheet first. _Auto_ (`use-global-shortcuts.test.tsx`, `shortcuts.spec.ts`) + _Cowork_
-- AC-P4-T04-4: `?` (Shift+/) opens the help dialog (not search); it lists exactly the `SHORTCUTS` table, ⌘ or Ctrl per platform; Settings and More have "Keyboard shortcuts"; Escape closes it and focus returns. _Auto_ + _Cowork_
-- AC-P4-T04-5: search (⌘K, `/`, Escape, table and column results) behaves as before. _Auto_ (`search-dialog.test.tsx`, `search.spec.ts`)
-- AC-P4-T04-6: per-area commands ("Hide area billing", "Show only area core") appear only for a typed query and act like the Areas list (saas-300). _Auto_ (`palette.test.tsx`) + _Cowork_
-- AC-P4-T04-7: focus returns to the element focused before ⌘K after any command, including those that open Export, Import, shortcuts or Clear saved data; `[` / `]` with focus inside the collapsing panel moves focus to its toolbar toggle. _Auto_ + _Cowork_
-- AC-P4-T04-8: command rows are options in the same listbox with labels and visible focus; toolbar buttons with a key have `aria-keyshortcuts`. _Auto_ + _Cowork_
-- AC-P4-T04-9: at 390×844 the palette and help dialog fit without horizontal scroll and `scripts/headless/toolbar-width.mjs` prints PASS. _Auto_ + _Cowork_
+- **Status: Verified with known issues** (Cowork round 28 at `72e2caf`; QA-042 deferred). Plan: [plans/p4-t04.md](plans/p4-t04.md), ADR-037.
+- AC-P4-T04-1: ⌘K with an empty query lists the commands (Reset view first); "lay" ranks Layout first; `>` shows commands only; Enter runs one and closes the dialog. _Auto_ (`palette.test.tsx`, `shortcuts.spec.ts`) + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-2: every command works (Reset view, Layout, Export, Export image, Import, Health, Path finder, panels, minimap, theme, Show all areas, shortcuts, Clear saved data); disabled ones (Path finder without a selection, Show all areas with nothing hidden) are marked and Enter skips them. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-3: `F L [ ] H E I ?` work on the canvas and do nothing in a text field, over a dialog or menu, with Ctrl/Meta/Alt or on key repeat; on a phone E, I and ? close an open sheet first. _Auto_ (`use-global-shortcuts.test.tsx`, `shortcuts.spec.ts`) + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-4: `?` (Shift+/) opens the help dialog (not search); it lists exactly the `SHORTCUTS` table, ⌘ or Ctrl per platform; Settings and More have "Keyboard shortcuts"; Escape closes it and focus returns. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-5: search (⌘K, `/`, Escape, table and column results) behaves as before. _Auto_ (`search-dialog.test.tsx`, `search.spec.ts`) — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-6: per-area commands ("Hide area billing", "Show only area core") appear only for a typed query and act like the Areas list (saas-300). _Auto_ (`palette.test.tsx`) + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-7: focus returns to the element focused before ⌘K after any command, including those that open Export, Import, shortcuts or Clear saved data; `[` / `]` with focus inside the collapsing panel moves focus to its toolbar toggle. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-8: command rows are options in the same listbox with labels and visible focus; toolbar buttons with a key have `aria-keyshortcuts`. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
+- AC-P4-T04-9: at 390×844 the palette and help dialog fit without horizontal scroll and `scripts/headless/toolbar-width.mjs` prints PASS. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
 
