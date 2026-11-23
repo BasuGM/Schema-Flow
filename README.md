@@ -20,7 +20,11 @@ SQL is parsed as text, never executed, and schema data is never sent anywhere.
   nullability, and relationships with cardinality. Select a table in the list or on the canvas
   to see its columns, keys and relations in the inspector, follow foreign keys, and dim everything
   outside its 1- or 2-hop neighbourhood.
-- **Search** tables and columns (⌘K / Ctrl+K or `/`) and jump to the result.
+- **Search** tables and columns (⌘K / Ctrl+K or `/`) and jump to the result; the same dialog runs
+  commands (type a few letters, or start with `>`).
+- **Keyboard shortcuts** (press `?` for the list): `F` reset view, `L` layout, `[` / `]` table list
+  and inspector, `H` health, `E` export, `I` import. Single keys are ignored while typing in a field
+  or with a dialog open. On some keyboard layouts `[` and `]` need AltGr.
 - **Pick up where you left off.** A reload restores the last schema you imported, the pan and zoom and the selected table.
   `?sample=…` URLs always show that sample.
 - Light and dark themes, keyboard navigation, and a phone layout with the panels as sheets.

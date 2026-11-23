@@ -981,3 +981,9 @@ Pending — not independently verified.
 - **AC-P4-T03-1…9 Verified.**
 - **Defects:** none new. QA-041 remains deferred → next P4 bug-fix.
 - **Status:** P4-T03 Verified (QA-041 deferred).
+
+## 2026-11-23 — P4-T04: keyboard shortcuts and commands in the search dialog (Claude Code, not independently verified)
+
+- **Handoff:** [handoffs/P4-T04.md](handoffs/P4-T04.md). Plan [plans/p4-t04.md](plans/p4-t04.md) (Cowork amendments 1–9), ADR-037.
+- **Status:** Pending — not independently verified. Automated: `npm run check` green; e2e 221/1/20 then the one failure (a race in the new spec) fixed and re-run green; toolbar-width PASS.
+

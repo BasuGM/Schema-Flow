@@ -97,7 +97,7 @@ export function SearchPanel({
   const total = commands.length + results.totalTables + results.totalColumns;
   const empty = deferred.trim() === "";
   const status = empty
-    ? `Type to search ${plural(index!.tables.length, "table")} and ${plural(index!.columns.length, "column")}, or pick a command`
+    ? `Type to search ${plural(index!.tables.length, "table")} and ${plural(index!.columns.length, "column")}`
     : total === 0
       ? `No tables or columns match “${deferred.trim()}”.`
       : plural(total, "result");
