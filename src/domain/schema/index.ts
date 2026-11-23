@@ -13,3 +13,4 @@ export {
   getNeighbors,
   getOutgoingRelationships,
 } from "./selectors";
+export { findPath, type PathHop, type TablePath } from "./path";
