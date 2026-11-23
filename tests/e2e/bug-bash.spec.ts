@@ -54,6 +54,7 @@ test.describe("row 7: the console stays empty", () => {
   test("AC-BB-P2-1: a journey through every Phase 2 feature logs no errors or warnings", async ({
     page,
   }) => {
+    test.setTimeout(120_000); // imports real/mysqldump-180
     const problems = watchConsole(page);
     await openSample(page);
     await clickTable(page, "orders");

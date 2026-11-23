@@ -33,6 +33,36 @@ export function fitPadding(sheetOpen: boolean): FitViewOptions["padding"] {
   return { top: "5%", bottom: `${SHEET_HEIGHT_PERCENT + 5}%`, x: "6%" };
 }
 
+/** Canvas height left above the bottom sheet, given how many px of the pane it covers. */
+export function visibleCanvasHeight(h: number, coveredPx: number): number {
+  return Math.max(0, h - coveredPx);
+}
+
+/** Flow-y shift that moves a centred point from the pane middle to the middle of the visible band. */
+export function sheetCenterOffset(h: number, visibleH: number, zoom: number): number {
+  return (h - visibleH) / 2 / zoom;
+}
+
+/** Gap between the pane top and a table taller than the visible band (header stays in view). */
+const TALL_TOP_GAP = 16;
+
+/** Flow-y centre that puts a node's top `TALL_TOP_GAP` px below the pane top. */
+export function tallNodeTargetY(nodeY: number, zoom: number, h: number): number {
+  return nodeY - TALL_TOP_GAP / zoom + h / 2 / zoom;
+}
+
+/**
+ * Pixels of the pane covered by the phone issues sheet (QA-039), measured from the DOM because
+ * the sheet is a share of the viewport while the pane sits below the toolbar. Falls back to the
+ * sheet's percentage when the element is not mounted yet.
+ */
+function sheetCoveredPx(pane: HTMLElement | null, h: number): number {
+  if (!issuesSheetOpen()) return 0;
+  const sheet = document.querySelector<HTMLElement>('[data-testid="issues-sheet"]');
+  if (!sheet || !pane) return (h * SHEET_HEIGHT_PERCENT) / 100;
+  return Math.max(0, pane.getBoundingClientRect().bottom - sheet.getBoundingClientRect().top);
+}
+
 export function motionDuration(ms: number): number {
   if (typeof window === "undefined" || !window.matchMedia) return ms;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : ms;
@@ -88,22 +118,34 @@ export function useCanvasCommands(base: FlowElements, large = false) {
           )
         : null;
     const target = { x: x + width / 2, y: y + (rowOffset ?? Math.min(height / 2, 200)) };
+    const { width: w, height: h, transform, domNode } = flowStore.getState();
+    const [tx, ty, currentZoom] = transform;
+    const visibleH = visibleCanvasHeight(h, sheetCoveredPx(domNode, h));
+    // With the phone sheet open, center in the band above it; a table taller than the band is
+    // top-aligned so its header stays visible. Nothing is covered on desktop (shift 0).
+    const placeY = (zoom: number): number => {
+      if (rowOffset === null && height * zoom > visibleH && visibleH < h) {
+        return tallNodeTargetY(y, zoom, h);
+      }
+      return target.y + sheetCenterOffset(h, visibleH, zoom);
+    };
     if (focusRequest.mode === "ensure-visible") {
       // Reading through columns in the inspector must not make the diagram jump: pan only when
       // the row (or the table header) is outside the visible canvas.
-      const { width: w, height: h, transform } = flowStore.getState();
-      const [tx, ty, zoom] = transform;
-      const half = (rowOffset === null ? NODE_ROW_HEIGHT : NODE_ROW_HEIGHT / 2) * zoom;
-      const left = x * zoom + tx;
-      const right = (x + width) * zoom + tx;
-      const cy = target.y * zoom + ty;
-      const visible = left >= 0 && right <= w && cy - half >= 0 && cy + half <= h;
+      const half = (rowOffset === null ? NODE_ROW_HEIGHT : NODE_ROW_HEIGHT / 2) * currentZoom;
+      const left = x * currentZoom + tx;
+      const right = (x + width) * currentZoom + tx;
+      const cy = target.y * currentZoom + ty;
+      const visible = left >= 0 && right <= w && cy - half >= 0 && cy + half <= visibleH;
       if (visible) return;
-      void setCenter(target.x, target.y, { zoom, duration: motionDuration(300) });
+      void setCenter(target.x, placeY(currentZoom), {
+        zoom: currentZoom,
+        duration: motionDuration(300),
+      });
       return;
     }
     const zoom = Math.max(getZoom(), 0.9);
-    void setCenter(target.x, target.y, {
+    void setCenter(target.x, placeY(zoom), {
       zoom,
       duration: centerDuration(getZoom(), zoom, large),
     });

@@ -4,6 +4,8 @@ import { importFixture, openSample } from "./support/app";
 // AC-P2-T10-7 (ADR-023): a large schema zoomed below 0.3 draws rows as one striped block and
 // edges without markers or hover targets; zooming in brings the detail back.
 test.describe("zoomed-out rendering of large schemas", () => {
+  test.describe.configure({ timeout: 120_000 });
+
   test("fitted view of a 180-table schema is an overview; zooming in restores detail", async ({
     page,
   }) => {

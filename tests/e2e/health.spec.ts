@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { importFixture, tableNode } from "./support/app";
+import { expectSelectedHeaderAboveSheet, importFixture, tableNode } from "./support/app";
 
 // P4-T01 (docs/development/plans/p4-t01.md): the Health tab, from the toolbar button and from the
 // Settings item, plus one phone case. tests/fixtures/sql/health.postgres.sql triggers all four checks.
@@ -65,5 +65,14 @@ test.describe("phone (390×844)", () => {
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test("QA-039: Show table puts the table header above the open sheet", async ({ page }) => {
+    await page.goto("/");
+    await importFixture(page, FIXTURE);
+    await page.getByTestId("toolbar-more").click();
+    await page.getByTestId("more-health").click();
+    await healthRows(page).first().getByTestId("issue-show-table").click();
+    await expectSelectedHeaderAboveSheet(page);
   });
 });

@@ -17,7 +17,7 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite");
 const db = new DatabaseSync(":memory:");
 try {
   db.exec(readFileSync(0, "utf8"));
-  const { n } = db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table'").get();
+  const { n } = db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").get();
   console.log(`${n} tables created`);
 } catch (error) {
   console.error(`SQLite error: ${error.message}`);

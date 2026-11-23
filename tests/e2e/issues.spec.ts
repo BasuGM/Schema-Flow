@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { importFixture, openSample, tableNode } from "./support/app";
+import {
+  expectSelectedHeaderAboveSheet,
+  importFixture,
+  openSample,
+  tableNode,
+} from "./support/app";
 
 interface Row {
   severity: "error" | "warning";
@@ -210,5 +215,17 @@ test.describe("issues panel", () => {
     await importFixture(page, "sql/edge-cases.postgres.sql");
     await expect(rows(page).first()).toContainText("Error");
     await expect(rows(page).nth(1)).toContainText("Warning");
+  });
+});
+
+test.describe("issues sheet on a phone (390×844)", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("QA-039: Show table puts the table header above the open sheet", async ({ page }) => {
+    await openSample(page);
+    await importFixture(page, "sql/edge-cases.postgres.sql");
+    await expect(page.getByTestId("issues-sheet")).toBeVisible();
+    await page.getByTestId("issue-show-table").first().click();
+    await expectSelectedHeaderAboveSheet(page);
   });
 });
