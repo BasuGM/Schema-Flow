@@ -517,6 +517,9 @@ are drawn by our own renderer (ADR-027), so `html-to-image` is not installed.
     phones. Instead, every fit (the import fit and Reset view) uses a bottom padding of 65% of
     the canvas height while the sheet is open, so the diagram lands in the area above the 60%
     sheet (QA-014). Opening the sheet later by hand still keeps the viewport.
+    "Show table" / search reveals use the same rule (QA-039, P4-T07): the target is centred in the
+    band above the sheet, measured from the DOM (the sheet is 60% of the viewport, the pane sits
+    below the toolbar); a table taller than the band is top-aligned instead.
   - **Toolbar tooltips and dialogs:** a dialog returns focus to its trigger on close, which
     opened the trigger's tooltip and left it showing (QA-015). `useReturnFocusTooltip` ignores
     that one returning focus; hover and keyboard focus still open it.
