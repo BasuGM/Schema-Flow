@@ -39,6 +39,6 @@ export function ExportItem({
  * returns it on close).
  */
 export function keepFocusForExportDialog(event: Event) {
-  const { exportOpen, clearDataOpen } = useUiStore.getState();
-  if (exportOpen || clearDataOpen) event.preventDefault();
+  const { exportOpen, clearDataOpen, shortcutsOpen } = useUiStore.getState();
+  if (exportOpen || clearDataOpen || shortcutsOpen) event.preventDefault();
 }

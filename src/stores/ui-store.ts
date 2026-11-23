@@ -94,8 +94,9 @@ interface UiState {
   searchOpen: boolean;
   /** Import dialog (P4-T04: in the store so a command or key can open it). */
   importOpen: boolean;
-  /** Keyboard shortcuts dialog (P4-T04). */
+  /** Keyboard shortcuts dialog (P4-T04) and the menu button that gets focus back, if any. */
   shortcutsOpen: boolean;
+  shortcutsReturnFocus: string | null;
   /** Bumped to ask the canvas to fit all tables in view (Reset view, P4-T04). */
   resetViewRequest: number;
   /** Export dialog (P3-T03, P3-T05), its tab (session only) and the button that gets focus back. */
@@ -158,6 +159,8 @@ interface UiState {
   setSearchOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   setShortcutsOpen: (open: boolean) => void;
+  /** `returnFocusTestId`: the menu trigger the dialog was opened from (omit for a key or command). */
+  openShortcuts: (returnFocusTestId?: string) => void;
   requestResetView: () => void;
   /** `returnFocusTestId` is the `data-testid` of the toolbar button the dialog was opened from. */
   openExport: (returnFocusTestId: string, tab?: ExportTab) => void;
@@ -184,6 +187,7 @@ const initial = {
   searchOpen: false,
   importOpen: false,
   shortcutsOpen: false,
+  shortcutsReturnFocus: null,
   resetViewRequest: 0,
   exportOpen: false,
   exportTab: "sql",
@@ -279,6 +283,8 @@ export const useUiStore = create<UiState>()((set) => ({
   setImportOpen: (importOpen) => set((s) => (s.importOpen === importOpen ? s : { importOpen })),
   setShortcutsOpen: (shortcutsOpen) =>
     set((s) => (s.shortcutsOpen === shortcutsOpen ? s : { shortcutsOpen })),
+  openShortcuts: (returnFocusTestId) =>
+    set({ shortcutsOpen: true, shortcutsReturnFocus: returnFocusTestId ?? null }),
   requestResetView: () => set((s) => ({ resetViewRequest: s.resetViewRequest + 1 })),
   openExport: (exportReturnFocus, tab) =>
     set((s) => ({ exportOpen: true, exportReturnFocus, exportTab: tab ?? s.exportTab })),

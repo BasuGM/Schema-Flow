@@ -1,6 +1,8 @@
 "use client";
 
 import { Download, PanelLeft, PanelRight, Workflow } from "lucide-react";
+import { ShortcutsDialog } from "@/components/commands/shortcuts-dialog";
+import { keyShortcutsFor, withShortcut } from "@/components/commands/shortcuts";
 import { ExportDialog } from "@/components/export/export-dialog";
 import { ImportDialog } from "@/components/import/import-dialog";
 import { IssuesButton } from "@/components/issues/issues-button";
@@ -35,7 +37,8 @@ export function Toolbar() {
       data-testid="toolbar"
     >
       <ToolbarButton
-        tooltip={leftOpen ? "Hide table list" : "Show table list"}
+        tooltip={withShortcut(leftOpen ? "Hide table list" : "Show table list", "toggle-list")}
+        aria-keyshortcuts={keyShortcutsFor("toggle-list")}
         size="icon"
         aria-label="Toggle table list"
         aria-pressed={leftOpen}
@@ -72,10 +75,15 @@ export function Toolbar() {
         <ImportDialog />
         <ExportDialog />
         <ClearDataDialog />
+        <ShortcutsDialog />
         <IssuesButton />
         {/* Hidden on phones so the toolbar fits 390 px (QA-012); the More menu has Export… there. */}
         <ToolbarButton
-          tooltip={hasTables ? "Export schema or image" : "Load a schema to export it"}
+          tooltip={withShortcut(
+            hasTables ? "Export schema or image" : "Load a schema to export it",
+            "export",
+          )}
+          aria-keyshortcuts={keyShortcutsFor("export")}
           unavailable={!hasTables}
           onClick={() => useUiStore.getState().openExport("toolbar-export")}
           className="hidden sm:inline-flex"
@@ -87,7 +95,8 @@ export function Toolbar() {
         {/* Below `sm` these three live in the More menu, so the toolbar fits 390 px. */}
         <div className="hidden items-center gap-0.5 sm:flex">
           <ToolbarButton
-            tooltip="Re-run automatic layout (discards manual positions)"
+            tooltip={withShortcut("Re-run automatic layout (discards manual positions)", "layout")}
+            aria-keyshortcuts={keyShortcutsFor("layout")}
             onClick={relayout}
             unavailable={!schemaName}
             data-testid="toolbar-layout"
@@ -101,7 +110,11 @@ export function Toolbar() {
         </div>
         <MoreMenu onRelayout={relayout} canRelayout={!!schemaName} />
         <ToolbarButton
-          tooltip={rightOpen ? "Hide inspector" : "Show inspector"}
+          tooltip={withShortcut(
+            rightOpen ? "Hide inspector" : "Show inspector",
+            "toggle-inspector",
+          )}
+          aria-keyshortcuts={keyShortcutsFor("toggle-inspector")}
           size="icon"
           aria-label="Toggle inspector"
           aria-pressed={rightOpen}

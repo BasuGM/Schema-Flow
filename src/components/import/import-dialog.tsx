@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { keyShortcutsFor, withShortcut } from "@/components/commands/shortcuts";
 import { restorePaletteFocus } from "@/components/commands/focus-return";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
@@ -143,7 +144,8 @@ export function ImportDialog() {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <ToolbarButton
-          tooltip="Import SQL or Prisma schema"
+          tooltip={withShortcut("Import SQL or Prisma schema", "import")}
+          aria-keyshortcuts={keyShortcutsFor("import")}
           tooltipOpen={tooltipOpen}
           onTooltipOpenChange={onTooltipOpenChange}
           data-testid="toolbar-import"

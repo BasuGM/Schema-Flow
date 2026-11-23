@@ -14,6 +14,8 @@ export interface Shortcut {
   needsSchema: boolean;
   /** Opens a dialog: phone sheets close first. */
   opensDialog?: boolean;
+  /** Listed in the help only; handled elsewhere (Escape), so the global handler skips it. */
+  reference?: true;
   run: () => void;
 }
 
@@ -84,6 +86,14 @@ export const SHORTCUTS: readonly Shortcut[] = [
     opensDialog: true,
     run: actions.importSchema,
   },
+  {
+    id: "escape",
+    description: "Clear the selection, or close a dialog or menu",
+    bindings: [{ key: "Escape" }],
+    needsSchema: false,
+    reference: true,
+    run: () => {},
+  },
 ];
 
 export function shortcutById(id: string): Shortcut | undefined {
@@ -96,6 +106,7 @@ export function matchShortcut(event: KeyboardEvent): Shortcut | null {
   const mod = event.metaKey || event.ctrlKey;
   const key = event.key.toLowerCase();
   for (const shortcut of SHORTCUTS) {
+    if (shortcut.reference) continue;
     for (const binding of shortcut.bindings) {
       if (binding.key !== key) continue;
       if (binding.mod ? mod && !event.shiftKey : !mod) return shortcut;
@@ -123,4 +134,16 @@ export function ariaKeyShortcuts(shortcut: Shortcut, mac = isMac()): string {
   return shortcut.bindings
     .map((b) => (b.mod ? `${mac ? "Meta" : "Control"}+${b.key.toUpperCase()}` : b.key))
     .join(" ");
+}
+
+/** Tooltip text with the key, e.g. "Re-run layout (L)". */
+export function withShortcut(text: string, id: string): string {
+  const shortcut = shortcutById(id);
+  return shortcut ? `${text} (${shortcutLabels(shortcut).join(" / ")})` : text;
+}
+
+/** Value for `aria-keyshortcuts` of the control that has this shortcut. */
+export function keyShortcutsFor(id: string): string | undefined {
+  const shortcut = shortcutById(id);
+  return shortcut ? ariaKeyShortcuts(shortcut) : undefined;
 }

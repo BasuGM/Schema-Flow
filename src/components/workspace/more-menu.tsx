@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/ui-store";
 import { ClearDataItem } from "./clear-data-item";
+import { ShortcutsItem } from "./shortcuts-item";
 import { CollapseAllItems } from "./collapse-all-items";
 import { ExportItem, keepFocusForExportDialog } from "./export-item";
 import { HealthItem } from "./health-item";
@@ -88,6 +89,8 @@ export function MoreMenu({
         <ExportItem testId="more-export-image" returnFocusTestId="toolbar-more" tab="image" />
         <DropdownMenuSeparator />
         <ClearDataItem testId="more-clear-data" returnFocusTestId="toolbar-more" />
+        <DropdownMenuSeparator />
+        <ShortcutsItem testId="more-shortcuts" returnFocusTestId="toolbar-more" />
       </DropdownMenuContent>
     </DropdownMenu>
   );

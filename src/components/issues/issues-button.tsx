@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleAlert, TriangleAlert } from "lucide-react";
+import { keyShortcutsFor, withShortcut } from "@/components/commands/shortcuts";
 import { ToolbarButton } from "@/components/workspace/toolbar-button";
 import { countIssues } from "@/domain/schema/issues";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -26,7 +27,8 @@ export function IssuesButton() {
 
   return (
     <ToolbarButton
-      tooltip="Issues and health checks"
+      tooltip={withShortcut("Issues and health checks", "health")}
+      aria-keyshortcuts={keyShortcutsFor("health")}
       unavailable={!hasSchema && !open}
       aria-label={`Issues and health checks: ${summary}`}
       aria-pressed={open}
