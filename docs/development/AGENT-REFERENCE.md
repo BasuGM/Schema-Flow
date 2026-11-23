@@ -77,6 +77,7 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   `health-empty`, `health-filter-{all|missing-pk|unindexed-fk|orphan-table|naming}`, `settings-health`, `more-health`.
   Path finder (P4-T02): `inspector-tab-path`, `path-target-input`, `path-target-hint`, `path-target-option`, `path-result`,
   `path-summary`, `path-hops`, `path-hop`, `path-show`, `path-clear`, `path-none`; `data-on-path` on table nodes and edges.
+  Subject areas (P4-T03; `<area>` is the area id slug, e.g. `billing`, `other`): `area-filter`, `area-show-all-list`, `area-row-<area>`, `area-toggle-<area>`, `area-only-<area>`, `area-group-<area>`, `area-filter-notice`, `area-show-all`.
   Export dialog (P3-T03, P3-T05): `toolbar-export`, `settings-export`, `settings-export-image`, `more-export`,
   `more-export-image`, `export-dialog`, `export-tab-{sql|prisma|mermaid|json|image}`; text tabs:
   `export-dialect-{postgresql|mysql|sqlite}`, `export-mermaid-{all|keys}`, `export-preview`, `export-text-size`,

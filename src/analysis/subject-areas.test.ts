@@ -24,6 +24,14 @@ describe("getSubjectAreas", () => {
     expect(areas.areaOf.size).toBe(300);
   });
 
+  it("saas-300: hiding billing touches 248 of 520 relationships", () => {
+    const s = load("synthetic/saas-300.postgres.sql");
+    const billing = new Set(getSubjectAreas(s)!.areas.find((a) => a.id === "billing")!.tableIds);
+    const rels = Object.values(s.relationships);
+    const touched = rels.filter((r) => billing.has(r.from.tableId) || billing.has(r.to.tableId));
+    expect([rels.length, touched.length]).toEqual([520, 248]);
+  });
+
   it("uses name prefixes for mysqldump-180 with no Other", () => {
     const s = load("real/mysqldump-180.mysql.sql");
     const list = summary(s)!;

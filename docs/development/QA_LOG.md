@@ -963,3 +963,10 @@ Pending — not independently verified.
 - **Defects:** QA-041 (Low): on-path edges become hairlines at overview zoom. Deferred → next P4 bug-fix.
 - **Doc fix:** handoff sentence "Every hop above is a `references` walk" was wrong (pairs 1, 3, 4 include referenced-by hops); corrected.
 - **Status:** P4-T02 Verified with known issues (QA-041 deferred).
+
+## 2026-11-23 — P4-T03: subject-area grouping and filtering (Claude Code, not independently verified)
+
+- **Handoff:** [handoffs/P4-T03.md](handoffs/P4-T03.md). Plan [plans/p4-t03.md](plans/p4-t03.md) (approved with Cowork amendments 1–8), ADR-036.
+- **Built:** pure `getSubjectAreas`, `ui-store.hiddenAreas`, canvas hiding of tables and edges without relayout, auto-unhide on reveal, Areas control and grouped table list, "N tables hidden" pill.
+- **Results:** `npm run check` green (830 tests); `areas.spec.ts` 4 passed; related e2e 83 passed; `toolbar-width.mjs` PASS.
+- **Status:** Awaiting Cowork verification. Pending — not independently verified. No Backlog changes (QA-041 still deferred).
