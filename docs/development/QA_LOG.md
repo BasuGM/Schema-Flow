@@ -30,6 +30,7 @@ Update this table when an item changes; the dated log below stays append-only.
 | QA-038 | Cowork round 23 (BB-P3)                | importFixture (tests/e2e/support/app.ts:80) uses the default 10 s toBeHidden; GitLab import takes ~10 s in a loaded browser. Suggest a 60 s timeout for real/ fixtures                                                                                                                                                                                                                               | Run e2e under load; GitLab import in `importFixture`                                      | Low           | verified (round 25)  |
 | QA-039 | Cowork round 24 (P4-T01)               | At 390×844, "Show table" from the Health sheet centres the table in the full canvas, so it sits behind the sheet (categories node y 370–512, sheet top 404); the table is selected. Probably shared with the Issues sheet (same revealTable). Suggest: centre in the area above the open sheet (offset the reveal by the sheet height) or close the sheet on Show table as the phone table list does | Phone 390×844: Health → Show table                                                        | Low           | verified (round 25)  |
 | QA-040 | Cowork round 25 (P4-T07)               | Phone: Show table on an unindexed-FK row centres the column in the band, so a fitting table's header goes under the toolbar (saas-300 → Health → row 10, core.t008_entity.parent_id: node top 14 px; higher columns 37 px, 11 px clipped)                                                                                                                                                            | Phone 390×844: saas-300 Health row 10 → Show table                                        | Medium        | verified (round 25b) |
+| QA-041 | Cowork round 26 (P4-T02)               | Overview zoom (~0.06–0.13; saas-300 billing.t097_link → analytics.t031_entity): on-path edges are 2px scaled → hairlines. Suggest vector-effect: non-scaling-stroke or a zoom-compensated width for on-path edges | Long path or Reset view on saas-300 in overview | Low | deferred → next P4 bug-fix |
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -953,3 +954,12 @@ Pending — not independently verified.
 - **Built:** pure `findPath` (shortest undirected FK path, deterministic ties), inspector Path tab with a table picker, canvas highlight of the path (everything else dimmed), Show on canvas, Clear.
 - **Results:** `npm run check` green; `path.spec.ts` 8 passed; inspector, phone and health specs pass; `toolbar-width.mjs` PASS at 390×844.
 - **Status:** Awaiting Cowork verification. Pending — not independently verified. No QA_LOG Backlog changes.
+
+## 2026-11-23 — Cowork round 26 at `26e766f`: P4-T02 Verified with known issues
+
+- **Found by:** Cowork round 26 (report pasted by the user).
+- **Result:** full e2e 212/0/20; toolbar-width PASS light/dark. Own BFS over `gen … json` matches all 5 handoff pairs; 15,500 random pairs across saas-300, large-200, ecommerce, sakila, mysqldump-180, blog.prisma: 0 mismatches (tables, tie-break, direction labels; implicit Prisma join table traversed). Browser 1280 and phone 390 dark checks pass; console clean.
+- **AC-P4-T02-1…10 Verified.**
+- **Defects:** QA-041 (Low): on-path edges become hairlines at overview zoom. Deferred → next P4 bug-fix.
+- **Doc fix:** handoff sentence "Every hop above is a `references` walk" was wrong (pairs 1, 3, 4 include referenced-by hops); corrected.
+- **Status:** P4-T02 Verified with known issues (QA-041 deferred).

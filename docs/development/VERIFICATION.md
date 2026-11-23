@@ -815,7 +815,7 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 
 ## P4-T02 — Path finder between tables
 
-- **Status: Awaiting Cowork verification (automated checks only).** Plan: [plans/p4-t02.md](plans/p4-t02.md), ADR-035.
+- **Status: Verified with known issues (Cowork round 26 at `26e766f`; AC-P4-T02-1…10 pass; QA-041 deferred → next P4 bug-fix).** Plan: [plans/p4-t02.md](plans/p4-t02.md), ADR-035.
 - AC-P4-T02-1: select a table, open the inspector's Path tab, pick another table: the shortest chain of foreign keys is listed hop by hop (`path-hop`), summary "A → B: N hops". The recount pairs in the handoff (saas-300) give the same tables in order and the same hop counts. _Auto_ (`src/domain/schema/path*.test.ts`, `tests/e2e/path.spec.ts`) + _Cowork_ (recount)
 - AC-P4-T02-2: each hop shows the walk as text ("references" / "referenced by") and the FK as `fkTable.cols → refTable.cols`; one path shows both directions. _Auto_
 - AC-P4-T02-3: on the canvas the path's tables and edges are lit (`data-on-path`) and everything else is dimmed, also in the zoomed-out overview and the keys/header collapse modes; with parallel FKs only the chosen relationship is lit. Hover or clicking an edge keeps the path. _Auto_ (unit, e2e) + _Cowork_ (overview, collapse modes)
