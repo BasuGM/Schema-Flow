@@ -63,6 +63,9 @@ describe("Inspector tabs", () => {
     expect(tab("keys")).toHaveAttribute("aria-selected", "true");
     expect(within(inspector()).getAllByTestId("inspector-index")).toHaveLength(1);
     await user.keyboard("{End}");
+    expect(tab("path")).toHaveAttribute("aria-selected", "true");
+    expect(tab("path")).toHaveTextContent(/^Path$/);
+    await user.keyboard("{ArrowLeft}");
     expect(tab("relations")).toHaveAttribute("aria-selected", "true");
   });
 

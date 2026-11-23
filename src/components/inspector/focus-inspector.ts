@@ -9,7 +9,9 @@ const INSPECTOR = '[data-testid="inspector"]';
 export function focusInInspector(from: HTMLElement, testId: string): void {
   const container = from.closest<HTMLElement>(INSPECTOR);
   requestAnimationFrame(() => {
-    const root = container?.isConnected ? container : document.querySelector<HTMLElement>(INSPECTOR);
+    const root = container?.isConnected
+      ? container
+      : document.querySelector<HTMLElement>(INSPECTOR);
     root?.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.focus();
   });
 }

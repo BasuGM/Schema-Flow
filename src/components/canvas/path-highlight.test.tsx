@@ -73,13 +73,14 @@ describe("Active path on the canvas (P4-T02)", () => {
     expect(onPathTables()).toEqual([]);
   });
 
-  it("Escape and a new schema clear it; a failed search leaves the old path", () => {
+  it("a failed search, Escape and a new schema clear it", () => {
     render(<Harness />);
     act(() => void showPath("public.reviews", "public.coupons"));
     act(() => {
       expect(showPath("public.reviews", "public.nope")).toBeNull();
     });
-    expect(useUiStore.getState().activePath).not.toBeNull();
+    expect(useUiStore.getState().activePath).toBeNull();
+    act(() => void showPath("public.reviews", "public.coupons"));
     fireEvent.keyDown(document.body, { key: "Escape" });
     expect(useUiStore.getState().activePath).toBeNull();
     expect(useUiStore.getState().focusSet).toBeNull();

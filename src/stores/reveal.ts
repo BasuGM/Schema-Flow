@@ -36,13 +36,16 @@ export function inspectorGoBack(): void {
 
 /**
  * Path finder (P4-T02): find the shortest chain of foreign keys and make it the active path, so
- * the canvas highlights it. Returns the path, or null (and leaves any earlier path active) when
- * the tables are not connected.
+ * the canvas highlights it. Returns the path, or null when the tables are not connected; either
+ * way the earlier path is replaced, so the canvas never shows a path the panel doesn't describe.
  */
 export function showPath(from: TableId, to: TableId): TablePath | null {
   const schema = useSchemaStore.getState().schema;
   const path = schema ? findPath(schema, from, to) : null;
-  if (!path) return null;
+  if (!path) {
+    useUiStore.getState().setActivePath(null);
+    return null;
+  }
   useUiStore.getState().setActivePath({
     from,
     to,

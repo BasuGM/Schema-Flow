@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import type { ColumnName, RelationDetails, TableDetails } from "@/domain/schema/table-details";
+import type { RelationDetails, TableDetails } from "@/domain/schema/table-details";
 import { navigateToRelated } from "@/stores/reveal";
+import { formatColumns as names } from "./column-names";
 import { PAGE_SIZE } from "./columns-tab";
 import { focusInInspector } from "./focus-inspector";
 import { Section } from "./keys-tab";
@@ -46,9 +47,6 @@ function RelationList({
     </div>
   );
 }
-
-const names = (cols: ColumnName[]) =>
-  cols.length === 1 ? cols[0]!.name : `(${cols.map((c) => c.name).join(", ")})`;
 
 function RelationRow({ relation: r, kind }: { relation: RelationDetails; kind: string }) {
   const from = r.pairs.map(([f]) => f);

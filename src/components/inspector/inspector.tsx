@@ -12,6 +12,7 @@ import { CollapseModeControl } from "./collapse-mode-control";
 import { ColumnsTab } from "./columns-tab";
 import { focusInInspector } from "./focus-inspector";
 import { KeysTab } from "./keys-tab";
+import { PathTab } from "./path-tab";
 import { RelationsTab } from "./relations-tab";
 
 /**
@@ -135,6 +136,7 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
           <TabTrigger value="columns" label="Columns" count={counts.columns} />
           <TabTrigger value="keys" label="Keys" count={counts.keys} />
           <TabTrigger value="relations" label="Relations" count={counts.relations} />
+          <TabTrigger value="path" label="Path" />
         </TabsList>
         {/* Keyed by table so "Show more" limits and toggles reset when the selection changes. */}
         <TabsContent value="columns" className="overflow-y-auto">
@@ -145,6 +147,9 @@ export function Inspector({ sheet = false }: { sheet?: boolean }) {
         </TabsContent>
         <TabsContent value="relations" className="overflow-y-auto">
           <RelationsTab key={table.id} details={details} />
+        </TabsContent>
+        <TabsContent value="path" className="overflow-y-auto">
+          <PathTab key={table.id} tableId={table.id} sheet={sheet} />
         </TabsContent>
       </Tabs>
     </aside>
@@ -158,12 +163,14 @@ function TabTrigger({
 }: {
   value: InspectorTab;
   label: string;
-  count: number;
+  count?: number;
 }) {
   return (
     <TabsTrigger value={value} data-testid={`inspector-tab-${value}`}>
       {label}
-      <span className="text-[10px] text-muted-foreground tabular-nums">{count}</span>
+      {count !== undefined && (
+        <span className="text-[10px] text-muted-foreground tabular-nums">{count}</span>
+      )}
     </TabsTrigger>
   );
 }
