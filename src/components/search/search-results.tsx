@@ -1,12 +1,16 @@
 "use client";
 
-import { Columns3, KeyRound, Link2, Table2 } from "lucide-react";
+import { Columns3, Command as CommandIcon, KeyRound, Link2, Table2 } from "lucide-react";
 import { memo } from "react";
+import type { Command } from "@/components/commands/use-commands";
 import type { Range } from "@/domain/search/field";
 import type { ColumnHit, TableHit } from "@/domain/search/search";
 import { cn } from "@/lib/utils";
 
-export type SearchOption = { kind: "table"; hit: TableHit } | { kind: "column"; hit: ColumnHit };
+export type SearchOption =
+  | { kind: "command"; command: Command }
+  | { kind: "table"; hit: TableHit }
+  | { kind: "column"; hit: ColumnHit };
 
 /** Text with the matched ranges wrapped in `<mark>` (also visible in forced-colors mode). */
 export function Highlighted({ text, ranges }: { text: string; ranges: readonly Range[] }) {
@@ -55,18 +59,22 @@ export const OptionRow = memo(function OptionRow({
       id={id}
       role="option"
       aria-selected={active}
+      aria-disabled={option.kind === "command" && option.command.disabled ? true : undefined}
       tabIndex={-1}
       onMouseMove={active ? undefined : () => onHover(index)}
       onClick={() => onChoose(index)}
       className={cn(
         "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm",
         active && "bg-accent text-accent-foreground",
+        option.kind === "command" && option.command.disabled && "cursor-default opacity-50",
       )}
-      data-testid="search-option"
+      data-testid={option.kind === "command" ? "command-option" : "search-option"}
       data-kind={option.kind}
-      data-id={option.hit.entry.id}
+      data-id={option.kind === "command" ? option.command.id : option.hit.entry.id}
     >
-      {option.kind === "table" ? (
+      {option.kind === "command" ? (
+        <CommandOption command={option.command} />
+      ) : option.kind === "table" ? (
         <TableOption hit={option.hit} />
       ) : (
         <ColumnOption hit={option.hit} />
@@ -74,6 +82,24 @@ export const OptionRow = memo(function OptionRow({
     </div>
   );
 });
+
+function CommandOption({ command }: { command: Command }) {
+  return (
+    <>
+      <CommandIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 truncate font-medium">{command.label}</span>
+      {command.disabled && <span className="sr-only">(unavailable)</span>}
+      {command.shortcut && (
+        <kbd
+          aria-hidden
+          className="ml-auto shrink-0 rounded border px-1.5 font-mono text-[11px] text-muted-foreground"
+        >
+          {command.shortcut.join(" ")}
+        </kbd>
+      )}
+    </>
+  );
+}
 
 function TableOption({ hit }: { hit: TableHit }) {
   const { entry, marks } = hit;

@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { restorePaletteFocus } from "@/components/commands/focus-return";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { ToolbarButton } from "@/components/workspace/toolbar-button";
@@ -158,7 +159,9 @@ export function ImportDialog() {
           e.preventDefault();
           (draft.kind === "file" ? removeRef.current : textareaRef.current)?.focus();
         }}
-        onCloseAutoFocus={onCloseAutoFocus}
+        onCloseAutoFocus={(event) => {
+          if (!restorePaletteFocus(event)) onCloseAutoFocus();
+        }}
         onDragOver={onDragOver}
         onDragLeave={(e) => {
           if (e.currentTarget === e.target) setDragging(false);

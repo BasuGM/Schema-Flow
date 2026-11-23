@@ -4,6 +4,8 @@ import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { Search } from "lucide-react";
 import { useCallback, useRef } from "react";
+import type { Command } from "@/components/commands/use-commands";
+import { setPaletteReturnFocus } from "@/components/commands/focus-return";
 import {
   Dialog,
   DialogContent,
@@ -37,10 +39,20 @@ export function SearchDialog() {
   const tooltip = useReturnFocusTooltip();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
+  // A command runs once the dialog has closed and focus is back, so a dialog it opens keeps focus.
+  const pending = useRef<Command | null>(null);
 
   const onChoose = useCallback(
     (tableId: TableId, columnId?: ColumnId) => {
       revealTable(tableId, columnId);
+      setOpen(false);
+    },
+    [setOpen],
+  );
+
+  const onRun = useCallback(
+    (command: Command) => {
+      pending.current = command;
       setOpen(false);
     },
     [setOpen],
@@ -51,12 +63,12 @@ export function SearchDialog() {
       <DialogTrigger asChild>
         <ToolbarButton
           ref={triggerRef}
-          tooltip={`Search tables and columns (${shortcutLabel()})`}
+          tooltip={`Search and commands (${shortcutLabel()})`}
           tooltipOpen={tooltip.tooltipOpen}
           onTooltipOpenChange={tooltip.onTooltipOpenChange}
           unavailable={!hasSchema}
           size="icon"
-          aria-label="Search tables and columns"
+          aria-label="Search tables, columns and commands"
           data-testid="toolbar-search"
         >
           <Search aria-hidden />
@@ -76,16 +88,22 @@ export function SearchDialog() {
           const target = returnTo.current?.isConnected ? returnTo.current : triggerRef.current;
           if (target === triggerRef.current) tooltip.onCloseAutoFocus();
           target?.focus();
+          const command = pending.current;
+          pending.current = null;
+          if (!command) return;
+          if (command.opensDialog) setPaletteReturnFocus(returnTo.current);
+          command.run();
         }}
         data-testid="search-dialog"
       >
-        <DialogTitle className="sr-only">Search tables and columns</DialogTitle>
+        <DialogTitle className="sr-only">Search tables, columns and commands</DialogTitle>
         <DialogDescription className="sr-only">
-          Type to filter, use the arrow keys to move, and Enter to show the result on the canvas.
+          Type to filter, or start with {">"} for commands. Use the arrow keys to move and Enter to
+          run or show the result.
         </DialogDescription>
         <ErrorBoundary region="search" testId="search-error" onClose={() => setOpen(false)}>
           <QaCrash region="search" />
-          <SearchPanel onChoose={onChoose} />
+          <SearchPanel onChoose={onChoose} onRun={onRun} />
         </ErrorBoundary>
       </DialogContent>
     </Dialog>

@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { restorePaletteFocus } from "@/components/commands/focus-return";
 import { useUiStore, type ExportTab } from "@/stores/ui-store";
 import { ExportImagePanel } from "./export-image-panel";
 import { ExportTextPanel, type ExportCache } from "./export-text-panel";
@@ -35,6 +36,7 @@ export function ExportDialog() {
         className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl"
         data-testid="export-dialog"
         onCloseAutoFocus={(event) => {
+          if (restorePaletteFocus(event)) return;
           event.preventDefault();
           const id = useUiStore.getState().exportReturnFocus;
           document.querySelector<HTMLElement>(`[data-testid="${id}"]`)?.focus();

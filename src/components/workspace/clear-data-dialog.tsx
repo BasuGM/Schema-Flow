@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { restorePaletteFocus } from "@/components/commands/focus-return";
 import { useUiStore } from "@/stores/ui-store";
 import { clearSavedData } from "./clear-saved-data";
 
@@ -27,6 +28,7 @@ export function ClearDataDialog() {
         <DialogContent
           data-testid="clear-data-dialog"
           onCloseAutoFocus={(event) => {
+            if (restorePaletteFocus(event)) return;
             event.preventDefault();
             const id = useUiStore.getState().clearDataReturnFocus;
             document.querySelector<HTMLElement>(`[data-testid="${id}"]`)?.focus();

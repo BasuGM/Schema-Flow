@@ -10,17 +10,21 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { useCommands, type Command } from "@/components/commands/use-commands";
 import type { ColumnId, TableId } from "@/domain/schema/types";
 import { search, type SearchResults } from "@/domain/search/search";
 import { getSearchIndex } from "@/domain/search/search-index";
 import { useSchemaStore } from "@/stores/schema-store";
 import { OptionRow, type SearchOption } from "./search-results";
 
+const NO_RESULTS: SearchResults = { tables: [], columns: [], totalTables: 0, totalColumns: 0 };
+
 const plural = (n: number, word: string) =>
   `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
 
-function toOptions(results: SearchResults): SearchOption[] {
+function toOptions(commands: readonly Command[], results: SearchResults): SearchOption[] {
   return [
+    ...commands.map((command) => ({ kind: "command" as const, command })),
     ...results.tables.map((hit) => ({ kind: "table" as const, hit })),
     ...results.columns.map((hit) => ({ kind: "column" as const, hit })),
   ];
@@ -32,18 +36,24 @@ function toOptions(results: SearchResults): SearchOption[] {
  */
 export function SearchPanel({
   onChoose,
+  onRun,
 }: {
   onChoose: (tableId: TableId, columnId?: ColumnId) => void;
+  onRun: (command: Command) => void;
 }) {
   const schema = useSchemaStore((s) => s.schema);
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
   const index = useMemo(() => (schema ? getSearchIndex(schema) : null), [schema]);
-  const results = useMemo(() => (index ? search(index, deferred) : null), [index, deferred]);
-  const options = useMemo(() => (results ? toOptions(results) : []), [results]);
+  const { commands, commandsOnly } = useCommands(deferred);
+  const results = useMemo(
+    () => (index ? (commandsOnly ? NO_RESULTS : search(index, deferred)) : null),
+    [index, deferred, commandsOnly],
+  );
+  const options = useMemo(() => (results ? toOptions(commands, results) : []), [commands, results]);
   // The active row resets to the first one whenever the results change (derived, not an effect).
-  const [active, setActive] = useState({ results, index: 0 });
-  const activeIndex = active.results === results ? Math.min(active.index, options.length - 1) : 0;
+  const [active, setActive] = useState({ options, index: 0 });
+  const activeIndex = active.options === options ? Math.min(active.index, options.length - 1) : 0;
   const listId = useId();
   const optionId = (i: number) => `${listId}-option-${i}`;
   const activeId = options.length > 0 ? optionId(activeIndex) : undefined;
@@ -56,18 +66,20 @@ export function SearchPanel({
     (i: number) => {
       const option = options[i];
       if (!option) return;
-      if (option.kind === "table") onChoose(option.hit.entry.id);
+      if (option.kind === "command") {
+        if (!option.command.disabled) onRun(option.command);
+      } else if (option.kind === "table") onChoose(option.hit.entry.id);
       else onChoose(option.hit.entry.table.id, option.hit.entry.id);
     },
-    [options, onChoose],
+    [options, onChoose, onRun],
   );
-  const hover = useCallback((i: number) => setActive({ results, index: i }), [results]);
+  const hover = useCallback((i: number) => setActive({ options, index: i }), [options]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     const n = options.length;
     const move = (i: number) => {
       e.preventDefault();
-      if (n > 0) setActive({ results, index: (i + n) % n });
+      if (n > 0) setActive({ options, index: (i + n) % n });
     };
     if (e.key === "ArrowDown") move(activeIndex + 1);
     else if (e.key === "ArrowUp") move(activeIndex - 1);
@@ -82,13 +94,14 @@ export function SearchPanel({
   };
 
   if (!results) return null;
-  const total = results.totalTables + results.totalColumns;
+  const total = commands.length + results.totalTables + results.totalColumns;
   const empty = deferred.trim() === "";
   const status = empty
-    ? `Type to search ${plural(index!.tables.length, "table")} and ${plural(index!.columns.length, "column")}`
+    ? `Type to search ${plural(index!.tables.length, "table")} and ${plural(index!.columns.length, "column")}, or pick a command`
     : total === 0
       ? `No tables or columns match “${deferred.trim()}”.`
       : plural(total, "result");
+  const cmdCount = commands.length;
   const tableCount = results.tables.length;
 
   return (
@@ -101,8 +114,8 @@ export function SearchPanel({
           aria-controls={listId}
           aria-activedescendant={activeId}
           aria-autocomplete="list"
-          aria-label="Search tables and columns"
-          placeholder="Search tables and columns…"
+          aria-label="Search tables, columns and commands"
+          placeholder="Search tables, columns and commands…"
           autoComplete="off"
           spellCheck={false}
           value={query}
@@ -142,14 +155,9 @@ export function SearchPanel({
         data-testid="search-results"
         data-query={deferred}
       >
-        {tableCount > 0 && (
-          <Group
-            label="Tables"
-            more={results.totalTables - tableCount}
-            noun="table"
-            testid="tables"
-          >
-            {results.tables.map((_, i) => (
+        {cmdCount > 0 && (
+          <Group label="Commands" more={0} noun="command" testid="commands">
+            {commands.map((_, i) => (
               <OptionRow
                 key={optionId(i)}
                 option={options[i]!}
@@ -162,6 +170,29 @@ export function SearchPanel({
             ))}
           </Group>
         )}
+        {tableCount > 0 && (
+          <Group
+            label="Tables"
+            more={results.totalTables - tableCount}
+            noun="table"
+            testid="tables"
+          >
+            {results.tables.map((_, k) => {
+              const i = cmdCount + k;
+              return (
+                <OptionRow
+                  key={optionId(i)}
+                  option={options[i]!}
+                  index={i}
+                  id={optionId(i)}
+                  active={i === activeIndex}
+                  onHover={hover}
+                  onChoose={choose}
+                />
+              );
+            })}
+          </Group>
+        )}
         {results.columns.length > 0 && (
           <Group
             label="Columns"
@@ -170,7 +201,7 @@ export function SearchPanel({
             testid="columns"
           >
             {results.columns.map((_, k) => {
-              const i = tableCount + k;
+              const i = cmdCount + tableCount + k;
               return (
                 <OptionRow
                   key={optionId(i)}
