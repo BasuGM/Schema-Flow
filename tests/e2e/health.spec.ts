@@ -75,4 +75,18 @@ test.describe("phone (390×844)", () => {
     await healthRows(page).first().getByTestId("issue-show-table").click();
     await expectSelectedHeaderAboveSheet(page);
   });
+
+  test("QA-040: Show table on a deep-column row (saas-300 unindexed FK) keeps the header in view", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto("/");
+    await importFixture(page, "synthetic/saas-300.postgres.sql");
+    await page.getByTestId("toolbar-more").click();
+    await page.getByTestId("more-health").click();
+    const row = healthRows(page).filter({ hasText: "t008_entity" }).first();
+    await row.scrollIntoViewIfNeeded();
+    await row.getByTestId("issue-show-table").click();
+    await expectSelectedHeaderAboveSheet(page);
+  });
 });

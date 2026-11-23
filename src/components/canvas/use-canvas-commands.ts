@@ -51,6 +51,39 @@ export function tallNodeTargetY(nodeY: number, zoom: number, h: number): number 
   return nodeY - TALL_TOP_GAP / zoom + h / 2 / zoom;
 }
 
+export interface BandPlacement {
+  /** Node top (flow y) and height (flow px). */
+  nodeY: number;
+  nodeH: number;
+  /** Flow y that should be centred: the node middle, or the focused column's row. */
+  targetY: number;
+  /** True when `targetY` is a column row rather than the table as a whole. */
+  hasRow: boolean;
+  zoom: number;
+  /** Pane height and the part of it above the sheet, in px. */
+  h: number;
+  visibleH: number;
+}
+
+/**
+ * Flow-y to centre the viewport on so the reveal lands in the band above the phone sheet (QA-039,
+ * QA-040). A table that fits is clamped to sit fully inside the band (header 16 px below the top),
+ * which also keeps a focused column in view; a table taller than the band keeps its header at the
+ * top, moving down to the column only when the column would otherwise be below the band.
+ */
+export function bandCenterY(p: BandPlacement): number {
+  const { nodeY, nodeH, targetY, hasRow, zoom, h, visibleH } = p;
+  const centered = targetY + sheetCenterOffset(h, visibleH, zoom);
+  const headerFirst = tallNodeTargetY(nodeY, zoom, h); // largest centre that keeps the top gap
+  if (nodeH * zoom <= visibleH - TALL_TOP_GAP) {
+    const bottomBound = nodeY + nodeH + (h / 2 - visibleH) / zoom; // smallest centre keeping the bottom
+    return Math.min(headerFirst, Math.max(bottomBound, centered));
+  }
+  if (!hasRow) return headerFirst;
+  const columnInBand = targetY + (h / 2 - visibleH) / zoom + NODE_ROW_HEIGHT;
+  return Math.max(headerFirst, columnInBand);
+}
+
 /**
  * Pixels of the pane covered by the phone issues sheet (QA-039), measured from the DOM because
  * the sheet is a share of the viewport while the pane sits below the toolbar. Falls back to the
@@ -121,14 +154,20 @@ export function useCanvasCommands(base: FlowElements, large = false) {
     const { width: w, height: h, transform, domNode } = flowStore.getState();
     const [tx, ty, currentZoom] = transform;
     const visibleH = visibleCanvasHeight(h, sheetCoveredPx(domNode, h));
-    // With the phone sheet open, center in the band above it; a table taller than the band is
-    // top-aligned so its header stays visible. Nothing is covered on desktop (shift 0).
-    const placeY = (zoom: number): number => {
-      if (rowOffset === null && height * zoom > visibleH && visibleH < h) {
-        return tallNodeTargetY(y, zoom, h);
-      }
-      return target.y + sheetCenterOffset(h, visibleH, zoom);
-    };
+    // With the phone sheet open, place the table in the band above it (see `bandCenterY`).
+    // Nothing is covered on desktop: plain centring.
+    const placeY = (zoom: number): number =>
+      visibleH < h
+        ? bandCenterY({
+            nodeY: y,
+            nodeH: height,
+            targetY: target.y,
+            hasRow: rowOffset !== null,
+            zoom,
+            h,
+            visibleH,
+          })
+        : target.y;
     if (focusRequest.mode === "ensure-visible") {
       // Reading through columns in the inspector must not make the diagram jump: pan only when
       // the row (or the table header) is outside the visible canvas.

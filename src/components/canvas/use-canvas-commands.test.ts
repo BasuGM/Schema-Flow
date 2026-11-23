@@ -7,6 +7,7 @@ import {
   issuesSheetOpen,
   motionDuration,
   sheetCenterOffset,
+  bandCenterY,
   tallNodeTargetY,
   visibleCanvasHeight,
 } from "./use-canvas-commands";
@@ -89,5 +90,40 @@ describe("reveal above the issues sheet (QA-039)", () => {
     // node top at flow y 100, zoom 1, pane 700: viewport centre sits 350 px below the top
     expect(tallNodeTargetY(100, 1, 700)).toBe(434);
     expect(tallNodeTargetY(100, 2, 700)).toBe(100 - 8 + 175);
+  });
+
+  describe("bandCenterY (QA-040)", () => {
+    // pane 700 px, sheet covers 420 → band 280 px; zoom 1. Screen y of a flow y at centre c:
+    // (y - c) + 350.
+    const base = { zoom: 1, h: 700, visibleH: 280 };
+    const screenTop = (nodeY: number, c: number) => nodeY - c + 350;
+
+    it("keeps a table that fits fully inside the band, header below the top gap", () => {
+      const c = bandCenterY({ ...base, nodeY: 1000, nodeH: 200, targetY: 1100, hasRow: false });
+      expect(screenTop(1000, c)).toBeGreaterThanOrEqual(16);
+      expect(screenTop(1000, c) + 200).toBeLessThanOrEqual(280);
+    });
+
+    it("does not push the header under the toolbar for a column deep in a fitting table", () => {
+      // column 190 px down a 220 px table: plain centring would put the top at -9
+      const c = bandCenterY({ ...base, nodeY: 1000, nodeH: 220, targetY: 1190, hasRow: true });
+      expect(screenTop(1000, c)).toBeGreaterThanOrEqual(16);
+      const col = 1190 - c + 350;
+      expect(col).toBeGreaterThan(0);
+      expect(col).toBeLessThan(280);
+    });
+
+    it("top-aligns a tall table without a column", () => {
+      const c = bandCenterY({ ...base, nodeY: 1000, nodeH: 900, targetY: 1200, hasRow: false });
+      expect(c).toBe(tallNodeTargetY(1000, 1, 700));
+    });
+
+    it("prefers the header for a tall table, moving to the column only when it is below the band", () => {
+      const near = bandCenterY({ ...base, nodeY: 1000, nodeH: 900, targetY: 1040, hasRow: true });
+      expect(near).toBe(tallNodeTargetY(1000, 1, 700));
+      const far = bandCenterY({ ...base, nodeY: 1000, nodeH: 900, targetY: 1600, hasRow: true });
+      expect(far).toBeGreaterThan(tallNodeTargetY(1000, 1, 700));
+      expect(1600 - far + 350).toBeLessThan(280);
+    });
   });
 });

@@ -118,10 +118,11 @@ export async function expectSelectedHeaderAboveSheet(page: Page): Promise<void> 
     .toBe(true);
   const box = await node.boundingBox();
   const sheetBox = await sheet.boundingBox();
-  const toolbarBox = await page.getByTestId("toolbar-more").boundingBox();
-  expect(box && sheetBox && toolbarBox).toBeTruthy();
+  const paneBox = await page.getByTestId("schema-canvas").boundingBox();
+  expect(box && sheetBox && paneBox).toBeTruthy();
   const header = box!.y + 20;
   expect(header).toBeLessThan(sheetBox!.y);
-  expect(header).toBeGreaterThan(toolbarBox!.y + toolbarBox!.height);
+  // The whole header row (not just a point in it) is below the toolbar, i.e. inside the pane.
+  expect(box!.y).toBeGreaterThanOrEqual(paneBox!.y);
   await expect(sheet).toBeVisible();
 }
