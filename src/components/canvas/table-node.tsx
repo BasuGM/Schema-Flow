@@ -44,6 +44,7 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
   const selected = useUiStore((s) => s.selectedTableId === id);
   // Neighbourhood highlighting (P2-T09): a boolean, so only nodes whose state flips re-render.
   const dimmed = useUiStore((s) => s.focusSet !== null && !s.focusSet.has(id));
+  const onPath = useUiStore((s) => s.activePath?.tables.has(id) ?? false);
   // A primitive per node: only the node that owns the highlighted column re-renders.
   const highlighted = useUiStore((s) =>
     s.highlightedColumn?.tableId === id ? s.highlightedColumn.columnId : null,
@@ -63,6 +64,7 @@ function TableNodeComponent({ id, data }: NodeProps<TableFlowNode>) {
       data-testid={`table-node-${title}`}
       data-selected={selected}
       data-dimmed={dimmed || undefined}
+      data-on-path={onPath || undefined}
       style={{ width: NODE_WIDTH }}
       className={cn(
         "table-node rounded-lg border bg-card text-card-foreground shadow-sm",

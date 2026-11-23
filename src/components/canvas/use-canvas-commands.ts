@@ -131,6 +131,18 @@ export function useCanvasCommands(base: FlowElements, large = false) {
     });
   }, [fitView]);
 
+  // "Show on canvas" for a path (P4-T02): fit all its tables, clear of an open phone sheet.
+  const fitRequest = useUiStore((s) => s.fitRequest);
+  useEffect(() => {
+    if (!fitRequest) return;
+    void fitView({
+      nodes: fitRequest.tableIds.map((id) => ({ id })),
+      padding: fitPadding(issuesSheetOpen()),
+      maxZoom: 1,
+      duration: motionDuration(250),
+    });
+  }, [fitRequest, fitView]);
+
   const flowStore = useStoreApi();
   useEffect(() => {
     if (!focusRequest) return;

@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import type { ColumnId, TableId } from "@/domain/schema/types";
+import type { TablePath } from "@/domain/schema/path";
+import type { ColumnId, RelationshipId, TableId } from "@/domain/schema/types";
 import { readJson, writeText } from "@/lib/safe-storage";
 
 /**
@@ -41,7 +42,22 @@ export function hydratePrefs(): void {
   if (isDepth(depth)) useUiStore.getState().setNeighbourhoodDepth(depth);
 }
 
-export type InspectorTab = "columns" | "keys" | "relations";
+export type InspectorTab = "columns" | "keys" | "relations" | "path";
+
+/** The path found in the inspector's Path tab (P4-T02); highlighted on the canvas until cleared. */
+export interface ActivePath {
+  from: TableId;
+  to: TableId;
+  path: TablePath;
+  tables: ReadonlySet<TableId>;
+  relationships: ReadonlySet<RelationshipId>;
+}
+
+/** A request for the canvas to fit these tables in view; `nonce` makes repeats distinct. */
+export interface FitRequest {
+  tableIds: readonly TableId[];
+  nonce: number;
+}
 
 /** Where Relations navigation came from, so "Back" restores the table and the tab. */
 export interface InspectorBack {
@@ -96,6 +112,9 @@ interface UiState {
    * Derived by `useFocusSetSync`; `null` = nothing dimmed.
    */
   focusSet: ReadonlySet<TableId> | null;
+  /** Session only; not saved. Cleared by Escape, Clear and a new schema. */
+  activePath: ActivePath | null;
+  fitRequest: FitRequest | null;
   /**
    * A large schema is zoomed out past readable row text (`ZoomDetail`, ADR-022/023): table nodes
    * render column rows as skeletons. Set by the canvas only.
@@ -113,6 +132,9 @@ interface UiState {
   setInspectorBack: (back: InspectorBack | null) => void;
   setNeighbourhoodDepth: (depth: NeighbourhoodDepth) => void;
   setFocusSet: (set: ReadonlySet<TableId> | null) => void;
+  setActivePath: (path: ActivePath | null) => void;
+  /** Ask the canvas to fit these tables in view (path "Show on canvas"). */
+  fitTables: (tableIds: readonly TableId[]) => void;
   setCanvasZoomedOut: (zoomedOut: boolean) => void;
   setTableFilter: (filter: string) => void;
   setShowMiniMap: (show: boolean) => void;
@@ -156,6 +178,8 @@ const initial = {
   inspectorBack: null,
   neighbourhoodDepth: 1 as NeighbourhoodDepth,
   focusSet: null,
+  activePath: null,
+  fitRequest: null,
   canvasZoomedOut: false,
 } satisfies Partial<UiState>;
 
@@ -173,6 +197,7 @@ export const useUiStore = create<UiState>()((set) => ({
       highlightedColumn: null,
       inspectorBack: null,
       focusSet: null,
+      activePath: null,
       clearRequest: s.clearRequest + 1,
     })),
   focusTable: (id, columnId, options = {}) =>
@@ -198,6 +223,9 @@ export const useUiStore = create<UiState>()((set) => ({
       return { neighbourhoodDepth };
     }),
   setFocusSet: (focusSet) => set((s) => (s.focusSet === focusSet ? s : { focusSet })),
+  setActivePath: (activePath) => set({ activePath }),
+  fitTables: (tableIds) =>
+    set((s) => ({ fitRequest: { tableIds, nonce: (s.fitRequest?.nonce ?? 0) + 1 } })),
   setCanvasZoomedOut: (canvasZoomedOut) =>
     set((s) => (s.canvasZoomedOut === canvasZoomedOut ? s : { canvasZoomedOut })),
   setTableFilter: (tableFilter) => set({ tableFilter }),
@@ -232,6 +260,8 @@ export const useUiStore = create<UiState>()((set) => ({
       inspectorTab: "columns",
       inspectorBack: null,
       focusSet: null,
+      activePath: null,
+      fitRequest: null,
     })),
   reset: () => set(initial),
 }));

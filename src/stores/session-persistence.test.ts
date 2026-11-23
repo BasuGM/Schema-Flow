@@ -89,7 +89,11 @@ describe("selection record", () => {
       SESSION_UI_KEY,
       JSON.stringify({ fingerprint: "f", selectedTableId: "t", inspectorTab: "keys" }),
     );
-    expect(loadSessionUi()).toEqual({ fingerprint: "f", selectedTableId: "t", inspectorTab: "keys" });
+    expect(loadSessionUi()).toEqual({
+      fingerprint: "f",
+      selectedTableId: "t",
+      inspectorTab: "keys",
+    });
     localStorage.setItem(
       SESSION_UI_KEY,
       JSON.stringify({ fingerprint: "f", selectedTableId: 3, inspectorTab: "keys" }),
@@ -97,6 +101,18 @@ describe("selection record", () => {
     expect(loadSessionUi()).toBeNull();
     localStorage.setItem(SESSION_UI_KEY, "{");
     expect(loadSessionUi()).toBeNull();
+  });
+
+  it("accepts the Path tab (P4-T02); the active path itself is never saved", () => {
+    localStorage.setItem(
+      SESSION_UI_KEY,
+      JSON.stringify({ fingerprint: "f", selectedTableId: "t", inspectorTab: "path" }),
+    );
+    expect(loadSessionUi()).toEqual({
+      fingerprint: "f",
+      selectedTableId: "t",
+      inspectorTab: "path",
+    });
   });
 });
 

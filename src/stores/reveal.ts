@@ -1,3 +1,4 @@
+import { findPath, type TablePath } from "@/domain/schema/path";
 import type { ColumnId, TableId } from "@/domain/schema/types";
 import { useSchemaStore } from "./schema-store";
 import { useUiStore, type FocusOptions } from "./ui-store";
@@ -31,4 +32,23 @@ export function inspectorGoBack(): void {
   const back = useUiStore.getState().inspectorBack;
   if (!back) return;
   revealTable(back.tableId, undefined, { tab: back.tab });
+}
+
+/**
+ * Path finder (P4-T02): find the shortest chain of foreign keys and make it the active path, so
+ * the canvas highlights it. Returns the path, or null (and leaves any earlier path active) when
+ * the tables are not connected.
+ */
+export function showPath(from: TableId, to: TableId): TablePath | null {
+  const schema = useSchemaStore.getState().schema;
+  const path = schema ? findPath(schema, from, to) : null;
+  if (!path) return null;
+  useUiStore.getState().setActivePath({
+    from,
+    to,
+    path,
+    tables: new Set(path.tables),
+    relationships: new Set(path.hops.map((h) => h.relationshipId)),
+  });
+  return path;
 }

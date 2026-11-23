@@ -30,7 +30,7 @@ export interface SessionRecord {
   savedAt: number;
 }
 
-export type InspectorTabName = "columns" | "keys" | "relations";
+export type InspectorTabName = "columns" | "keys" | "relations" | "path";
 
 export interface SessionUi {
   fingerprint: string;
@@ -39,7 +39,7 @@ export interface SessionUi {
 }
 
 const FORMATS: readonly ImportFormatChoice[] = ["auto", "postgresql", "mysql", "sqlite", "prisma"];
-const TABS: readonly InspectorTabName[] = ["columns", "keys", "relations"];
+const TABS: readonly InspectorTabName[] = ["columns", "keys", "relations", "path"];
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
