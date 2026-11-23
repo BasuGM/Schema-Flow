@@ -107,3 +107,22 @@ describe("ui-store", () => {
     expect(calls).toBe(0);
   });
 });
+
+describe("subject area visibility (P4-T03)", () => {
+  it("hides, shows only, shows all, and resets for a new schema", () => {
+    const ui = useUiStore.getState();
+    ui.setAreaVisible("a", false);
+    ui.setAreaVisible("b", false);
+    expect([...useUiStore.getState().hiddenAreas]).toEqual(["a", "b"]);
+    useUiStore.getState().showOnlyArea("b", ["a", "b", "c"]);
+    expect([...useUiStore.getState().hiddenAreas]).toEqual(["a", "c"]);
+    const before = useUiStore.getState().hiddenAreas;
+    useUiStore.getState().showOnlyArea("b", ["a", "b", "c"]);
+    expect(useUiStore.getState().hiddenAreas).toBe(before);
+    useUiStore.getState().showAllAreas();
+    expect(useUiStore.getState().hiddenAreas.size).toBe(0);
+    useUiStore.getState().setAreaVisible("a", false);
+    useUiStore.getState().resetForNewSchema();
+    expect(useUiStore.getState().hiddenAreas.size).toBe(0);
+  });
+});

@@ -115,6 +115,8 @@ interface UiState {
   /** Session only; not saved. Cleared by Escape, Clear and a new schema. */
   activePath: ActivePath | null;
   fitRequest: FitRequest | null;
+  /** Subject areas hidden on the canvas (P4-T03, ids from `getSubjectAreas`). Session only. */
+  hiddenAreas: ReadonlySet<string>;
   /**
    * A large schema is zoomed out past readable row text (`ZoomDetail`, ADR-022/023): table nodes
    * render column rows as skeletons. Set by the canvas only.
@@ -133,6 +135,10 @@ interface UiState {
   setNeighbourhoodDepth: (depth: NeighbourhoodDepth) => void;
   setFocusSet: (set: ReadonlySet<TableId> | null) => void;
   setActivePath: (path: ActivePath | null) => void;
+  setAreaVisible: (areaId: string, visible: boolean) => void;
+  /** Hide every area except this one (`allAreaIds` = all area ids of the schema). */
+  showOnlyArea: (areaId: string, allAreaIds: readonly string[]) => void;
+  showAllAreas: () => void;
   /** Ask the canvas to fit these tables in view (path "Show on canvas"). */
   fitTables: (tableIds: readonly TableId[]) => void;
   setCanvasZoomedOut: (zoomedOut: boolean) => void;
@@ -180,6 +186,7 @@ const initial = {
   focusSet: null,
   activePath: null,
   fitRequest: null,
+  hiddenAreas: new Set<string>() as ReadonlySet<string>,
   canvasZoomedOut: false,
 } satisfies Partial<UiState>;
 
@@ -224,6 +231,22 @@ export const useUiStore = create<UiState>()((set) => ({
     }),
   setFocusSet: (focusSet) => set((s) => (s.focusSet === focusSet ? s : { focusSet })),
   setActivePath: (activePath) => set({ activePath }),
+  setAreaVisible: (areaId, visible) =>
+    set((s) => {
+      if (s.hiddenAreas.has(areaId) === !visible) return s;
+      const next = new Set(s.hiddenAreas);
+      if (visible) next.delete(areaId);
+      else next.add(areaId);
+      return { hiddenAreas: next };
+    }),
+  showOnlyArea: (areaId, allAreaIds) =>
+    set((s) => {
+      const next = new Set(allAreaIds.filter((id) => id !== areaId));
+      const same =
+        next.size === s.hiddenAreas.size && [...next].every((id) => s.hiddenAreas.has(id));
+      return same ? s : { hiddenAreas: next };
+    }),
+  showAllAreas: () => set((s) => (s.hiddenAreas.size === 0 ? s : { hiddenAreas: new Set() })),
   fitTables: (tableIds) =>
     set((s) => ({ fitRequest: { tableIds, nonce: (s.fitRequest?.nonce ?? 0) + 1 } })),
   setCanvasZoomedOut: (canvasZoomedOut) =>
@@ -262,6 +285,7 @@ export const useUiStore = create<UiState>()((set) => ({
       focusSet: null,
       activePath: null,
       fitRequest: null,
+      hiddenAreas: new Set(),
     })),
   reset: () => set(initial),
 }));

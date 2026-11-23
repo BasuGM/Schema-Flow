@@ -33,8 +33,8 @@ describe("saas-300 synthetic fixture (BB-P3)", () => {
     expect(isolated / tables.length).toBeGreaterThan(0.1);
     expect(isolated / tables.length).toBeLessThan(0.25);
     expect(tables.some((t) => (t.primaryKey?.columnIds.length ?? 0) > 1)).toBe(true);
-    expect(
-      Object.values(schema.relationships).some((r) => r.from.tableId === r.to.tableId),
-    ).toBe(true);
+    expect(Object.values(schema.relationships).some((r) => r.from.tableId === r.to.tableId)).toBe(
+      true,
+    );
   });
 });

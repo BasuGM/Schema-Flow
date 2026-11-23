@@ -24,10 +24,13 @@ import type { RelationshipFlowEdge, TableFlowNode } from "@/graph/types";
 import { useLayoutStore } from "@/stores/layout-store";
 import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
+import { AreaFilterNotice } from "./area-filter-notice";
+import { applyAreaVisibility, deselectHiddenEdges, hiddenTableIds } from "./area-visibility";
 import { LargeSchemaNotice } from "./large-schema-notice";
 import { RelationshipEdge } from "./relationship-edge";
 import { TableNode } from "./table-node";
 import { useCanvasCommands } from "./use-canvas-commands";
+import { useAreaFilterSync } from "./use-area-filter-sync";
 import { useFocusSetSync } from "./use-focus-set-sync";
 import { CANVAS_MIN_ZOOM, ZoomDetail } from "./zoom-detail";
 
@@ -72,6 +75,8 @@ function SchemaCanvasInner() {
   const setPosition = useLayoutStore((s) => s.setPosition);
   const setViewport = useLayoutStore((s) => s.setViewport);
   useFocusSetSync();
+  useAreaFilterSync();
+  const hiddenAreas = useUiStore((s) => s.hiddenAreas);
 
   // Rebuild nodes/edges only when the schema, collapse modes or layout version change. Positions are
   // read from the store at that moment; afterwards React Flow owns transient drag state.
@@ -92,6 +97,11 @@ function SchemaCanvasInner() {
     setEdges(base.edges);
   }
 
+  // Hidden subject areas (P4-T03) are applied on top of the state so drag and selection state is
+  // untouched and unchanged nodes keep their identity.
+  const hidden = useMemo(() => hiddenTableIds(schema, hiddenAreas), [schema, hiddenAreas]);
+  const shown = useMemo(() => applyAreaVisibility(nodes, edges, hidden), [nodes, edges, hidden]);
+
   // Selecting a table (canvas, list or keyboard) or pressing Escape clears a clicked edge and its
   // pinned label.
   const clearEdgeSelection = useCallback(() => setEdges(deselectEdges), []);
@@ -102,6 +112,11 @@ function SchemaCanvasInner() {
           s.selectedTableId !== prev.selectedTableId || s.focusRequest !== prev.focusRequest;
         if ((changed && s.selectedTableId !== null) || s.clearRequest !== prev.clearRequest)
           clearEdgeSelection();
+        // A pinned edge label whose edge just became hidden (P4-T03) is unpinned.
+        if (s.hiddenAreas !== prev.hiddenAreas) {
+          const gone = hiddenTableIds(useSchemaStore.getState().schema, s.hiddenAreas);
+          setEdges((cur) => deselectHiddenEdges(cur, gone));
+        }
       }),
     [clearEdgeSelection],
   );
@@ -213,8 +228,8 @@ function SchemaCanvasInner() {
       className="h-full w-full bg-canvas"
     >
       <ReactFlow<TableFlowNode, RelationshipFlowEdge>
-        nodes={nodes}
-        edges={edges}
+        nodes={shown.nodes}
+        edges={shown.edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
@@ -253,14 +268,18 @@ function SchemaCanvasInner() {
             ariaLabel="Diagram overview"
           />
         )}
-        {fingerprint !== dismissedFor && (
-          <Panel position="top-left">
+        <Panel position="top-left" className="flex flex-col items-start gap-2">
+          {fingerprint !== dismissedFor && (
             <LargeSchemaNotice
               tables={base.nodes.length}
               onDismiss={() => setDismissedFor(fingerprint)}
             />
-          </Panel>
-        )}
+          )}
+          <AreaFilterNotice
+            hiddenTables={hidden.size}
+            onShowAll={() => useUiStore.getState().showAllAreas()}
+          />
+        </Panel>
         <Panel position="top-right">
           <Button
             variant="outline"
