@@ -802,7 +802,7 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 
 ## P4-T01 — Schema health checks
 
-- **Status: Awaiting Cowork verification** (automated checks only; not verified by Cowork or a human). Plan: [plans/p4-t01.md](plans/p4-t01.md), ADR-034. Fixtures: `tests/fixtures/sql/health.postgres.sql`, `health.mysql.sql`.
+- **Status: Verified with known issues (Cowork round 24 at `68a1dd0`; e2e 201/0/20; QA-039 deferred → first P4 bug-fix task).** Plan: [plans/p4-t01.md](plans/p4-t01.md), ADR-034. Fixtures: `tests/fixtures/sql/health.postgres.sql`, `health.mysql.sql`.
 - AC-P4-T01-1: `health.postgres.sql` shows 7 findings (1 missing PK, 3 unindexed FK, 2 orphan, 1 naming); a table without the problem has no finding; the MySQL twin shows no unindexed-FK finding. _Auto_ (`src/analysis/health.test.ts`, `tests/e2e/health.spec.ts`)
 - AC-P4-T01-2: "Show table" on a row selects and centres that table. _Auto_ (`health.spec.ts`)
 - AC-P4-T01-3: the check chips filter the rows and show counts. _Auto_

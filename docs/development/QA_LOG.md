@@ -28,6 +28,7 @@ Update this table when an item changes; the dated log below stays append-only.
 | QA-036 | Cowork round 22 (P3-T08)               | data-testid="inspector" is on two elements (ResizablePanel wrapper id="inspector" and aside, inspector.tsx:61); getByTestId("inspector") throws a strict-mode error                                                                   | Playwright getByTestId("inspector") with the inspector open                               | Low           | verified (round 23) |
 | QA-037 | Claude Code bug-bash (BB-P3)           | `generate.ts` header command crashed (`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`); needs `--experimental-transform-types`                                                                                                                    | Run the header command on a SQL file                                                      | Low           | verified (round 23) |
 | QA-038 | Cowork round 23 (BB-P3)                | importFixture (tests/e2e/support/app.ts:80) uses the default 10 s toBeHidden; GitLab import takes ~10 s in a loaded browser. Suggest a 60 s timeout for real/ fixtures                                                                | Run e2e under load; GitLab import in `importFixture`                                      | Low           | Deferred → first P4 bug-fix task|
+| QA-039 | Cowork round 24 (P4-T01)               | At 390×844, "Show table" from the Health sheet centres the table in the full canvas, so it sits behind the sheet (categories node y 370–512, sheet top 404); the table is selected. Probably shared with the Issues sheet (same revealTable). Suggest: centre in the area above the open sheet (offset the reveal by the sheet height) or close the sheet on Show table as the phone table list does| Phone 390×844: Health → Show table                                                        | Low           | Deferred → first P4 bug-fix task (with QA-038)|
 
 Append-only. One entry per handoff. Cowork results are summarized only from reports pasted into a
 Claude Code session; until then an entry reads "Pending — not independently verified."
@@ -904,3 +905,12 @@ Pending — not independently verified.
 - **Charter rows 2–3:** export follows full / keys / header; preview refreshes after another import; 180 / 220-table PNG and SVG OK; reload restores schema, selection and inspector tab; `?sample=` vs saved session OK; Clear saved data → sample. Console empty.
 - **Defects:** QA-038 (Low, e2e `importFixture` 10 s `toBeHidden` timeout on GitLab under load), deferred → first P4 bug-fix task. Optional in the same task: `scripts/headless/sqlite-load.mjs` counts only non-`sqlite_` tables so GitLab prints 992.
 - **Status:** BB-P3 Verified; QA-031…037 verified (round 23). Phase 3 Verified with known issues (QA-038 open).
+
+## 2026-11-23 — Cowork round 24 at `68a1dd0`: P4-T01 Verified with known issues
+
+- **Found by:** Cowork round 24 (report pasted by the user).
+- **e2e:** 201 passed / 0 failed / 20 skipped.
+- **Recount:** independent Python rules over `gen <file> json` match the handoff: ecommerce 1/7/1/0, saas-300 0/476/35/0, mysqldump-180 0/0/1/0, health.postgres 1/3/2/1, health.mysql 1/0/0/0.
+- **Browser:** Issues button → Health with 0 import issues; Settings / More → Schema health; edge-cases → Issues tab. Missing-PK chip narrows to 1; Show table selects order_items; naming row lists userToken, lastSeenAt. Copy: 7 lines on the real clipboard. ArrowLeft/Right keep focus on the tab with a visible ring. saas-300: 511 findings, pages at 500 + Show more. Phone tabs fit at 390 (scrollWidth 390). Console empty.
+- **Defects:** QA-039 (Low, phone Show table centres the table behind the open sheet), deferred → first P4 bug-fix task (with QA-038).
+- **Status:** P4-T01 Verified with known issues (QA-039 open).
