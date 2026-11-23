@@ -131,6 +131,12 @@ export function useCanvasCommands(base: FlowElements, large = false) {
     });
   }, [fitView]);
 
+  // Reset view requested from a key or command (P4-T04); the toolbar button calls `resetView` directly.
+  const resetViewRequest = useUiStore((s) => s.resetViewRequest);
+  useEffect(() => {
+    if (resetViewRequest > 0) resetView();
+  }, [resetViewRequest, resetView]);
+
   // "Show on canvas" for a path (P4-T02): fit all its tables, clear of an open phone sheet.
   const fitRequest = useUiStore((s) => s.fitRequest);
   useEffect(() => {

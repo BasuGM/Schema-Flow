@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
 import { SHEET_QUERY } from "@/components/issues/issues-sheet";
-import { useSearchShortcut } from "@/components/search/use-search-shortcut";
+import { useGlobalShortcuts } from "@/components/commands/use-global-shortcuts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useSchemaStore } from "@/stores/schema-store";
@@ -38,7 +38,7 @@ export function Workspace() {
   const fingerprint = useSchemaStore((s) => s.fingerprint);
   useOneSheetAtATime(sheet, leftOpen, rightOpen);
   useEscapeToClear();
-  useSearchShortcut();
+  useGlobalShortcuts();
 
   const tableList = (onClose?: () => void) => (
     <ErrorBoundary

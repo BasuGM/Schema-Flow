@@ -15,7 +15,7 @@ import { useSchemaStore } from "@/stores/schema-store";
 import { useUiStore } from "@/stores/ui-store";
 import { resetStores } from "@/test/store-helpers";
 import { SearchDialog } from "./search-dialog";
-import { useSearchShortcut } from "./use-search-shortcut";
+import { useGlobalShortcuts } from "@/components/commands/use-global-shortcuts";
 
 function renderWorkspace() {
   return render(
@@ -93,7 +93,7 @@ describe("Search dialog", () => {
   it("is disabled without a schema", async () => {
     resetStores(null);
     function Harness() {
-      useSearchShortcut();
+      useGlobalShortcuts();
       return (
         <TooltipProvider>
           <SearchDialog />

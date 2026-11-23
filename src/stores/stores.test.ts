@@ -126,3 +126,25 @@ describe("subject area visibility (P4-T03)", () => {
     expect(useUiStore.getState().hiddenAreas.size).toBe(0);
   });
 });
+
+describe("ui-store commands (P4-T04)", () => {
+  it("opens and closes the import and shortcuts dialogs, idempotently", () => {
+    const ui = useUiStore.getState();
+    ui.setImportOpen(true);
+    ui.setShortcutsOpen(true);
+    expect(useUiStore.getState().importOpen).toBe(true);
+    expect(useUiStore.getState().shortcutsOpen).toBe(true);
+    const before = useUiStore.getState();
+    useUiStore.getState().setImportOpen(true);
+    expect(useUiStore.getState()).toBe(before);
+    useUiStore.getState().setImportOpen(false);
+    useUiStore.getState().setShortcutsOpen(false);
+    expect(useUiStore.getState().importOpen).toBe(false);
+    expect(useUiStore.getState().shortcutsOpen).toBe(false);
+  });
+  it("counts reset-view requests", () => {
+    useUiStore.getState().requestResetView();
+    useUiStore.getState().requestResetView();
+    expect(useUiStore.getState().resetViewRequest).toBe(2);
+  });
+});

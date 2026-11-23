@@ -22,6 +22,7 @@ import { afterNextPaint } from "@/lib/after-next-paint";
 import { cn } from "@/lib/utils";
 import type { ImportFormatChoice } from "@/parsers";
 import { resolveSessionFormat } from "@/stores/session-persistence";
+import { useUiStore } from "@/stores/ui-store";
 import { applyImportedSchema, type SessionSave } from "./apply-import";
 import {
   EMPTY_DRAFT,
@@ -47,7 +48,8 @@ export const BUSY_IMPORT_TABLES = 150;
  * Escape keeps it for the session; a successful import resets it.
  */
 export function ImportDialog() {
-  const [open, setOpen] = useState(false);
+  const open = useUiStore((s) => s.importOpen);
+  const setOpen = useUiStore((s) => s.setImportOpen);
   const [draft, setDraft] = useState<ImportDraft>(EMPTY_DRAFT);
   const [format, setFormat] = useState<ImportFormatChoice>("auto");
   const [dragging, setDragging] = useState(false);

@@ -90,8 +90,14 @@ interface UiState {
   issuesPanelOpen: boolean;
   /** Tab of the bottom panel (P4-T01); session only. */
   issuesPanelTab: BottomTab;
-  /** Search dialog (P2-T07). */
+  /** Search and commands dialog (P2-T07, P4-T04). */
   searchOpen: boolean;
+  /** Import dialog (P4-T04: in the store so a command or key can open it). */
+  importOpen: boolean;
+  /** Keyboard shortcuts dialog (P4-T04). */
+  shortcutsOpen: boolean;
+  /** Bumped to ask the canvas to fit all tables in view (Reset view, P4-T04). */
+  resetViewRequest: number;
   /** Export dialog (P3-T03, P3-T05), its tab (session only) and the button that gets focus back. */
   exportOpen: boolean;
   exportTab: ExportTab;
@@ -150,6 +156,9 @@ interface UiState {
   /** Opens the bottom panel on the Health tab. */
   openHealthPanel: () => void;
   setSearchOpen: (open: boolean) => void;
+  setImportOpen: (open: boolean) => void;
+  setShortcutsOpen: (open: boolean) => void;
+  requestResetView: () => void;
   /** `returnFocusTestId` is the `data-testid` of the toolbar button the dialog was opened from. */
   openExport: (returnFocusTestId: string, tab?: ExportTab) => void;
   setExportTab: (tab: ExportTab) => void;
@@ -173,6 +182,9 @@ const initial = {
   issuesPanelOpen: false,
   issuesPanelTab: "issues",
   searchOpen: false,
+  importOpen: false,
+  shortcutsOpen: false,
+  resetViewRequest: 0,
   exportOpen: false,
   exportTab: "sql",
   exportReturnFocus: null,
@@ -264,6 +276,10 @@ export const useUiStore = create<UiState>()((set) => ({
     set((s) => (s.issuesPanelTab === issuesPanelTab ? s : { issuesPanelTab })),
   openHealthPanel: () => set({ issuesPanelOpen: true, issuesPanelTab: "health" }),
   setSearchOpen: (searchOpen) => set((s) => (s.searchOpen === searchOpen ? s : { searchOpen })),
+  setImportOpen: (importOpen) => set((s) => (s.importOpen === importOpen ? s : { importOpen })),
+  setShortcutsOpen: (shortcutsOpen) =>
+    set((s) => (s.shortcutsOpen === shortcutsOpen ? s : { shortcutsOpen })),
+  requestResetView: () => set((s) => ({ resetViewRequest: s.resetViewRequest + 1 })),
   openExport: (exportReturnFocus, tab) =>
     set((s) => ({ exportOpen: true, exportReturnFocus, exportTab: tab ?? s.exportTab })),
   setExportTab: (exportTab) => set({ exportTab }),
