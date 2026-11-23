@@ -964,9 +964,20 @@ Pending — not independently verified.
 - **Doc fix:** handoff sentence "Every hop above is a `references` walk" was wrong (pairs 1, 3, 4 include referenced-by hops); corrected.
 - **Status:** P4-T02 Verified with known issues (QA-041 deferred).
 
-## 2026-11-23 — P4-T03: subject-area grouping and filtering (Claude Code, not independently verified)
+## 2026-11-23 — P4-T03: subject-area grouping and filtering (Claude Code, not independently verified; verified by Cowork round 27 at `fca073f`, see below)
 
 - **Handoff:** [handoffs/P4-T03.md](handoffs/P4-T03.md). Plan [plans/p4-t03.md](plans/p4-t03.md) (approved with Cowork amendments 1–8), ADR-036.
 - **Built:** pure `getSubjectAreas`, `ui-store.hiddenAreas`, canvas hiding of tables and edges without relayout, auto-unhide on reveal, Areas control and grouped table list, "N tables hidden" pill.
 - **Results:** `npm run check` green (830 tests); `areas.spec.ts` 4 passed; related e2e 83 passed; `toolbar-width.mjs` PASS.
 - **Status:** Awaiting Cowork verification. Pending — not independently verified. No Backlog changes (QA-041 still deferred).
+- **Update:** Now Verified by Cowork round 27 at `fca073f` (see below). The entry above is kept as recorded.
+
+## 2026-11-23 — Cowork round 27 at `fca073f`: P4-T03 Verified
+
+- **Found by:** Cowork round 27 (report pasted by the user).
+- **Result:** full e2e 216/0/20; toolbar-width PASS light/dark. Recount of `getSubjectAreas` against its own rule over `gen … json`: 0 membership diffs (saas-300 3 × 100, mysqldump-180 9 × 20, large-200 10 × 20 + Other 20, GitLab 78 + Other (79 rows); ecommerce, sakila and blog → null).
+- **Browser 1280:** hide billing → 200 nodes, 272/520 edges, pill "100 tables hidden", positions unchanged, Reset view fits the visible tables, minimap 300 → 200. Only analytics → 100/37. Show all restores identical positions. Muted row → area on, selected, centred. Hiding the selected table's area keeps the inspector and clears the pinned edge label. Search, Health Show table and path pick re-enable the area. Layout with billing hidden stays hidden, deterministic, 0 overlaps after Show all. Drag moves only the dragged table. Export identical hidden vs shown (300 tables). Text filter works per group. Keyboard reachable with focus-visible ring. Reload shows all areas. GitLab 79 rows scroll; pill stacked under LargeSchemaNotice.
+- **Phone 390 light/dark:** no horizontal overflow; pill clear of Reset view. Console clean.
+- **AC-P4-T03-1…9 Verified.**
+- **Defects:** none new. QA-041 remains deferred → next P4 bug-fix.
+- **Status:** P4-T03 Verified (QA-041 deferred).

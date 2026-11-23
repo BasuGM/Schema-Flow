@@ -829,16 +829,16 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 
 ## P4-T03 — Subject-area grouping and filtering
 
-- **Status: Awaiting Cowork verification (automated checks only).** Plan: [plans/p4-t03.md](plans/p4-t03.md), ADR-036.
-- AC-P4-T03-1: saas-300 shows 3 areas (core/billing/analytics, 100 each; hide billing → 100 nodes and 248 edges hidden, 272 of 520 edges remain); mysqldump-180 shows 9 prefix areas of 20; large-200.prisma 10 × 20 + Other 20; GitLab 78 areas + Other 179 (no crash, list scrolls); ecommerce, sakila and blog show no Areas control and a flat list. _Auto_ (`subject-areas.test.ts`, `areas.spec.ts`) + _Cowork_ (recount)
-- AC-P4-T03-2: the table list is grouped under area headers with counts; the text filter works inside groups and empty groups disappear. _Auto_
-- AC-P4-T03-3: unchecking an area hides its tables and every edge touching them; other tables keep their positions; Reset view fits the visible tables; the minimap shows visible tables only; hiding the selected table's area keeps selection and inspector and unpins a clicked edge that became hidden. _Auto_ + _Cowork_ (Reset view, minimap)
-- AC-P4-T03-4: "Only" shows one area (a no-op when it is already alone), "Show all" (list, disabled when nothing is hidden, or canvas pill) restores everything; the pill reads "N tables hidden". _Auto_
-- AC-P4-T03-5: revealing a hidden table (list click, search, Show table, inspector link, path found or Show on canvas) turns its area back on. _Auto_ (`use-area-filter-sync.test.tsx`, `areas.spec.ts`) + _Cowork_ (search, Show table)
-- AC-P4-T03-6: Layout lays out all tables and hidden ones stay hidden; dragging a visible table never moves hidden ones. _Cowork_
-- AC-P4-T03-7: a new schema or a reload shows all areas; exports include all tables. _Auto_ (store test) + _Cowork_
-- AC-P4-T03-8: at 390×844 the list sheet shows Areas without horizontal overflow; the pill and Reset view do not overlap; `scripts/headless/toolbar-width.mjs` prints PASS. _Auto_
-- AC-P4-T03-9: the Areas disclosure, checkboxes, Only and Show all are reachable with Tab and show a visible focus ring. _Auto_ (reachability) + _Cowork_ (ring)
+- **Status: Verified** (Cowork round 27 at `fca073f`; AC-P4-T03-1…9 pass). Plan: [plans/p4-t03.md](plans/p4-t03.md), ADR-036.
+- AC-P4-T03-1: saas-300 shows 3 areas (core/billing/analytics, 100 each; hide billing → 100 nodes and 248 edges hidden, 272 of 520 edges remain); mysqldump-180 shows 9 prefix areas of 20; large-200.prisma 10 × 20 + Other 20; GitLab 78 areas + Other 179 (no crash, list scrolls); ecommerce, sakila and blog show no Areas control and a flat list. _Auto_ (`subject-areas.test.ts`, `areas.spec.ts`) + _Cowork_ (recount) — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-2: the table list is grouped under area headers with counts; the text filter works inside groups and empty groups disappear. _Auto_ — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-3: unchecking an area hides its tables and every edge touching them; other tables keep their positions; Reset view fits the visible tables; the minimap shows visible tables only; hiding the selected table's area keeps selection and inspector and unpins a clicked edge that became hidden. _Auto_ + _Cowork_ (Reset view, minimap) — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-4: "Only" shows one area (a no-op when it is already alone), "Show all" (list, disabled when nothing is hidden, or canvas pill) restores everything; the pill reads "N tables hidden". _Auto_ — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-5: revealing a hidden table (list click, search, Show table, inspector link, path found or Show on canvas) turns its area back on. _Auto_ (`use-area-filter-sync.test.tsx`, `areas.spec.ts`) + _Cowork_ (search, Show table) — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-6: Layout lays out all tables and hidden ones stay hidden; dragging a visible table never moves hidden ones. _Cowork_ — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-7: a new schema or a reload shows all areas; exports include all tables. _Auto_ (store test) + _Cowork_ — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-8: at 390×844 the list sheet shows Areas without horizontal overflow; the pill and Reset view do not overlap; `scripts/headless/toolbar-width.mjs` prints PASS. _Auto_ — **Verified (Cowork round 27)** (`fca073f`)
+- AC-P4-T03-9: the Areas disclosure, checkboxes, Only and Show all are reachable with Tab and show a visible focus ring. _Auto_ (reachability) + _Cowork_ (ring) — **Verified (Cowork round 27)** (`fca073f`)
 
 ## P4-T07 — Phone sheet reveal and e2e import timeout (QA-038, QA-039)
 
