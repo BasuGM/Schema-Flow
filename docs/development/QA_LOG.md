@@ -946,3 +946,10 @@ Pending — not independently verified.
 - **QA-040 verified.** AC-P4-T07-1/2 verified. No new defects.
 - Note (no action): the new e2e uses the first t008_entity row (p000_wide_id), not the deepest; it still catches the bug.
 - **Status:** P4-T07 Verified (round 25b).
+
+## 2026-11-23 — P4-T02: path finder between tables (Claude Code, not independently verified)
+
+- **Handoff:** [handoffs/P4-T02.md](handoffs/P4-T02.md). Plan [plans/p4-t02.md](plans/p4-t02.md) (approved with Cowork amendments 1–10), ADR-035.
+- **Built:** pure `findPath` (shortest undirected FK path, deterministic ties), inspector Path tab with a table picker, canvas highlight of the path (everything else dimmed), Show on canvas, Clear.
+- **Results:** `npm run check` green; `path.spec.ts` 8 passed; inspector, phone and health specs pass; `toolbar-width.mjs` PASS at 390×844.
+- **Status:** Awaiting Cowork verification. Pending — not independently verified. No QA_LOG Backlog changes.

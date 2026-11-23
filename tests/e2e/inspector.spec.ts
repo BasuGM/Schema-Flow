@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { importFixture, listItem, openSample, tableNode } from "./support/app";
 
-const tab = (page: Page, name: "columns" | "keys" | "relations") =>
+const tab = (page: Page, name: "columns" | "keys" | "relations" | "path") =>
   page.getByTestId(`inspector-tab-${name}`);
 
 async function expectCounts(page: Page, [c, k, r]: [number, number, number]): Promise<void> {

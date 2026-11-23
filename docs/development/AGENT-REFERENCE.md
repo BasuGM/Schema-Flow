@@ -39,7 +39,7 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   `E2E_QA_HOOKS=1 E2E_BASE_URL=<that server> npm run e2e -- error-regions.spec.ts`. Without
   `E2E_QA_HOOKS=1` those tests are skipped and one test checks that `schemaflowQa` is undefined.
 - Specs, one per area: `import` (paste / file picker / drop for every fixture, plus the real
-  fixtures), `issues`, `health`, `search`, `inspector`, `neighbourhood`, `panels` (inert, Enter, keyboard),
+  fixtures), `issues`, `health`, `path`, `search`, `inspector`, `neighbourhood`, `panels` (inert, Enter, keyboard),
   `phone` (390×844), `error-regions`. Shared helpers: `tests/e2e/support/app.ts`.
 - Rules: assert on `data-testid`, `data-*` and ARIA state, never pixels or fixed timeouts (wait on
   state); use real mouse and keyboard input. The one synthetic input is the file **drop** (a test
@@ -75,6 +75,8 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   inspector root, empty states).
   Bottom panel (P4-T01): `bottom-tab-issues`, `bottom-tab-health`, `health-panel`, `health-list`, `health-copy`,
   `health-empty`, `health-filter-{all|missing-pk|unindexed-fk|orphan-table|naming}`, `settings-health`, `more-health`.
+  Path finder (P4-T02): `inspector-tab-path`, `path-target-input`, `path-target-hint`, `path-target-option`, `path-result`,
+  `path-summary`, `path-hops`, `path-hop`, `path-show`, `path-clear`, `path-none`; `data-on-path` on table nodes and edges.
   Export dialog (P3-T03, P3-T05): `toolbar-export`, `settings-export`, `settings-export-image`, `more-export`,
   `more-export-image`, `export-dialog`, `export-tab-{sql|prisma|mermaid|json|image}`; text tabs:
   `export-dialect-{postgresql|mysql|sqlite}`, `export-mermaid-{all|keys}`, `export-preview`, `export-text-size`,
