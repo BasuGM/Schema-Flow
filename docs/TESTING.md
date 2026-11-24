@@ -59,8 +59,11 @@ zoomed-out, packed-layout, error-regions, a11y and two bug-bash specs.
 ## Counts
 
 Stamped: **2026-11-24, at `f66a33c`.** `npx vitest run`: 107 test files, 863 tests, all passing, in
-about 63 seconds on a loaded M1. The browser suite has roughly 165 test declarations by a text
-count of `tests/e2e`; that is not a run result. These numbers change with every task.
+about 63 seconds on a loaded M1. The browser suite has 254 e2e tests. Run results, stamped:
+Cowork round 29 at `64c5aa7`: 233 passed, 1 failed (the `a11y.spec` dark dialogs, flaky, QA-045),
+20 skipped. Claude Code's P4-T06 run: 234 passed, 20 skipped. A text count of the spec files
+undercounts, because parameterised tests expand into several runs. These numbers change with every
+task.
 
 ## The verification loop
 

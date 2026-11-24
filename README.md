@@ -139,6 +139,13 @@ Headless checks (need Chrome and a running server): `node scripts/headless/toolb
 | [CI/CD](docs/CI_CD.md)                         | [Deployment](docs/DEPLOYMENT.md)         |
 | [Environment setup](docs/ENVIRONMENT_SETUP.md) |                                          |
 
+| Interview preparation (first person)                 |                                                          |
+| ---------------------------------------------------- | -------------------------------------------------------- |
+| [Interview guide](docs/INTERVIEW_GUIDE.md)           | [Project Q&A](docs/PROJECT_Q%26A.md)                     |
+| [Technical challenges](docs/TECHNICAL_CHALLENGES.md) | [Design decisions](docs/DESIGN_DECISIONS.md)             |
+| [Trade-off analysis](docs/TRADE_OFF_ANALYSIS.md)     | [Scalability discussion](docs/SCALABILITY_DISCUSSION.md) |
+| [Lessons learned](docs/LESSONS_LEARNED.md)           |                                                          |
+
 ## Author
 
 Basavachetan Mathapati ([GitHub: BasuGM](https://github.com/BasuGM)).
