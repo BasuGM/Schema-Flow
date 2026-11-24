@@ -102,6 +102,8 @@ function RelationshipEdgeComponent(props: EdgeProps<RelationshipFlowEdge>) {
         style={{
           stroke: state === "default" ? "var(--edge)" : "var(--brand)",
           strokeWidth: STROKE_WIDTH[state],
+          // Overview zoom would scale a 2px path edge to a hairline (QA-041); keep it on-screen width.
+          vectorEffect: onPath && overview ? "non-scaling-stroke" : undefined,
         }}
       />
       {!overview && (

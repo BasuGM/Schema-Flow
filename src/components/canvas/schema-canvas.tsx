@@ -18,6 +18,7 @@ import {
 } from "@xyflow/react";
 import { LocateFixed } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { keyShortcutsFor } from "@/components/commands/shortcuts";
 import { Button } from "@/components/ui/button";
 import { schemaToFlow, type FlowElements } from "@/graph/schema-to-flow";
 import type { RelationshipFlowEdge, TableFlowNode } from "@/graph/types";
@@ -286,6 +287,7 @@ function SchemaCanvasInner() {
             size="sm"
             className="bg-card shadow-sm"
             onClick={resetView}
+            aria-keyshortcuts={keyShortcutsFor("reset-view")}
             data-testid="canvas-reset-view"
           >
             <LocateFixed aria-hidden />

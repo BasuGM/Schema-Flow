@@ -96,6 +96,17 @@ describe("Active path on the canvas (P4-T02)", () => {
     expect(litEdges().length).toBeGreaterThan(0);
   });
 
+  it("keeps on-path edges at on-screen width in the overview (QA-041)", () => {
+    render(<Harness />);
+    act(() => useUiStore.getState().setCanvasZoomedOut(true));
+    act(() => void showPath("public.reviews", "public.coupons"));
+    const edge = document.querySelector(
+      '.relationship-edge[data-on-path="true"] path.react-flow__edge-path',
+    );
+    expect(edge).not.toBeNull();
+    expect((edge as SVGPathElement).style.vectorEffect).toBe("non-scaling-stroke");
+  });
+
   it("fitTables bumps a distinct request each time", () => {
     const ui = useUiStore.getState();
     ui.fitTables(["a"]);

@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { useCallback, useRef } from "react";
 import type { Command } from "@/components/commands/use-commands";
 import { setPaletteReturnFocus } from "@/components/commands/focus-return";
+import { keyShortcutsFor } from "@/components/commands/shortcuts";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ export function SearchDialog() {
           unavailable={!hasSchema}
           size="icon"
           aria-label="Search tables, columns and commands"
+          aria-keyshortcuts={keyShortcutsFor("search")}
           data-testid="toolbar-search"
         >
           <Search aria-hidden />

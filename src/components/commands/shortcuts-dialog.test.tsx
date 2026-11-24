@@ -61,5 +61,8 @@ describe("shortcuts dialog", () => {
     expect(screen.getByTestId("toolbar-toggle-left")).toHaveAttribute("aria-keyshortcuts", "[");
     expect(screen.getByTestId("toolbar-toggle-right")).toHaveAttribute("aria-keyshortcuts", "]");
     expect(screen.getByTestId("toolbar-issues")).toHaveAttribute("aria-keyshortcuts", "h");
+    expect(screen.getByTestId("toolbar-search").getAttribute("aria-keyshortcuts")).toMatch(
+      /\+K \/$/,
+    );
   });
 });
