@@ -9,6 +9,13 @@ SQL is parsed as text, never executed, and schema data is never sent anywhere.
 > separate agent). Open defects: [QA log Backlog](docs/development/QA_LOG.md#backlog).
 > There is no hosted demo; run it locally (see Getting started).
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
+  <img src="docs/images/hero-light.png" alt="SchemaFlow showing the e-commerce sample schema as a diagram, with the orders table selected and its columns and relations in the inspector on the right">
+</picture>
+
+<sub>Hero: e-commerce sample, captured at `1ba8bef` (light and dark follow your GitHub theme).</sub>
+
 ## The problem
 
 Reading a real schema as text is slow: a `pg_dump` lists hundreds of tables and the relationships
@@ -41,6 +48,30 @@ a database connection or an upload. More in [docs/PROJECT_OVERVIEW.md](docs/PROJ
 
 Large schemas are laid out on the main thread: GitLab's 992 tables take about 3 s on an M1
 (the Import button shows "Laying out N tables…" meanwhile).
+
+## Screenshots
+
+All captured from fixtures at `1ba8bef` by [scripts/headless/docs-screenshots.mjs](scripts/headless/docs-screenshots.mjs).
+
+![Import issues panel on the edge-cases fixture, listing one error and five warnings with line numbers](docs/images/import-issues.png)
+
+_Import issues: a fixture with a duplicate table, an unknown foreign-key target and unsupported statements; the rest of the schema still loads._
+
+![Schema health panel listing missing primary keys, unindexed foreign keys, orphan tables and naming findings](docs/images/health.png)
+
+_Health: four checks on the health fixture, each with Show table._
+
+![Path finder showing a three-hop foreign-key chain from reviews to coupons, highlighted on the canvas](docs/images/path-finder.png)
+
+_Path finder: reviews to coupons on the e-commerce sample._
+
+![Subject areas filter on a 300-table schema with the billing area hidden](docs/images/subject-areas.png)
+
+_Subject areas: saas-300 fixture with the billing area hidden (100 of 300 tables)._
+
+<img src="docs/images/phone.png" width="260" alt="SchemaFlow on a 390 by 844 phone viewport showing the e-commerce sample">
+
+_Phone layout at 390×844._
 
 ## Tech stack and architecture
 
