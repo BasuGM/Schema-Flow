@@ -4,9 +4,16 @@ A browser-based, interactive database schema explorer. Import SQL DDL or a Prism
 explore it as a 2D entity relationship diagram. Everything runs locally in the browser: imported
 SQL is parsed as text, never executed, and schema data is never sent anywhere.
 
-> Status: Phases 1 and 2 are built: interactive canvas, import, search, full inspector and
-> neighbourhood highlighting. Phase 2's final verification is in progress; export and layout
-> persistence come in Phase 3. See [docs/development/ROADMAP.md](docs/development/ROADMAP.md).
+> Status: Phases 1 to 4 are built and the project is closed. Every task was implemented with
+> Claude Code and tested in a browser by an independent verification pass (Claude Cowork, a
+> separate agent). Open defects: [QA log Backlog](docs/development/QA_LOG.md#backlog).
+> There is no hosted demo; run it locally (see Getting started).
+
+## The problem
+
+Reading a real schema as text is slow: a `pg_dump` lists hundreds of tables and the relationships
+are buried in `ALTER TABLE` statements. SchemaFlow turns the file into an interactive diagram without
+a database connection or an upload. More in [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md).
 
 ## What it does
 
@@ -35,6 +42,13 @@ SQL is parsed as text, never executed, and schema data is never sent anywhere.
 Large schemas are laid out on the main thread: GitLab's 992 tables take about 3 s on an M1
 (the Import button shows "Laying out N tables…" meanwhile).
 
+## Tech stack and architecture
+
+Next.js 16 (static export), React 19, React Flow 12, Zustand 5, Tailwind v4, shadcn/ui, Dagre; own
+SQL and Prisma parsers. Pure TypeScript layers (`src/domain`, `src/parsers`, `src/generators`,
+`src/analysis`) produce a normalized `Schema`; `schemaToFlow()` turns it into React Flow nodes and
+edges. Details: [docs/TECH_STACK.md](docs/TECH_STACK.md), [docs/development/ARCHITECTURE.md](docs/development/ARCHITECTURE.md).
+
 ## Accessibility
 
 - **Keyboard:** Tab reaches every control and every table on the diagram; Enter or Space selects a
@@ -42,12 +56,17 @@ Large schemas are laid out on the main thread: GitLab's 992 tables take about 3 
 - **Screen readers:** panels, dialogs and the diagram are labelled landmarks; tables and
   relationships have accessible names; toolbar buttons keep their names on a phone.
 - **Reduced motion** is honoured (animations and viewport transitions are switched off).
-- **Automated audit:** an axe-core suite (WCAG 2.0/2.1 A and AA) runs on the main screens in light
-  and dark, with zero violations (as of `6230bea`, 2026-11-24; source: `tests/e2e/a11y.spec.ts`).
-  It does not replace a manual screen-reader pass, which has not been done.
-- **Known limitations:** relationship lines can't be focused with the keyboard (the inspector's
-  Relations and Path tabs give the same information), the diagram's spatial layout has no
-  non-visual equivalent, and reduced motion is covered by a unit test only.
+- **Automated audit:** an axe-core suite (WCAG 2.0/2.1 A and AA) covers the main screens in light
+  and dark. In the latest verification round it passed except for one flaky dark-mode dialog check
+  (QA-045). It does not replace a manual screen-reader pass, which has not been done.
+- **Known defects (open, won't fix because the project is closed):** the destructive button, for
+  example on the Clear saved data confirmation, has a contrast ratio of 3.79 (light) / 4.28 (dark),
+  below 4.5 (QA-044); the search button's `aria-keyshortcuts` reads `Meta+K` on Windows and Linux
+  (QA-043); the audit does not cover the Settings and More menus or the clear-data dialog (QA-045).
+  See the [QA log Backlog](docs/development/QA_LOG.md#backlog).
+- **Other limitations:** relationship lines can't be focused with the keyboard (the inspector's
+  Relations and Path tabs give the same information), and the diagram's spatial layout has no
+  non-visual equivalent.
 
 ## Local data
 
@@ -89,6 +108,16 @@ Headless checks (need Chrome and a running server): `node scripts/headless/toolb
 
 ## Documentation
 
-- [Architecture](docs/development/ARCHITECTURE.md)
-- [Roadmap](docs/development/ROADMAP.md)
-- [Verification](docs/development/VERIFICATION.md) and [QA log](docs/development/QA_LOG.md)
+| Start here                                   | Engineering record (source of truth)                      |
+| -------------------------------------------- | --------------------------------------------------------- |
+| [Project overview](docs/PROJECT_OVERVIEW.md) | [Architecture and ADRs](docs/development/ARCHITECTURE.md) |
+| [Features](docs/FEATURES.md)                 | [Roadmap](docs/development/ROADMAP.md)                    |
+| [User flows](docs/USER_FLOWS.md)             | [Verification](docs/development/VERIFICATION.md)          |
+| [Demo guide](docs/DEMO_GUIDE.md)             | [QA log](docs/development/QA_LOG.md)                      |
+| [Public roadmap](docs/ROADMAP.md)            |                                                           |
+| [Tech stack](docs/TECH_STACK.md)             |                                                           |
+| [Dependencies](docs/DEPENDENCIES.md)         |                                                           |
+
+## Author
+
+Basavachetan Mathapati ([GitHub: BasuGM](https://github.com/BasuGM)).
