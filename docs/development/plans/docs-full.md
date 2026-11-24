@@ -119,7 +119,7 @@ light/dark hero.
 3. **Done, `f97e849`:** BACKEND_ARCHITECTURE, DATABASE_DESIGN, API_DOCUMENTATION, DATA_FLOW, AUTHENTICATION, LOGGING_AND_MONITORING, CACHING_STRATEGY.
 4. **Done, `3e871fb`:** SECURITY, SCALABILITY, PERFORMANCE, ERROR_HANDLING, CODING_STANDARDS, TESTING, CI_CD, DEPLOYMENT, ENVIRONMENT_SETUP.
 5. **Done, `d0eedd2`:** INTERVIEW_GUIDE, PROJECT_Q&A, TECHNICAL_CHALLENGES, DESIGN_DECISIONS, TRADE_OFF_ANALYSIS, SCALABILITY_DISCUSSION, LESSONS_LEARNED.
-6. QA_REPORT, KNOWN_ISSUES, KNOWN_LIMITATIONS, CHANGELOG, RELEASE_NOTES, LICENSE, CONTRIBUTING, CODE_OF_CONDUCT.
+6. **Done, `9f96fb3`:** QA_REPORT, KNOWN_ISSUES, KNOWN_LIMITATIONS, CHANGELOG, RELEASE_NOTES, LICENSE, CONTRIBUTING, CODE_OF_CONDUCT.
 7. `scripts/headless/docs-screenshots.mjs`, `docs/images/*`, README images and the full docs map, `npm run check`; then handoff `handoffs/DOC-01.md` (20 claims with sources, link-check and Prettier output, screenshot sizes, `npm run check` result) and the ROADMAP Now block "Project closed — DOC-01 Awaiting Cowork verification".
 
 Each commit: link + anchor check, Prettier on the changed `.md`, `git diff --stat` showing docs paths
