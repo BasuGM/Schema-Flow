@@ -115,8 +115,14 @@ Headless checks (need Chrome and a running server): `node scripts/headless/toolb
 | [User flows](docs/USER_FLOWS.md)             | [Verification](docs/development/VERIFICATION.md)          |
 | [Demo guide](docs/DEMO_GUIDE.md)             | [QA log](docs/development/QA_LOG.md)                      |
 | [Public roadmap](docs/ROADMAP.md)            |                                                           |
-| [Tech stack](docs/TECH_STACK.md)             |                                                           |
-| [Dependencies](docs/DEPENDENCIES.md)         |                                                           |
+
+| Design                                                 | Stack and decisions                                            |
+| ------------------------------------------------------ | -------------------------------------------------------------- |
+| [Architecture overview](docs/ARCHITECTURE.md)          | [Tech stack](docs/TECH_STACK.md)                               |
+| [System design](docs/SYSTEM_DESIGN.md)                 | [Dependencies](docs/DEPENDENCIES.md)                           |
+| [Frontend architecture](docs/FRONTEND_ARCHITECTURE.md) | [Version compatibility](docs/VERSION_COMPATIBILITY.md)         |
+| [Project structure](docs/PROJECT_STRUCTURE.md)         | [Technical decisions (ADR index)](docs/TECHNICAL_DECISIONS.md) |
+| [Diagrams](docs/diagrams/data-flow.md)                 | [Trade-offs](docs/TRADE_OFFS.md)                               |
 
 ## Author
 
