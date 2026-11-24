@@ -131,6 +131,14 @@ Headless checks (need Chrome and a running server): `node scripts/headless/toolb
 | [Authentication](docs/AUTHENTICATION.md)                 | [Caching strategy](docs/CACHING_STRATEGY.md)         |
 | [Logging and monitoring](docs/LOGGING_AND_MONITORING.md) |                                                      |
 
+| Quality and operations                         |                                          |
+| ---------------------------------------------- | ---------------------------------------- |
+| [Security](docs/SECURITY.md)                   | [Scalability](docs/SCALABILITY.md)       |
+| [Performance](docs/PERFORMANCE.md)             | [Error handling](docs/ERROR_HANDLING.md) |
+| [Coding standards](docs/CODING_STANDARDS.md)   | [Testing](docs/TESTING.md)               |
+| [CI/CD](docs/CI_CD.md)                         | [Deployment](docs/DEPLOYMENT.md)         |
+| [Environment setup](docs/ENVIRONMENT_SETUP.md) |                                          |
+
 ## Author
 
 Basavachetan Mathapati ([GitHub: BasuGM](https://github.com/BasuGM)).
