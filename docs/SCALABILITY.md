@@ -50,8 +50,8 @@ schema work stopped, not a promise.
   hundreds of elements; that rendering cost is browser style and paint, not JavaScript
   ([ADR-022](development/ARCHITECTURE.md#adr-022--large-schema-frame-costs-2026-11-16-p2-t10)).
 - **A fitted view of a packed 992-table schema mounts many tables and is slow by design** (ADR-031).
-  The fitted zoom for such a diagram is below the canvas minimum of 0.05, so Reset view may show it
-  clipped. This is a known limitation ([KNOWN_LIMITATIONS](KNOWN_LIMITATIONS.md)).
+  Reset view fits it at a zoom of about 0.03, which the canvas minimum of 0.02 allows (QA-035),
+  and a schema this size is outside the design target ([KNOWN_LIMITATIONS](KNOWN_LIMITATIONS.md)).
 - **No canvas overview renderer.** One was prototyped and dropped when its scope was cut
   (ADR-031).
 - **Memory.** Source text, the parsed schema and the layout all live in the tab. No memory figure

@@ -146,6 +146,13 @@ Headless checks (need Chrome and a running server): `node scripts/headless/toolb
 | [Trade-off analysis](docs/TRADE_OFF_ANALYSIS.md)     | [Scalability discussion](docs/SCALABILITY_DISCUSSION.md) |
 | [Lessons learned](docs/LESSONS_LEARNED.md)           |                                                          |
 
+| Status and project                             |                                        |
+| ---------------------------------------------- | -------------------------------------- |
+| [QA report](docs/QA_REPORT.md)                 | [Known issues](docs/KNOWN_ISSUES.md)   |
+| [Known limitations](docs/KNOWN_LIMITATIONS.md) | [Release notes](docs/RELEASE_NOTES.md) |
+| [Changelog](CHANGELOG.md)                      | [Contributing](CONTRIBUTING.md)        |
+| [Code of conduct](CODE_OF_CONDUCT.md)          | [License (MIT)](LICENSE)               |
+
 ## Author
 
 Basavachetan Mathapati ([GitHub: BasuGM](https://github.com/BasuGM)).
