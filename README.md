@@ -124,6 +124,13 @@ Headless checks (need Chrome and a running server): `node scripts/headless/toolb
 | [Project structure](docs/PROJECT_STRUCTURE.md)         | [Technical decisions (ADR index)](docs/TECHNICAL_DECISIONS.md) |
 | [Diagrams](docs/diagrams/data-flow.md)                 | [Trade-offs](docs/TRADE_OFFS.md)                               |
 
+| Data and internals                                       |                                                      |
+| -------------------------------------------------------- | ---------------------------------------------------- |
+| [Data flow](docs/DATA_FLOW.md)                           | [Database design](docs/DATABASE_DESIGN.md)           |
+| [API documentation](docs/API_DOCUMENTATION.md)           | [Backend architecture](docs/BACKEND_ARCHITECTURE.md) |
+| [Authentication](docs/AUTHENTICATION.md)                 | [Caching strategy](docs/CACHING_STRATEGY.md)         |
+| [Logging and monitoring](docs/LOGGING_AND_MONITORING.md) |                                                      |
+
 ## Author
 
 Basavachetan Mathapati ([GitHub: BasuGM](https://github.com/BasuGM)).
