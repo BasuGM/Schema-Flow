@@ -54,7 +54,7 @@ export function IssuesButton() {
           <span className="tabular-nums">{warnings}</span>
         </span>
       )}
-      <span className="hidden lg:inline">Issues</span>
+      <span className="max-lg:sr-only">Issues</span>
     </ToolbarButton>
   );
 }

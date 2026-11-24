@@ -40,7 +40,7 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   `E2E_QA_HOOKS=1` those tests are skipped and one test checks that `schemaflowQa` is undefined.
 - Specs, one per area: `import` (paste / file picker / drop for every fixture, plus the real
   fixtures), `issues`, `health`, `path`, `search`, `inspector`, `neighbourhood`, `panels` (inert, Enter, keyboard),
-  `phone` (390×844), `error-regions`. Shared helpers: `tests/e2e/support/app.ts`.
+  `phone` (390×844), `error-regions`, `a11y` (axe, light + dark; ADR-038). Shared helpers: `tests/e2e/support/app.ts`.
 - Rules: assert on `data-testid`, `data-*` and ARIA state, never pixels or fixed timeouts (wait on
   state); use real mouse and keyboard input. The one synthetic input is the file **drop** (a test
   cannot start an OS drag), which dispatches `dragenter`/`dragover`/`drop` with a `DataTransfer`.
@@ -73,6 +73,7 @@ AC-P2-\* ACs. It is **not** part of `npm run check` (it needs a built, served ap
   without a ROADMAP task ID.
 - Add `data-testid` to key UI (toolbar buttons, `table-list-item-<name>`, `table-node-<name>`,
   inspector root, empty states).
+  Skip link (P4-T06): `skip-link`.
   Bottom panel (P4-T01): `bottom-tab-issues`, `bottom-tab-health`, `health-panel`, `health-list`, `health-copy`,
   `health-empty`, `health-filter-{all|missing-pk|unindexed-fk|orphan-table|naming}`, `settings-health`, `more-health`.
   Path finder (P4-T02): `inspector-tab-path`, `path-target-input`, `path-target-hint`, `path-target-option`, `path-result`,

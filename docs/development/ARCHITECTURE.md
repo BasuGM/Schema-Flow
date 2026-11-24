@@ -49,6 +49,7 @@ One line per ADR; the full records are under [Decision records](#decision-record
 | [ADR-035](#adr-035--path-finder-in-an-inspector-tab-2026-11-23-p4-t02)                                                                   | 2026-11-23 | Shortest undirected FK path in a pure `findPath`, shown in an inspector Path tab and highlighted on the canvas     | P4-T02: no new toolbar button (390 px width); one path, no all-paths mode                | A toolbar mode; a bottom-panel tab; listing every path                  |
 | [ADR-036](#adr-036--subject-areas-derived-and-hidden-on-the-canvas-2026-11-23-p4-t03)                                                    | 2026-11-23 | Subject areas derived from schema names or name prefixes; hiding an area hides its tables and edges in place       | P4-T03: no relayout, no editing, session only                                            | Editable areas; relayout on hide; dimming only                          |
 | [ADR-037](#adr-037--commands-in-the-own-palette-and-one-shortcut-table-2026-11-23-p4-t04) | 2026-11-23 | Commands live in the ⌘K search dialog; one `SHORTCUTS` table feeds the key handler, the help dialog and hints | P4-T04: no new dependency (ADR-016 stands); palette, keys and help cannot drift | cmdk; separate command palette; hand-written help |
+| [ADR-038](#adr-038--accessibility-audit-with-axe-2026-11-24-p4-t06) | 2026-11-24 | Automated axe audit of the main screens; skip link; SchemaFlow `ariaLabelConfig`; edges stay unfocusable | P4-T06: one dev dependency, `@axe-core/playwright` 4.11.3; contrast and names cannot regress unnoticed | jest-axe in jsdom (no layout, no contrast); manual-only checks; focusable edges |
 
 ## Data flow
 
@@ -1017,3 +1018,11 @@ software rasterizer (QA-020), and that GitLab lays out ~242,000 px tall (QA-018)
 - **One table:** `SHORTCUTS` (`src/components/commands/shortcuts.ts`) drives the global key handler (`use-global-shortcuts.ts`), the `?` help dialog, palette hints, tooltips and `aria-keyshortcuts`. Keys: `?` help, `F` reset view, `L` layout, `[` `]` panels, `H` health, `E` export, `I` import (plus ⌘K, `/`, Escape). Matching uses `event.key` (Shift and CapsLock don't matter); Ctrl/Meta/Alt, key repeat, text fields and open dialogs/menus are ignored. On phones E, I and ? close the sheets first.
 - **Actions:** `actions.ts` holds the plain functions both keys and commands call. The store gained `importOpen`, `shortcutsOpen` and `resetViewRequest` so a key or command can reach what was local state.
 - **Focus:** a command runs after the dialog has closed and focus is back on the element that had it before ⌘K; a dialog it opens returns focus there too (`focus-return.ts`, consumed once).
+
+### ADR-038 — Accessibility audit with axe (2026-11-24, P4-T06)
+
+- **Decision:** `tests/e2e/a11y.spec.ts` runs axe (`@axe-core/playwright` 4.11.3, a dev dependency; `axe-core` was only present through eslint-plugin-jsx-a11y) with the tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` on ten states in light and dark. The assertion is zero violations; no rule is disabled and nothing is excluded.
+- **Why Playwright, not jsdom:** contrast and names of hidden/responsive labels need a real layout. The spec emulates `prefers-reduced-motion` so dialog fades are settled when axe reads colours, and waits for the export preview to finish generating.
+- **Found and fixed:** Export, Layout, Import and Issues labels were `hidden` (display:none) below a breakpoint, leaving icon-only buttons without a name; they now use `max-*:sr-only`.
+- **Added:** a "Skip to diagram" link (`skip-link.tsx`); `ariaLabelConfig` on the canvas (`ARIA_LABEL_CONFIG`), replacing React Flow's default text that offered to delete or move nodes.
+- **Not done (scope):** focusable edges (Relations and Path tabs are the keyboard route), arrow-key movement between tables, a screen-reader walkthrough.

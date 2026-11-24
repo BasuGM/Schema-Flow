@@ -151,7 +151,7 @@ export function ImportDialog() {
           data-testid="toolbar-import"
         >
           <Upload aria-hidden />
-          <span className="hidden md:inline">Import</span>
+          <span className="max-md:sr-only">Import</span>
         </ToolbarButton>
       </DialogTrigger>
       <DialogContent

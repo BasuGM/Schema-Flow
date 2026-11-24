@@ -90,7 +90,7 @@ export function Toolbar() {
           data-testid="toolbar-export"
         >
           <Download aria-hidden />
-          <span className="hidden md:inline">Export</span>
+          <span className="max-md:sr-only">Export</span>
         </ToolbarButton>
         {/* Below `sm` these three live in the More menu, so the toolbar fits 390 px. */}
         <div className="hidden items-center gap-0.5 sm:flex">
@@ -102,7 +102,7 @@ export function Toolbar() {
             data-testid="toolbar-layout"
           >
             <Workflow aria-hidden />
-            <span className="hidden md:inline">Layout</span>
+            <span className="max-md:sr-only">Layout</span>
           </ToolbarButton>
           <Separator orientation="vertical" className="mx-1 h-5!" />
           <ThemeToggle />

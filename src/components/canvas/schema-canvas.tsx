@@ -48,6 +48,18 @@ const nodeTypes = { table: TableNode };
 const edgeTypes = { relationship: RelationshipEdge };
 const EMPTY: FlowElements = { nodes: [], edges: [] };
 const FIT_VIEW_OPTIONS = { padding: 0.15, maxZoom: 1 };
+/** SchemaFlow wording: tables are selected, never moved by keyboard or deleted (P4-T06, ADR-038). */
+export const ARIA_LABEL_CONFIG = {
+  "node.a11yDescription.default": "Press Enter or Space to select this table.",
+  "node.a11yDescription.keyboardDisabled": "Press Enter or Space to select this table.",
+  "edge.a11yDescription.default":
+    "Relationships are listed in the inspector Relations tab and the Path tab.",
+  "controls.ariaLabel": "Diagram controls",
+  "controls.zoomIn.ariaLabel": "Zoom in",
+  "controls.zoomOut.ariaLabel": "Zoom out",
+  "controls.fitView.ariaLabel": "Fit diagram to view",
+  "minimap.ariaLabel": "Diagram overview",
+} as const;
 
 /** Unpins any clicked edge; returns the same array when nothing was selected (no re-render). */
 function deselectEdges(edges: RelationshipFlowEdge[]): RelationshipFlowEdge[] {
@@ -251,6 +263,7 @@ function SchemaCanvasInner() {
         fitViewOptions={FIT_VIEW_OPTIONS}
         onInit={onInit}
         aria-label="Schema diagram"
+        ariaLabelConfig={ARIA_LABEL_CONFIG}
       >
         <ZoomDetail enabled={large} />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--canvas-dot)" />

@@ -861,3 +861,11 @@ Charter: [plans/bb-p3.md](plans/bb-p3.md). Automated in `tests/e2e/bug-bash-p3.s
 - AC-P4-T04-8: command rows are options in the same listbox with labels and visible focus; toolbar buttons with a key have `aria-keyshortcuts`. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
 - AC-P4-T04-9: at 390×844 the palette and help dialog fit without horizontal scroll and `scripts/headless/toolbar-width.mjs` prints PASS. _Auto_ + _Cowork_ — **Verified (Cowork round 28)** (`72e2caf`)
 
+## P4-T06 — Accessibility audit
+
+- AC-P4-T06-1: the axe suite (WCAG 2.0/2.1 A + AA) reports zero violations on the start screen, sample, inspector tabs, search / import / export / shortcuts dialogs, issues and health panels and the phone table-list sheet, in light and dark. _Auto_ (`a11y.spec.ts`) — Awaiting Cowork verification
+- AC-P4-T06-2: "Skip to diagram" is the first Tab stop, visible on focus, and Enter moves focus to the diagram. _Auto_ (`skip-link.test.tsx`, `a11y.spec.ts`) + _Cowork_ — Awaiting Cowork verification
+- AC-P4-T06-3: the zoom, fit and minimap controls and the node description use SchemaFlow wording (no "press delete" text). _Auto_ (`a11y.spec.ts`) + _Cowork_ — Awaiting Cowork verification
+- AC-P4-T06-4: Export, Layout, Import and Issues keep their accessible names below their label breakpoint (fixed: the label was `display:none`). _Auto_ (axe `button-name`) — Awaiting Cowork verification
+- AC-P4-T06-5: README has an Accessibility section with its limits. _Cowork_ (read) — Awaiting Cowork verification
+- AC-P4-T06-6: no regression: `bug-bash.spec.ts` focus tests green and `toolbar-width.mjs` prints PASS at 390×844. _Auto_ — Awaiting Cowork verification

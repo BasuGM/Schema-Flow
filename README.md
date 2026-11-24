@@ -35,6 +35,20 @@ SQL is parsed as text, never executed, and schema data is never sent anywhere.
 Large schemas are laid out on the main thread: GitLab's 992 tables take about 3 s on an M1
 (the Import button shows "Laying out N tables…" meanwhile).
 
+## Accessibility
+
+- **Keyboard:** Tab reaches every control and every table on the diagram; Enter or Space selects a
+  table; `?` lists the shortcuts. A "Skip to diagram" link is the first Tab stop.
+- **Screen readers:** panels, dialogs and the diagram are labelled landmarks; tables and
+  relationships have accessible names; toolbar buttons keep their names on a phone.
+- **Reduced motion** is honoured (animations and viewport transitions are switched off).
+- **Automated audit:** an axe-core suite (WCAG 2.0/2.1 A and AA) runs on the main screens in light
+  and dark, with zero violations (as of `6230bea`, 2026-11-24; source: `tests/e2e/a11y.spec.ts`).
+  It does not replace a manual screen-reader pass, which has not been done.
+- **Known limitations:** relationship lines can't be focused with the keyboard (the inspector's
+  Relations and Path tabs give the same information), the diagram's spatial layout has no
+  non-visual equivalent, and reduced motion is covered by a unit test only.
+
 ## Local data
 
 Nothing is uploaded. To restore your work, SchemaFlow keeps on this device only: the text of your last import (IndexedDB), table

@@ -1,5 +1,6 @@
 "use client";
 
+import { SkipLink } from "./skip-link";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary } from "@/components/errors/error-boundary";
 import { QaCrash } from "@/components/errors/qa-crash";
@@ -66,6 +67,7 @@ export function Workspace() {
   return (
     <div className="flex h-full flex-col" data-testid="workspace">
       <QaCrash region="app" />
+      <SkipLink />
       <Toolbar />
       <div className="relative min-h-0 flex-1">
         <ResizablePanelGroup orientation="horizontal" className="h-full">

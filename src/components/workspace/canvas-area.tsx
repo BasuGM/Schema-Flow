@@ -1,5 +1,6 @@
 "use client";
 
+import { DIAGRAM_ID } from "./skip-link";
 import { useEffect, useRef } from "react";
 import type { PanelImperativeHandle, PanelSize } from "react-resizable-panels";
 import { CanvasErrorBoundary } from "@/components/canvas/canvas-error-boundary";
@@ -34,7 +35,7 @@ export function CanvasArea() {
           back to a 50/50 split in short groups, which would have opened the panel by itself. */}
       <ResizablePanel id="diagram" minSize="30%">
         <div className="relative h-full">
-          <main className="h-full" aria-label="Diagram">
+          <main id={DIAGRAM_ID} tabIndex={-1} className="h-full outline-none" aria-label="Diagram">
             <CanvasErrorBoundary>
               <QaCrash region="canvas" />
               <SchemaCanvas />
